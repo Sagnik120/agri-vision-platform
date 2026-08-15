@@ -23,8 +23,8 @@ def route(domain: str, image_path: str, mode: str = None) -> dict:
     if domain not in VALID_DOMAINS:
         raise ValueError(f"domain must be one of {VALID_DOMAINS}, got {domain!r}")
 
-    expert_name = "Crop Disease & Pest Expert" if domain == "crop" else "Livestock Health & Behaviour Expert"
-    print(f"Detected task → {domain} → Expert selected: {expert_name}")
+    expert_name = "Crop Disease & Pest Expert" if domain == "crop" else "Livestock Health & Behavior Expert"
+    print(f"Detected task -> {domain} -> Expert selected: {expert_name}")
 
     if domain == "crop":
         return run_crop_expert(image_path, mode=mode)

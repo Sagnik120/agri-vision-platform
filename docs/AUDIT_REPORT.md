@@ -30,39 +30,39 @@ Zone 1 (Person A / Edge) is **fully implemented, correctly wired, and all 38 pyt
 | On-Device Advisory Output | `knowledge/local_advisory.py` + `local_advisories.json` | ✅ 13 entries |
 | Full Pipeline Orchestrator | `pipeline.py` — `run_zone1_pipeline()` | ✅ Wires all Zone 1 modules |
 
-### Zone 2 — Cloud Advisory Layer 🚧 STUBBED (Expected)
+### Zone 2 — Cloud Advisory Layer ✅ COMPLETE
 
 | Diagram Component | Implementation File | Status |
 |---|---|---|
-| Cloud Gateway | `zone2_cloud/` package scaffold | ✅ Structure ready |
-| Hindi IndicConformer ASR | `zone2_cloud/asr/hindi_asr.py` | 🔴 STUB |
-| Hindi TTS (FastPitch/IndicF5) | `zone2_cloud/tts/hindi_tts.py` | 🔴 STUB |
-| RAG Knowledge Base | `zone2_cloud/rag/knowledge_base/` | 🔴 EMPTY — 0 entries |
-| RAG Builder | `zone2_cloud/rag/build_knowledge_base.py` | 🔴 STUB |
-| RAG Retriever | `zone2_cloud/rag/retriever.py` | 🔴 STUB |
-| Gemini Client | `zone2_cloud/gemini/gemini_client.py` | 🔴 STUB (prompt written) |
+| Cloud Gateway | `zone2_cloud/` package | ✅ Structure ready |
+| Hindi IndicConformer ASR | `zone1_edge/speech/hindi_asr.py` | ✅ Implemented (Moved to Edge/Offline) |
+| Hindi TTS (FastPitch / HF TTS e.g. vits_rasa_13) | `zone1_edge/speech/hindi_tts.py` | ✅ Implemented (Moved to Edge/Offline) |
+| RAG Knowledge Base | `zone2_cloud/rag/knowledge_base/` | ✅ 8 entries |
+| RAG Builder | `zone2_cloud/rag/build_knowledge_base.py` | ✅ FAISS builder done |
+| RAG Retriever | `zone2_cloud/rag/retriever.py` | ✅ FAISS retriever done |
+| Gemini Client | `zone2_cloud/gemini/gemini_client.py` | ✅ Implemented w/ google-genai & mock |
 
-### Zone 3 — Farm Memory & Learning 🚧 STUBBED (Expected)
+### Zone 3 — Farm Memory & Learning ✅ COMPLETE
 
 | Diagram Component | Implementation File | Status |
 |---|---|---|
 | Farm Records Store (Schema) | `zone3_memory/schema/schema.sql` | ✅ 5 tables defined |
-| SQLite CRUD functions | `zone3_memory/db/farm_memory.py` | 🔴 STUB |
-| My Farm History Timeline | Streamlit + `get_farm_history()` | 🔴 Not wired |
+| SQLite CRUD functions | `zone3_memory/db/farm_memory.py` | ✅ Implemented |
+| My Farm History Timeline | Streamlit + `get_farm_history()` | ✅ Wired |
 | On-Device Model Improvement / Secure Aggregation | **OUT OF SCOPE** per plan Section 7 | ⚪ Correctly skipped |
 
-### UI — Streamlit App 🚧 PARTIALLY WIRED
+### UI — Streamlit App ✅ FULLY WIRED
 
 | Component | Status |
 |---|---|
 | Crop tab (Zone 1 wired) | ✅ Calls `run_zone1_pipeline()`, shows advisory |
-| 🟢/🟡 Local/Cloud banner | ✅ Implemented for Crop tab |
+| 🟢/🟡 Local/Cloud banner | ✅ Implemented for all tabs |
 | "Why cloud?" debug panel | ✅ `st.expander` showing gate JSON |
-| Livestock tab | 🔴 Stub — sensor sliders not wired |
-| Voice tab | 🔴 Stub — ASR not wired |
-| Gemini cloud call branch | 🔴 Shows TODO message |
-| TTS playback | 🔴 Not wired |
-| Farm memory writes | 🔴 Not wired |
+| Livestock tab | ✅ Wired w/ simulated sensors |
+| Voice tab | ✅ Wired w/ ASR transcription |
+| Gemini cloud call branch | ✅ Implemented (RAG + Farm history included) |
+| TTS playback | ✅ Wired |
+| Farm memory writes | ✅ Wired to save observation/diagnosis |
 
 ---
 
@@ -106,7 +106,10 @@ All 6 contract shapes from `contract.md` verified:
 | 2 | `demo_data/audio/`, `demo_data/crop/`, `demo_data/livestock/` are empty | Low | Expected per plan, noted in PROGRESS.md |
 | 3 | Livestock tab in Streamlit fully unimplemented | Medium | Documented as Person B TODO |
 | 4 | `results/zone2/` and `results/zone3/` sub-folders missing | Low | Fixed — created in diagnostic test setup |
-| (OLD) | `fusion.py` `_text_agreement()` unreachable healthy-label check | Bug | Already fixed in commit `539c9f3` |
+| 5 | Edge Model outputs raw class names mismatching JSON | Medium | **Fixed** — `local_advisory.py` normalizes string (e.g. Potato___Early_Blight -> potato_early_blight) |
+| 6 | Farm History UI missing | Medium | **Fixed** — Created `tab_history` and `farm_memory.get_all_history_records()` |
+| 7 | AI4Bharat `IndicVitsConfig` missing pad_token_id | High | **Fixed** — Programmatically patched in `hindi_tts.py` |
+| 8 | Nested TTS buttons caused Streamlit state loss | High | **Fixed** — Automated TTS audio generation post-inference |
 
 ---
 

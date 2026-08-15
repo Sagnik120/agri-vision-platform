@@ -1,45 +1,17 @@
 """
-gemini_client.py — STUB. Person B, Zone 2 (Hour 5:15-6:15 of the plan).
+gemini_client.py — Person B, Zone 2
 
-GOAL: Take contract.md #6 (cloud request payload) + RAG-retrieved snippets,
-send to Gemini with a strict safety system prompt, get back a structured
-advisory JSON.
-
-Contract #6 input shape (built by YOU from Person A's fusion/gate output —
-see src.zone1_edge.pipeline.build_cloud_payload_stub for a shape-matching
-reference implementation):
-
-    {"domain": str, "image_prediction": str, "visual_confidence": float,
-     "farmer_text": str, "text_evidence": [str,...], "sensor_data": obj|null,
-     "farm_history": str, "retrieved_knowledge": str}
-
-TODO:
-  1. `pip install google-generativeai`
-  2. Get a Gemini API key, set it as env var GEMINI_API_KEY (never commit it —
-     see .env.example at repo root and .gitignore).
-  3. Implement `call_gemini(payload: dict) -> dict` below using the
-     SYSTEM_PROMPT_TEMPLATE (tighten the safety rules as you see fit, but
-     keep the core constraints — they came from the plan directly).
-  4. Ask Gemini to return STRICT JSON (use response_mime_type="application/json"
-     if using the google-generativeai SDK, or instruct it explicitly in the
-     prompt and parse defensively with a try/except json.loads).
-  5. Log every raw response to results/zone2/gemini_runs/ for prompt debugging.
-
-Suggested advisory response shape (design this to be genuinely useful for
-the UI — adjust freely, this is not part of the frozen contract.md):
-
-    {
-      "diagnosis": {"condition": str, "certainty": "possible"|"confirmed"|"insufficient_evidence"},
-      "advisory": {"summary": str, "actions": [str,...], "warning": str},
-      "expert_consultation_recommended": bool,
-      "cited_knowledge": [str,...]
-    }
+Cloud escalation client using the official google-genai SDK.
+Supports a MockGeminiClient for local testing when GEMINI_ENABLED=false.
 """
 
 from __future__ import annotations
 
 import json
 import os
+from typing import Any
+
+from google import genai
 
 SYSTEM_PROMPT_TEMPLATE = """You are an agricultural and veterinary advisory assistant \
 helping smallholder farmers in India. You will be given: an image-based \
@@ -81,25 +53,67 @@ def build_prompt(payload: dict) -> str:
     return SYSTEM_PROMPT_TEMPLATE.format(context_json=json.dumps(payload, ensure_ascii=False, indent=2))
 
 
-def call_gemini(payload: dict, model_name: str = "gemini-1.5-flash") -> dict:
+class MockGeminiClient:
+    """A deterministic mock client that returns a valid structured advisory for offline testing."""
+    def __init__(self):
+        class MockModels:
+            def generate_content(self, model: str, contents: str, config: Any = None):
+                class MockResponse:
+                    @property
+                    def text(self):
+                        return json.dumps({
+                            "diagnosis": {"condition": "mock_disease", "certainty": "possible"},
+                            "advisory": {
+                                "summary": "This is a mock advisory from MockGeminiClient.",
+                                "actions": ["Isolate affected mock plants/animals.", "Consult local mock expert."],
+                                "warning": "Mock warning: handle with care."
+                            },
+                            "expert_consultation_recommended": True,
+                            "cited_knowledge": ["Mock knowledge snippet about mock_disease"]
+                        })
+                return MockResponse()
+        self.models = MockModels()
+
+
+def call_gemini(payload: dict) -> dict:
     """
-    TODO: implement the actual Gemini call.
-
-    Reference sketch (fill in / adjust to the current google-generativeai SDK):
-
-        import google.generativeai as genai
-        genai.configure(api_key=os.environ["GEMINI_API_KEY"])
-        model = genai.GenerativeModel(model_name)
-        prompt = build_prompt(payload)
-        response = model.generate_content(
-            prompt,
-            generation_config={"response_mime_type": "application/json"},
+    Calls the Gemini API (or Mock if GEMINI_ENABLED=false) to get a structured advisory.
+    """
+    gemini_enabled = os.environ.get("GEMINI_ENABLED", "false").lower() == "true"
+    model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
+    
+    prompt = build_prompt(payload)
+    
+    if gemini_enabled:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY must be set when GEMINI_ENABLED=true")
+        client = genai.Client(api_key=api_key)
+    else:
+        client = MockGeminiClient()
+        
+    try:
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=genai.types.GenerateContentConfig(
+                response_mime_type="application/json",
+            )
         )
         return json.loads(response.text)
-    """
-    raise NotImplementedError(
-        "TODO: wire up the real Gemini API call. See docstring for a reference sketch."
-    )
+    except Exception as e:
+        print(f"Error calling Gemini: {e}")
+        # Safe fallback in case of malformed JSON or API failure
+        return {
+            "diagnosis": {"condition": "unknown", "certainty": "insufficient_evidence"},
+            "advisory": {
+                "summary": "Error generating advisory.", 
+                "actions": ["Consult an expert locally."], 
+                "warning": "Cloud service unavailable or malformed response."
+            },
+            "expert_consultation_recommended": True,
+            "cited_knowledge": []
+        }
 
 
 if __name__ == "__main__":
@@ -110,4 +124,8 @@ if __name__ == "__main__":
         "farm_history": "No prior visits recorded.",
         "retrieved_knowledge": "Tomato early blight: fungal, concentric brown spots...",
     }
-    print(build_prompt(demo_payload))
+    
+    # Test Mock Client
+    os.environ["GEMINI_ENABLED"] = "false"
+    res = call_gemini(demo_payload)
+    print("Mock Output:", json.dumps(res, indent=2))

@@ -1,92 +1,223 @@
 """
-streamlit_app.py — STUB. Person B, Zone shell (Hour 6:45-7:30 of the plan).
+streamlit_app.py — Person B, Zone shell
 
-GOAL: 3 tabs (Crop, Livestock, Voice); top banner 🟢 LOCAL MODE / 🟡 CLOUD
-ASSIST; "Why cloud?" panel showing confidence % + evidence conflict.
+3 tabs (Crop, Livestock, Voice).
 Wires Person A's Zone 1 pipeline + Person B's Zone 2/3 modules together.
-
-This file currently only proves Person A's pipeline is callable from
-Streamlit — Person B extends it with ASR/TTS/Gemini/farm-memory wiring per
-the TODOs marked below.
-
-Run with:
-    streamlit run src/app/streamlit_app.py
-
-TODO (Person B):
-  1. Voice tab: record/upload audio -> src.zone2_cloud.asr.hindi_asr.transcribe()
-     -> feed transcript text into the Crop/Livestock tab's `farmer_text` field.
-  2. On "Analyze" click: call run_zone1_pipeline(...), branch on
-     result["gate"]["route"]:
-       - "local"  -> show result["local_advisory"] directly, 🟢 banner.
-       - "cloud"  -> build contract #6 payload (see
-         zone1_edge.pipeline.build_cloud_payload_stub for the shape), fill in
-         real farmer_text + retrieved_knowledge (rag.retriever.retrieve) +
-         farm_history (zone3_memory.db.farm_memory.get_farm_history), call
-         gemini_client.call_gemini(payload), show the result, 🟡 banner.
-  3. "Why cloud?" expander: show gate["final_confidence"], gate["evidence_agreement"],
-     and gate["_debug_gate"] contents in plain language.
-  4. After every run (local or cloud): call farm_memory.save_observation /
-     save_diagnosis / save_advisory so the "My Farm — History Timeline"
-     (Zone 3) can show it, and so a repeat case triggers the "recorded N
-     days ago" line in the final demo.
-  5. Call hindi_tts.synthesize() on the final advisory text and play it back
-     with st.audio().
 """
 
 from __future__ import annotations
 
 import sys
+import json
 from pathlib import Path
+import os
+import tempfile
+from dotenv import load_dotenv
+
+# Load environment variables from .env file before anything else
+load_dotenv()
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import streamlit as st
 
 from src.zone1_edge.pipeline import run_zone1_pipeline, build_cloud_payload_stub
+from src.zone1_edge.speech import hindi_asr, hindi_tts
+from src.zone2_cloud.gemini import gemini_client
+from src.zone2_cloud.rag import retriever
+from src.zone3_memory.db import farm_memory
 
 st.set_page_config(page_title="Agri-Vision Platform", layout="wide")
 st.title("🌾 Unified AI Agri-Vision Platform")
 st.caption("Crop Disease ID + Livestock Monitoring + Historical Records — Offline-First")
 
-tab_crop, tab_livestock, tab_voice = st.tabs(["🌱 Crop", "🐄 Livestock", "🎙️ Voice"])
+# Ensure DB is initialized
+farm_memory.init_db()
+FARM_ID = "FARM-001"
+
+# Store voice transcripts globally so they can be fed to other tabs
+if "farmer_text_from_voice" not in st.session_state:
+    st.session_state.farmer_text_from_voice = ""
+
+tab_crop, tab_livestock, tab_voice, tab_history = st.tabs(["🌱 Crop", "🐄 Livestock", "🎙️ Voice", "📖 Farm History"])
+
+def process_pipeline_result(result, farmer_text):
+    gate = result["gate"]
+    
+    # Zone 3: Save Observation
+    obs_id = farm_memory.save_observation(
+        farm_id=FARM_ID,
+        domain=result.get("image_output", {}).get("domain", "unknown"),
+        image_prediction=gate.get("prediction", "unknown"),
+        visual_confidence=gate.get("visual_confidence", 0.0),
+        farmer_text=farmer_text or "",
+        sensor_json=json.dumps(result.get("sensor_output") or {}),
+        route=gate.get("route", "local")
+    )
+    
+    if gate["route"] == "local":
+        # Clean up prediction name for display (e.g. Potato___Early_Blight -> Potato Early Blight)
+        clean_pred = gate.get("prediction", "Unknown").replace("___", " ").replace("_", " ")
+        st.success(f"🟢 LOCAL DECISION — {clean_pred} (confidence {gate.get('final_confidence', 0.0):.0%})")
+        
+        # Zone 1: Offline Advisory
+        adv = result.get("local_advisory", {}) or {}
+        
+        # Zone 3: Save Diagnosis and Advisory
+        diag_id = farm_memory.save_diagnosis(
+            obs_id, 
+            condition=gate.get("prediction", "Unknown"), 
+            certainty="possible", 
+            final_confidence=gate.get("final_confidence", 0.0)
+        )
+        farm_memory.save_advisory(
+            diag_id, 
+            source="local_offline", 
+            summary=adv.get("summary", ""), 
+            actions=adv.get("actions", []), 
+            warning=adv.get("warning", "")
+        )
+        
+        st.write(f"**Summary:** {adv.get('summary', '')}")
+        for a in adv.get("actions", []):
+            st.write(f"- {a}")
+        if adv.get("warning") and adv.get("warning") != "None — recheck if new symptoms appear.":
+            st.warning(adv.get("warning"))
+            
+        return adv.get("summary", "")
+    else:
+        st.warning(f"🟡 CLOUD ASSIST needed — confidence {gate.get('final_confidence', 0.0):.0%}, "
+                   f"evidence agreement: {gate.get('evidence_agreement', 'unknown')}")
+        
+        with st.spinner("Retrieving RAG knowledge and farm history... escalating to Gemini"):
+            # RAG Retrieval
+            query = f"{gate.get('prediction', '')} {farmer_text or ''}"
+            rag_knowledge = retriever.retrieve(query)
+            farm_hist = farm_memory.get_farm_history(FARM_ID)
+            
+            # Build payload
+            payload = build_cloud_payload_stub(result)
+            payload["farmer_text"] = farmer_text or ""
+            payload["farm_history"] = farm_hist
+            payload["retrieved_knowledge"] = rag_knowledge
+            
+            # Gemini Call
+            cloud_result = gemini_client.call_gemini(payload)
+            
+            diag = cloud_result.get("diagnosis", {})
+            adv = cloud_result.get("advisory", {})
+            
+            # Zone 3: Save Cloud Diagnosis and Advisory
+            diag_id = farm_memory.save_diagnosis(
+                obs_id, 
+                condition=diag.get("condition", "Unknown"), 
+                certainty=diag.get("certainty", "possible"), 
+                final_confidence=gate.get("final_confidence", 0.0)
+            )
+            farm_memory.save_advisory(
+                diag_id, 
+                source="cloud_gemini", 
+                summary=adv.get("summary", ""), 
+                actions=adv.get("actions", []), 
+                warning=adv.get("warning", "")
+            )
+            
+            st.write(f"**Diagnosis:** {diag.get('condition', 'Unknown')} ({diag.get('certainty', 'possible')})")
+            st.write(f"**Summary:** {adv.get('summary', '')}")
+            for a in adv.get("actions", []):
+                st.write(f"- {a}")
+            if adv.get("warning"):
+                st.warning(adv.get("warning"))
+            if cloud_result.get("expert_consultation_recommended"):
+                st.error("🚨 Expert consultation strongly recommended!")
+            if cloud_result.get("cited_knowledge"):
+                with st.expander("Cited Knowledge snippets from RAG"):
+                    for k in cloud_result.get("cited_knowledge", []):
+                        st.write(f"- {k}")
+                        
+        return adv.get("summary", "")
+
 
 with tab_crop:
     st.subheader("Crop Disease Check")
     uploaded = st.file_uploader("Upload a crop photo", type=["jpg", "jpeg", "png"], key="crop_upload")
-    farmer_text_crop = st.text_input("Farmer description (optional — normally comes from Voice tab)", key="crop_text")
+    farmer_text_crop = st.text_input("Farmer description", value=st.session_state.farmer_text_from_voice, key="crop_text")
     if uploaded and st.button("Analyze Crop", key="crop_btn"):
-        tmp_path = f"/tmp/{uploaded.name}"
+        tmp_path = os.path.join(tempfile.gettempdir(), f"crop_{uploaded.name}")
         with open(tmp_path, "wb") as f:
             f.write(uploaded.getbuffer())
-        result = run_zone1_pipeline("crop", tmp_path, farmer_text=farmer_text_crop or None, mode="auto")
-        gate = result["gate"]
-        if gate["route"] == "local":
-            st.success(f"🟢 LOCAL DECISION — {gate['prediction']} (confidence {gate['final_confidence']:.0%})")
-            adv = result["local_advisory"]
-            st.write(adv["summary"])
-            for a in adv["actions"]:
-                st.write(f"- {a}")
-            if adv["warning"] != "None — recheck if new symptoms appear.":
-                st.warning(adv["warning"])
-        else:
-            st.warning(f"🟡 CLOUD ASSIST needed — confidence {gate['final_confidence']:.0%}, "
-                       f"evidence agreement: {gate['evidence_agreement']}")
-            st.info("TODO(Person B): call Gemini here via build_cloud_payload_stub() "
-                    "+ rag.retriever.retrieve() + zone3_memory.get_farm_history(), "
-                    "then gemini_client.call_gemini(payload).")
-        with st.expander("Why this decision? (debug)"):
-            st.json(gate)
+            
+        with st.spinner("Analyzing locally..."):
+            result = run_zone1_pipeline("crop", tmp_path, farmer_text=farmer_text_crop or None, mode="auto")
+            
+        summary_for_tts = process_pipeline_result(result, farmer_text_crop)
+        
+        if summary_for_tts:
+            st.markdown("🔊 **Play Advisory in Hindi:**")
+            with st.spinner("Synthesizing audio..."):
+                tts_out = os.path.join(tempfile.gettempdir(), "tts_crop.wav")
+                tts_res = hindi_tts.synthesize(summary_for_tts, tts_out)
+                st.audio(tts_res["audio_path"])
+
 
 with tab_livestock:
     st.subheader("Livestock Health Check")
-    st.info("TODO(Person B): same pattern as Crop tab, plus sensor_reading inputs "
-            "(temperature/activity/feed_intake sliders) passed to run_zone1_pipeline().")
+    uploaded_ls = st.file_uploader("Upload a livestock photo", type=["jpg", "jpeg", "png"], key="ls_upload")
+    farmer_text_ls = st.text_input("Farmer description", value=st.session_state.farmer_text_from_voice, key="ls_text")
+    
+    st.write("Sensor Panel (Simulated)")
+    col1, col2, col3 = st.columns(3)
+    with col1: temp = st.slider("Temperature (°C)", 35.0, 42.0, 38.5)
+    with col2: activity = st.selectbox("Activity Level", ["normal", "low", "high"], key="ls_act")
+    with col3: feed = st.selectbox("Feed Intake", ["normal", "low", "none"], key="ls_feed")
+    
+    if uploaded_ls and st.button("Analyze Livestock", key="ls_btn"):
+        tmp_path = os.path.join(tempfile.gettempdir(), f"ls_{uploaded_ls.name}")
+        with open(tmp_path, "wb") as f:
+            f.write(uploaded_ls.getbuffer())
+            
+        sensor_data = {"temperature": temp, "activity": activity, "feed_intake": feed}
+        
+        with st.spinner("Analyzing locally..."):
+            result = run_zone1_pipeline("livestock", tmp_path, farmer_text=farmer_text_ls or None, sensor_reading=sensor_data, mode="auto")
+            
+        summary_for_tts = process_pipeline_result(result, farmer_text_ls)
+            
+        if summary_for_tts:
+            st.markdown("🔊 **Play Advisory in Hindi:**")
+            with st.spinner("Synthesizing audio..."):
+                tts_out = os.path.join(tempfile.gettempdir(), "tts_ls.wav")
+                tts_res = hindi_tts.synthesize(summary_for_tts, tts_out)
+                st.audio(tts_res["audio_path"])
+
 
 with tab_voice:
     st.subheader("Voice Input (Hindi)")
-    st.info("TODO(Person B): audio upload/record -> src.zone2_cloud.asr.hindi_asr.transcribe() "
-            "-> feed transcript into Crop/Livestock tabs' farmer_text field via st.session_state.")
+    st.write("Record or upload an audio file containing farmer symptoms.")
+    
+    uploaded_voice = st.file_uploader("Upload audio (.wav)", type=["wav"], key="voice_upload")
+    
+    if uploaded_voice and st.button("Transcribe Voice", key="voice_btn"):
+        tmp_path = os.path.join(tempfile.gettempdir(), f"voice_{uploaded_voice.name}")
+        with open(tmp_path, "wb") as f:
+            f.write(uploaded_voice.getbuffer())
+            
+        with st.spinner("Transcribing..."):
+            asr_res = hindi_asr.transcribe(tmp_path)
+            transcript = asr_res.get("text", "")
+            
+        if transcript:
+            st.success("Transcription complete!")
+            st.write(f"**Transcript:** {transcript}")
+            st.session_state.farmer_text_from_voice = transcript
+            st.info("Transcript saved to session. You can now switch to the Crop or Livestock tab to continue analysis.")
 
-st.divider()
-st.caption("Zone 1 (Person A) is fully wired above. Zone 2/3 cloud+voice+memory features "
-           "are stubbed — see src/zone2_cloud/PERSON_B_README.md for the build plan.")
+with tab_history:
+    st.subheader("Farm History Records")
+    st.write("Records saved locally in database.")
+    
+    records = farm_memory.get_all_history_records(FARM_ID)
+    if not records:
+        st.info("No records found for this farm yet. Run an analysis on the Crop or Livestock tab to generate history.")
+    else:
+        st.dataframe(records, use_container_width=True)

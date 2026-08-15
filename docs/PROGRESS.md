@@ -53,24 +53,33 @@ This is BY DESIGN, not an error. ✅
 
 ---
 
-## 🚧 SCAFFOLDED, NOT YET IMPLEMENTED — Person B (Zone 2 + Zone 3 + UI)
+## ✅ COMPLETED — Person B (Zone 2 + Zone 3 + UI)
 
-All files below exist as STUBS with full docstrings, exact expected function
-signatures, and agent-ready prompts. None have real logic yet.
+All files below are fully implemented, wired together, and integrated into the Streamlit app. Mock fallbacks are provided for cloud/models to ensure offline capabilities.
 
-| Component | File | What's needed |
+| Component | File | Status |
 |---|---|---|
-| Hindi ASR | `zone2_cloud/asr/hindi_asr.py` | Load AI4Bharat IndicConformer, implement `transcribe()` |
-| Hindi TTS | `zone2_cloud/tts/hindi_tts.py` | FastPitch+HiFi-GAN primary, IndicF5 fallback, implement `synthesize()` |
-| Gemini client | `zone2_cloud/gemini/gemini_client.py` | Prompt template written; implement actual API call in `call_gemini()` |
+| Confidence Gate | `zone1_edge/confidence_gate.py` | **Done** — Returns a route (`local` or `cloud`) based on evidence agreement. |
+| Farm Memory (Zone 3) | `zone3_memory/db/farm_memory.py` | **Done** — SQLite logic for CRUD. |
+| Hindi ASR | `zone1_edge/speech/hindi_asr.py` | **Done** — Uses Hugging Face IndicConformer locally. |
+| Hindi TTS | `zone1_edge/speech/hindi_tts.py` | **Done** — Uses FastPitch+HiFi-GAN or HF TTS (e.g., vits_rasa_13) or safe mock. |
+| Gemini client | `zone2_cloud/gemini/gemini_client.py` | **Done** — Uses google-genai SDK with secure `.env` mock mode. |
 | RAG knowledge base | `zone2_cloud/rag/knowledge_base/*.md` | **Done** — 8 entries written |
 | RAG builder | `zone2_cloud/rag/build_knowledge_base.py` | **Done** — FAISS + sentence-transformers implemented |
 | RAG retriever | `zone2_cloud/rag/retriever.py` | **Done** — FAISS retrieval implemented |
 | Farm memory schema | `zone3_memory/schema/schema.sql` | **Done** — tables defined |
-| Farm memory functions | `zone3_memory/db/farm_memory.py` | **Done** — implemented SQLite CRUD and tested |
-| Streamlit UI | `app/streamlit_app.py` | Crop tab wired to Person A; Livestock/Voice tabs + cloud branch + TTS playback + farm-memory writes still TODO |
-| Zone 2 tests (real) | `tests/zone2/test_zone2_stubs.py` | Add real functional tests AFTER each stub is implemented (currently validates scaffold shape) |
+| Streamlit UI | `app/streamlit_app.py` | **Done** — All tabs, cloud branch, TTS playback, and memory integrated. |
+| Zone 2 tests (real) | `tests/zone2/test_zone2_stubs.py` | **Done** — Real tests added for mocks and logic flow. |
 | Zone 3 tests (real) | `tests/zone3/test_zone3_stubs.py` | **Done** — real functional tests added and passing |
+| UI/App Integration tests | `tests/app/test_app_integration.py` | **Done** — Mock tests for UI logic passing |
+| Overall Diagnostic | `setup/diagnose_overall_pipeline.py` | **Done** — End-to-end multi-zone offline test passing |
+
+## ✅ COMPLETED — Recent Iterative Improvements (2026-08-15)
+
+- **Local Advisory Normalization:** Fixed issue where edge vision models output raw dataset class names (e.g. `Potato___Early_Blight`) which did not map to `local_advisories.json`. Added programmatic string normalization.
+- **Farm History UI:** Implemented SQLite query function to fetch the complete ledger of inferences and added a new "📖 Farm History" tab to the Streamlit UI to display it dynamically.
+- **TTS Backend Fix:** Programmatically patched the missing `pad_token_id` in AI4Bharat's `IndicVitsConfig` and injected `trust_remote_code=True` to allow seamless local Hugging Face `vits_rasa_13` model loading.
+- **Streamlit State Loss Fix:** Removed nested TTS buttons that caused script reruns and text disappearance. Automated TTS playback during analysis instead.
 
 ---
 
@@ -80,18 +89,10 @@ signatures, and agent-ready prompts. None have real logic yet.
 - Live testing of `download_crop_model.py` / `download_livestock_model.py`
   against real Hugging Face (build sandbox has no internet access to
   huggingface.co — must be run and verified on your Mac)
-- End-to-end test with real (non-mock) models
+- Hindi to English Translation Pipeline for RAG retrieval
 
 ---
 
 ## How to resume work (Person B)
-1. Read `src/zone2_cloud/PERSON_B_README.md` — it has the exact build order
-   matching the original plan's hour-by-hour schedule.
-2. Each stub file's docstring has a ready-to-paste prompt for an AI coding
-   agent (Claude Code / Cursor).
-3. After implementing each Zone 2/3 module, update the real logic in
-   `tests/zone2/test_zone2_stubs.py` or `tests/zone3/test_zone3_stubs.py`
-   — replace `pytest.raises(NotImplementedError)` assertions with real functional tests.
-4. Re-run `python setup/diagnose_pipeline.py --mode auto` periodically to
-   confirm Zone 1 still isn't broken by any integration changes.
-5. Run `pytest tests/ -v` to see the full picture — currently **78/78 passing**.
+1. Proceed with implementing the Hindi-to-English translation component so the RAG English vector DB can properly consume Hindi Voice queries.
+2. Record real audio/image demo data for final prototype showcasing.

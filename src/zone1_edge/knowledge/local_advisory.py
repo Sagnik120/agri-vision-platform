@@ -36,7 +36,12 @@ def _load_db() -> dict:
 
 def get_advisory(condition: str) -> dict:
     db = _load_db()
-    entry = db.get(condition, _FALLBACK_ADVISORY)
+    
+    # Normalize condition string to match DB keys
+    # e.g. "Potato___Early_Blight" -> "potato_early_blight"
+    normalized_condition = condition.lower().replace("___", "_").replace("__", "_")
+    
+    entry = db.get(normalized_condition, _FALLBACK_ADVISORY)
     return {
         "condition": condition,
         "summary": entry["summary"],

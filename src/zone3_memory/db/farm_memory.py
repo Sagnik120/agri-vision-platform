@@ -148,6 +148,22 @@ def get_farm_history(farm_id: str, limit: int = 5) -> str:
         return "\\n".join(history)
 
 
+def get_all_history_records(farm_id: str) -> list[dict]:
+    import sqlite3
+    with sqlite3.connect(DEFAULT_DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT o.created_at, o.domain, d.condition, d.certainty, a.summary, a.source
+            FROM observations o
+            JOIN diagnoses d ON o.observation_id = d.observation_id
+            LEFT JOIN advisories a ON d.diagnosis_id = a.diagnosis_id
+            WHERE o.farm_id = ?
+            ORDER BY o.created_at DESC
+        ''', (farm_id,))
+        return [dict(row) for row in cursor.fetchall()]
+
+
 if __name__ == "__main__":
     init_db()
     print(f"DB initialized at {DEFAULT_DB_PATH}")
