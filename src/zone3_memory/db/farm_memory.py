@@ -59,27 +59,93 @@ DEFAULT_DB_PATH = Path(__file__).resolve().parents[3] / "results" / "zone3" / "f
 
 
 def init_db(db_path: str = None) -> None:
-    raise NotImplementedError("TODO: create tables from schema.sql. See docstring.")
+    db = db_path or DEFAULT_DB_PATH
+    Path(db).parent.mkdir(parents=True, exist_ok=True)
+    import sqlite3
+    with sqlite3.connect(db) as conn:
+        with open(SCHEMA_PATH, 'r', encoding='utf-8') as f:
+            conn.executescript(f.read())
+        conn.execute("INSERT OR IGNORE INTO farm (farm_id, farmer_name, location) VALUES (?, ?, ?)",
+                     ("FARM-001", "Demo Farmer", "Demo Village"))
 
 
 def save_observation(farm_id: str, domain: str, image_prediction: str,
                       visual_confidence: float, farmer_text: str,
                       sensor_json: str, route: str, animal_id: str = None) -> int:
-    raise NotImplementedError("TODO: insert into observations table.")
+    import sqlite3
+    with sqlite3.connect(DEFAULT_DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO observations 
+            (farm_id, animal_id, domain, image_prediction, visual_confidence, farmer_text, sensor_json, route)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (farm_id, animal_id, domain, image_prediction, visual_confidence, farmer_text, sensor_json, route))
+        return cursor.lastrowid
 
 
 def save_diagnosis(observation_id: int, condition: str, certainty: str,
                     final_confidence: float) -> int:
-    raise NotImplementedError("TODO: insert into diagnoses table.")
+    import sqlite3
+    with sqlite3.connect(DEFAULT_DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO diagnoses 
+            (observation_id, condition, certainty, final_confidence)
+            VALUES (?, ?, ?, ?)
+        ''', (observation_id, condition, certainty, final_confidence))
+        return cursor.lastrowid
 
 
 def save_advisory(diagnosis_id: int, source: str, summary: str,
                    actions: list, warning: str) -> int:
-    raise NotImplementedError("TODO: insert into advisories table.")
+    import sqlite3
+    import json
+    actions_json = json.dumps(actions) if actions else None
+    with sqlite3.connect(DEFAULT_DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO advisories 
+            (diagnosis_id, source, summary, actions_json, warning)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (diagnosis_id, source, summary, actions_json, warning))
+        return cursor.lastrowid
 
 
 def get_farm_history(farm_id: str, limit: int = 5) -> str:
-    raise NotImplementedError("TODO: query + format prior diagnoses. See docstring.")
+    import sqlite3
+    from datetime import datetime
+    with sqlite3.connect(DEFAULT_DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT o.created_at, d.condition, d.certainty, a.summary
+            FROM observations o
+            JOIN diagnoses d ON o.observation_id = d.observation_id
+            LEFT JOIN advisories a ON d.diagnosis_id = a.diagnosis_id
+            WHERE o.farm_id = ?
+            ORDER BY o.created_at DESC
+            LIMIT ?
+        ''', (farm_id, limit))
+        rows = cursor.fetchall()
+        
+        if not rows:
+            return "No prior history for this farm."
+            
+        history = []
+        for row in rows:
+            created_at, condition, certainty, summary = row
+            try:
+                dt = datetime.strptime(created_at, '%Y-%m-%d %H:%M:%S')
+                days_ago = (datetime.utcnow() - dt).days
+                time_str = f"{days_ago} days ago" if days_ago > 0 else "Today"
+            except ValueError:
+                time_str = created_at
+            
+            entry = f"{time_str}: {condition} ({certainty})"
+            if summary:
+                entry += f", advised: {summary}"
+            history.append(entry)
+            
+        return "\\n".join(history)
 
 
 if __name__ == "__main__":
