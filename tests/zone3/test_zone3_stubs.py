@@ -89,38 +89,94 @@ def test_get_farm_history_signature():
 
 
 # ===========================================================================
-# 3. Stub behaviour — must raise NotImplementedError
+# 3. Functional tests
 # ===========================================================================
 
-def test_init_db_raises_not_implemented():
-    from src.zone3_memory.db.farm_memory import init_db
-    with pytest.raises(NotImplementedError):
-        init_db()
+@pytest.fixture
+def test_db(monkeypatch):
+    import tempfile
+    import sqlite3
+    from src.zone3_memory.db import farm_memory
+    
+    with tempfile.NamedTemporaryFile(suffix=".db") as f:
+        db_path = f.name
+        farm_memory.init_db(db_path)
+        monkeypatch.setattr(farm_memory, "DEFAULT_DB_PATH", db_path)
+        yield db_path
 
 
-def test_save_observation_raises_not_implemented():
-    from src.zone3_memory.db.farm_memory import save_observation
-    with pytest.raises(NotImplementedError):
-        save_observation("FARM-001", "crop", "tomato_early_blight", 0.8,
-                         "brown spots", "{}", "local")
+def test_init_db(test_db):
+    import sqlite3
+    with sqlite3.connect(test_db) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables = {row[0] for row in cursor.fetchall()}
+        assert {"farm", "observations", "diagnoses", "advisories", "livestock"}.issubset(tables)
+        
+        # check that demo farm exists
+        cursor.execute("SELECT farm_id FROM farm WHERE farm_id='FARM-001'")
+        assert cursor.fetchone() is not None
 
 
-def test_save_diagnosis_raises_not_implemented():
-    from src.zone3_memory.db.farm_memory import save_diagnosis
-    with pytest.raises(NotImplementedError):
-        save_diagnosis(1, "tomato_early_blight", "possible", 0.8)
+def test_save_observation(test_db):
+    from src.zone3_memory.db import farm_memory
+    
+    obs_id = farm_memory.save_observation(
+        farm_id="FARM-001", domain="crop", image_prediction="tomato_early_blight",
+        visual_confidence=0.8, farmer_text="brown spots", sensor_json="{}", route="local"
+    )
+    assert isinstance(obs_id, int)
+    
+    import sqlite3
+    with sqlite3.connect(test_db) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT domain, image_prediction FROM observations WHERE observation_id=?", (obs_id,))
+        row = cursor.fetchone()
+        assert row == ("crop", "tomato_early_blight")
 
 
-def test_save_advisory_raises_not_implemented():
-    from src.zone3_memory.db.farm_memory import save_advisory
-    with pytest.raises(NotImplementedError):
-        save_advisory(1, "local_offline", "summary", ["action"], "warning")
+def test_save_diagnosis(test_db):
+    from src.zone3_memory.db import farm_memory
+    
+    obs_id = farm_memory.save_observation("FARM-001", "crop", "test", 0.8, "", "{}", "local")
+    diag_id = farm_memory.save_diagnosis(obs_id, "tomato_early_blight", "possible", 0.8)
+    
+    assert isinstance(diag_id, int)
+    import sqlite3
+    with sqlite3.connect(test_db) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT condition FROM diagnoses WHERE diagnosis_id=?", (diag_id,))
+        assert cursor.fetchone()[0] == "tomato_early_blight"
 
 
-def test_get_farm_history_raises_not_implemented():
-    from src.zone3_memory.db.farm_memory import get_farm_history
-    with pytest.raises(NotImplementedError):
-        get_farm_history("FARM-001")
+def test_save_advisory(test_db):
+    from src.zone3_memory.db import farm_memory
+    
+    obs_id = farm_memory.save_observation("FARM-001", "crop", "test", 0.8, "", "{}", "local")
+    diag_id = farm_memory.save_diagnosis(obs_id, "tomato_early_blight", "possible", 0.8)
+    adv_id = farm_memory.save_advisory(diag_id, "local_offline", "summary", ["action1"], "warning")
+    
+    assert isinstance(adv_id, int)
+    import sqlite3
+    with sqlite3.connect(test_db) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT summary, actions_json FROM advisories WHERE advisory_id=?", (adv_id,))
+        row = cursor.fetchone()
+        assert row[0] == "summary"
+        assert "action1" in row[1]
+
+
+def test_get_farm_history(test_db):
+    from src.zone3_memory.db import farm_memory
+    
+    obs_id = farm_memory.save_observation("FARM-001", "crop", "test", 0.8, "", "{}", "local")
+    diag_id = farm_memory.save_diagnosis(obs_id, "tomato_early_blight", "possible", 0.8)
+    farm_memory.save_advisory(diag_id, "local_offline", "use copper fungicide", ["action1"], "none")
+    
+    history = farm_memory.get_farm_history("FARM-001")
+    assert "tomato_early_blight" in history
+    assert "use copper fungicide" in history
+    assert "possible" in history
 
 
 # ===========================================================================
