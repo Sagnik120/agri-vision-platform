@@ -1,0 +1,126 @@
+{
+  "tomato_early_blight": {
+    "summary": "Fungal disease causing concentric brown spots on lower leaves, spreading upward.",
+    "actions": [
+      "Remove and destroy infected lower leaves immediately.",
+      "Apply a copper-based or chlorothalonil fungicide as per label instructions.",
+      "Avoid overhead watering; water at the base in the morning.",
+      "Rotate crops — avoid planting tomato/potato in the same spot next season."
+    ],
+    "warning": "If more than 50% of the plant is affected, consult a local agriculture officer before further chemical use."
+  },
+  "tomato_late_blight": {
+    "summary": "Aggressive fungal-like disease (Phytophthora) causing dark, water-soaked lesions that spread rapidly in humid weather.",
+    "actions": [
+      "Remove and burn/bury infected plants — do not compost.",
+      "Apply a preventive fungicide (e.g. mancozeb) to healthy neighboring plants.",
+      "Improve airflow by spacing plants and pruning dense foliage.",
+      "Avoid working in the field when leaves are wet to prevent spread."
+    ],
+    "warning": "Late blight can destroy a field within days. Escalate to an expert if spread is rapid across multiple plants."
+  },
+  "potato_early_blight": {
+    "summary": "Fungal disease showing target-like brown spots on older potato leaves.",
+    "actions": [
+      "Remove severely infected foliage.",
+      "Apply recommended fungicide at first sign of spots.",
+      "Ensure balanced fertilization — avoid excess nitrogen.",
+      "Practice 2-3 year crop rotation with non-solanaceous crops."
+    ],
+    "warning": "Monitor tubers at harvest for secondary infection."
+  },
+  "potato_late_blight": {
+    "summary": "Fast-spreading disease causing dark lesions on leaves and stems, especially in cool, wet weather.",
+    "actions": [
+      "Destroy infected plant material away from the field.",
+      "Apply systemic fungicide immediately upon detection.",
+      "Hill soil around stems to protect tubers from spores.",
+      "Harvest early if the disease is spreading fast to save remaining tubers."
+    ],
+    "warning": "This is the disease responsible for historic famine-level crop loss — treat as high priority."
+  },
+  "maize_common_rust": {
+    "summary": "Fungal disease producing reddish-brown pustules on maize leaves.",
+    "actions": [
+      "Apply fungicide (e.g. propiconazole) if infection is detected early in the season.",
+      "Plant rust-resistant maize varieties in future seasons.",
+      "Avoid dense planting to improve air circulation.",
+      "Monitor weekly during humid growing periods."
+    ],
+    "warning": "Usually manageable; escalate only if yield-bearing leaves are heavily damaged before tasseling."
+  },
+  "maize_healthy": {
+    "summary": "No disease symptoms detected on this maize sample.",
+    "actions": [
+      "Continue regular monitoring, especially after rain.",
+      "Maintain balanced irrigation and fertilization schedule."
+    ],
+    "warning": "None — recheck if new symptoms appear."
+  },
+  "tomato_healthy": {
+    "summary": "No disease symptoms detected on this tomato sample.",
+    "actions": [
+      "Continue regular monitoring for early signs of blight.",
+      "Maintain consistent watering and mulching."
+    ],
+    "warning": "None — recheck if new symptoms appear."
+  },
+  "pepper_bacterial_spot": {
+    "summary": "Bacterial disease causing small, dark, raised spots on pepper leaves and fruit.",
+    "actions": [
+      "Remove infected plant debris and avoid working with wet plants.",
+      "Apply copper-based bactericide as a preventive measure.",
+      "Use certified disease-free seed in future planting.",
+      "Avoid overhead irrigation."
+    ],
+    "warning": "Bacterial spot does not respond to fungicides — use copper-based bactericides only."
+  },
+  "lumpy_skin_disease": {
+    "summary": "Viral disease in cattle causing firm skin nodules, fever, and reduced milk yield, spread by biting insects.",
+    "actions": [
+      "Isolate the affected animal immediately from the herd.",
+      "Control biting insects (flies, mosquitoes, ticks) around the shed.",
+      "Contact a veterinarian for supportive treatment and vaccination guidance.",
+      "Disinfect shared equipment and water troughs."
+    ],
+    "warning": "Notifiable disease in many regions — report to local veterinary authority."
+  },
+  "foot_and_mouth_disease": {
+    "summary": "Highly contagious viral disease causing fever, blisters on mouth/feet, and limping in cattle.",
+    "actions": [
+      "Isolate the animal and restrict herd movement immediately.",
+      "Contact a veterinarian and local animal husbandry department urgently.",
+      "Disinfect footwear, vehicles, and equipment entering/leaving the farm.",
+      "Do not sell or move animals until cleared by an official."
+    ],
+    "warning": "Reportable disease — contact veterinary authorities immediately, do not self-treat."
+  },
+  "mastitis_suspected": {
+    "summary": "Suspected udder inflammation, often from bacterial infection, reducing milk quality/yield.",
+    "actions": [
+      "Milk the affected quarter separately and discard the milk.",
+      "Keep the animal in a clean, dry area.",
+      "Contact a veterinarian for antibiotic/anti-inflammatory guidance.",
+      "Check milking equipment hygiene to prevent spread to other animals."
+    ],
+    "warning": "Untreated mastitis can become chronic — seek veterinary care promptly."
+  },
+  "abnormal_temperature": {
+    "summary": "Sensor detected temperature outside the normal range for cattle, combined with behavioural signs.",
+    "actions": [
+      "Recheck temperature with a manual thermometer to confirm sensor reading.",
+      "Ensure adequate shade, water and ventilation.",
+      "Monitor feed intake and activity over the next 12 hours.",
+      "Contact a veterinarian if fever persists beyond 24 hours."
+    ],
+    "warning": "Persistent high fever combined with low feed intake needs urgent veterinary attention."
+  },
+  "healthy": {
+    "summary": "No disease symptoms detected on this livestock sample.",
+    "actions": [
+      "Continue routine health monitoring.",
+      "Maintain vaccination and deworming schedule."
+    ],
+    "warning": "None — recheck if new symptoms appear."
+  }
+}
