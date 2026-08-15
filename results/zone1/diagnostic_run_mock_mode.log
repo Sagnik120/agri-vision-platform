@@ -1,0 +1,26 @@
+
+======================================================================
+AGRI-VISION ZONE 1 DIAGNOSTIC — mode=mock
+======================================================================
+
+  ✅ 1. Config imports cleanly
+     backend=mock, prediction=potato_early_blight, confidence=0.89
+  ✅ 2. Crop expert loads and returns contract shape
+     backend=mock, prediction=foot_and_mouth_disease, confidence=0.85
+  ✅ 3. Livestock expert loads and returns contract shape
+  ✅ 4. Text evidence extractor works on Hindi input
+  ✅ 5. Sensor expert threshold rules work
+Detected task → crop → Expert selected: Crop Disease & Pest Expert
+Detected task → livestock → Expert selected: Livestock Health & Behaviour Expert
+  ✅ 6. Task router dispatches correctly for both domains
+  ✅ 7. Fusion combines evidence and stays within [0.01, 0.99]
+  ✅ 8. Confidence gate produces a valid route
+  ✅ 9. Local advisory has >=10 knowledge entries and returns valid lookups
+Detected task → crop → Expert selected: Crop Disease & Pest Expert
+Detected task → livestock → Expert selected: Livestock Health & Behaviour Expert
+  ✅ 10. FULL end-to-end pipeline runs for crop AND livestock without exceptions
+
+======================================================================
+RESULT: 10 passed, 0 failed
+======================================================================
+ALL DIAGNOSTIC CHECKS PASSED. Nothing is broken.

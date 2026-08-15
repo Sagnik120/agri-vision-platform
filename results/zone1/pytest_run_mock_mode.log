@@ -1,0 +1,46 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.1.1, pluggy-1.6.0 -- /tmp/venvtest/bin/python
+cachedir: .pytest_cache
+rootdir: /home/claude/agri-vision-platform
+collecting ... collected 38 items
+
+tests/zone1/test_confidence_gate.py::test_high_confidence_high_agreement_routes_local PASSED [  2%]
+tests/zone1/test_confidence_gate.py::test_low_confidence_routes_cloud PASSED [  5%]
+tests/zone1/test_confidence_gate.py::test_low_evidence_agreement_routes_cloud_even_if_confident PASSED [  7%]
+tests/zone1/test_confidence_gate.py::test_bad_input_quality_forces_cloud PASSED [ 10%]
+tests/zone1/test_confidence_gate.py::test_preserves_contract_5_keys PASSED [ 13%]
+tests/zone1/test_crop_expert.py::test_crop_expert_returns_contract_shape PASSED [ 15%]
+tests/zone1/test_crop_expert.py::test_crop_expert_is_deterministic PASSED [ 18%]
+tests/zone1/test_crop_expert.py::test_crop_expert_top_k_sorted_descending PASSED [ 21%]
+tests/zone1/test_fusion.py::test_fusion_contract_shape PASSED            [ 23%]
+tests/zone1/test_fusion.py::test_text_support_increases_confidence PASSED [ 26%]
+tests/zone1/test_fusion.py::test_text_conflict_decreases_confidence PASSED [ 28%]
+tests/zone1/test_fusion.py::test_confidence_capped_at_099 PASSED         [ 31%]
+tests/zone1/test_fusion.py::test_confidence_floor_at_001 PASSED          [ 34%]
+tests/zone1/test_fusion.py::test_sensor_support_and_conflict PASSED      [ 36%]
+tests/zone1/test_livestock_expert.py::test_livestock_expert_returns_contract_shape PASSED [ 39%]
+tests/zone1/test_livestock_expert.py::test_livestock_expert_deterministic PASSED [ 42%]
+tests/zone1/test_local_advisory.py::test_known_condition_lookup PASSED   [ 44%]
+tests/zone1/test_local_advisory.py::test_all_10_plus_entries_present PASSED [ 47%]
+tests/zone1/test_local_advisory.py::test_unknown_condition_falls_back_gracefully PASSED [ 50%]
+tests/zone1/test_pipeline_e2e.py::test_pipeline_output_shape_crop PASSED [ 52%]
+tests/zone1/test_pipeline_e2e.py::test_pipeline_output_shape_livestock_with_sensor PASSED [ 55%]
+tests/zone1/test_pipeline_e2e.py::test_pipeline_image_only_no_crash PASSED [ 57%]
+tests/zone1/test_pipeline_e2e.py::test_cloud_payload_stub_matches_contract_6 PASSED [ 60%]
+tests/zone1/test_pipeline_e2e.py::test_final_demo_4_sentences_end_to_end PASSED [ 63%]
+tests/zone1/test_sensor_expert.py::test_normal_reading_no_anomaly PASSED [ 65%]
+tests/zone1/test_sensor_expert.py::test_high_temp_triggers_anomaly PASSED [ 68%]
+tests/zone1/test_sensor_expert.py::test_low_activity_triggers_anomaly PASSED [ 71%]
+tests/zone1/test_sensor_expert.py::test_low_feed_triggers_anomaly PASSED [ 73%]
+tests/zone1/test_sensor_expert.py::test_simulated_reading_runs_without_error PASSED [ 76%]
+tests/zone1/test_task_router.py::test_route_crop PASSED                  [ 78%]
+tests/zone1/test_task_router.py::test_route_livestock PASSED             [ 81%]
+tests/zone1/test_task_router.py::test_invalid_domain_raises PASSED       [ 84%]
+tests/zone1/test_text_evidence.py::test_hindi_symptom_extraction PASSED  [ 86%]
+tests/zone1/test_text_evidence.py::test_english_symptom_extraction PASSED [ 89%]
+tests/zone1/test_text_evidence.py::test_crop_detection PASSED            [ 92%]
+tests/zone1/test_text_evidence.py::test_no_symptoms_found PASSED         [ 94%]
+tests/zone1/test_text_evidence.py::test_severity_high_detection PASSED   [ 97%]
+tests/zone1/test_text_evidence.py::test_accepts_raw_string_too PASSED    [100%]
+
+============================== 38 passed in 0.06s ==============================
