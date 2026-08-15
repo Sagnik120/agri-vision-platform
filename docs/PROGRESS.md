@@ -63,9 +63,9 @@ signatures, and agent-ready prompts. None have real logic yet.
 | Hindi ASR | `zone2_cloud/asr/hindi_asr.py` | Load AI4Bharat IndicConformer, implement `transcribe()` |
 | Hindi TTS | `zone2_cloud/tts/hindi_tts.py` | FastPitch+HiFi-GAN primary, IndicF5 fallback, implement `synthesize()` |
 | Gemini client | `zone2_cloud/gemini/gemini_client.py` | Prompt template written; implement actual API call in `call_gemini()` |
-| RAG knowledge base | `zone2_cloud/rag/knowledge_base/*.md` | Write 8-10 entries (template provided in folder README) |
-| RAG builder | `zone2_cloud/rag/build_knowledge_base.py` | Implement embedding + FAISS/Chroma indexing |
-| RAG retriever | `zone2_cloud/rag/retriever.py` | Implement `retrieve()` |
+| RAG knowledge base | `zone2_cloud/rag/knowledge_base/*.md` | **Done** — 8 entries written |
+| RAG builder | `zone2_cloud/rag/build_knowledge_base.py` | **Done** — FAISS + sentence-transformers implemented |
+| RAG retriever | `zone2_cloud/rag/retriever.py` | **Done** — FAISS retrieval implemented |
 | Farm memory schema | `zone3_memory/schema/schema.sql` | **Done** — tables defined |
 | Farm memory functions | `zone3_memory/db/farm_memory.py` | **Done** — implemented SQLite CRUD and tested |
 | Streamlit UI | `app/streamlit_app.py` | Crop tab wired to Person A; Livestock/Voice tabs + cloud branch + TTS playback + farm-memory writes still TODO |

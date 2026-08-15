@@ -112,22 +112,15 @@ def test_synthesize_raises_not_implemented():
         synthesize("test text", "/tmp/tts_test.wav")
 
 
-def test_call_gemini_raises_not_implemented():
-    from src.zone2_cloud.gemini.gemini_client import call_gemini
-    dummy = {
-        "domain": "crop", "image_prediction": "tomato_early_blight",
-        "visual_confidence": 0.67, "farmer_text": "test",
-        "text_evidence": [], "sensor_data": None,
-        "farm_history": "", "retrieved_knowledge": "",
-    }
-    with pytest.raises(NotImplementedError):
-        call_gemini(dummy)
 
 
-def test_retrieve_raises_not_implemented():
+
+
+def test_retrieve_returns_string():
     from src.zone2_cloud.rag.retriever import retrieve
-    with pytest.raises(NotImplementedError):
-        retrieve("tomato brown spots")
+    result = retrieve("tomato brown spots", k=1)
+    assert isinstance(result, str)
+    assert "Tomato" in result or "Blight" in result
 
 
 # ===========================================================================
@@ -210,3 +203,14 @@ def test_zone1_produces_cloud_payload_matching_contract_6():
     assert payload["domain"] in ("crop", "livestock")
     assert isinstance(payload["visual_confidence"], float)
     assert isinstance(payload["text_evidence"], list)
+
+def test_call_gemini_raises_not_implemented():
+    from src.zone2_cloud.gemini.gemini_client import call_gemini
+    dummy = {
+        "domain": "crop", "image_prediction": "tomato_early_blight",
+        "visual_confidence": 0.67, "farmer_text": "test",
+        "text_evidence": [], "sensor_data": None,
+        "farm_history": "", "retrieved_knowledge": "",
+    }
+    with pytest.raises(NotImplementedError):
+        call_gemini(dummy)

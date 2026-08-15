@@ -1,50 +1,61 @@
 """
-build_knowledge_base.py — STUB. Person B, Zone 2 (Hour 4:15-5:15 of the plan).
+build_knowledge_base.py — Person B, Zone 2.
 
-GOAL: Write 8-10 short knowledge entries (Condition / Symptoms / Visual
-indicators / Recommended actions / Prevention / When to seek expert /
-Source) as .md or .json files in `rag/knowledge_base/`, then embed them with
-a small sentence-transformer and index with FAISS or Chroma.
-
-Cover (per the plan): tomato early/late blight, potato early/late blight,
-maize rust, maize leaf blight, lumpy skin disease, FMD, abnormal
-temperature/activity. This deliberately overlaps with Person A's
-knowledge/local_advisories.json (Zone 1, offline) — the RAG version is
-richer/longer-form and used ONLY on the cloud-escalation path.
-
-TODO:
-  1. Write 8-10 entries into rag/knowledge_base/*.md (one file per condition,
-     or one combined .json — your choice, just document it here once decided).
-  2. `pip install sentence-transformers faiss-cpu` (or chromadb — pick one).
-  3. Embed each entry with 'sentence-transformers/all-MiniLM-L6-v2'.
-  4. Build and persist a FAISS index (or Chroma collection) to disk so it
-     doesn't need rebuilding every app restart — save it under
-     `results/zone2/` or a dedicated `rag/index/` folder (git-ignore the
-     binary index file, keep the source .md/.json entries in git).
-
-Suggested agent prompt:
-    "Write a script that reads all .md files in rag/knowledge_base/, embeds
-    them with sentence-transformers/all-MiniLM-L6-v2, and builds a FAISS
-    IndexFlatL2 index, saving both the index and a parallel list of source
-    texts to disk for later retrieval."
+GOAL: Write 8-10 short knowledge entries as .md files in `rag/knowledge_base/`, 
+then embed them with a small sentence-transformer and index with FAISS.
 """
 
 from __future__ import annotations
 
+import os
+import pickle
 from pathlib import Path
 
+try:
+    import faiss
+    from sentence_transformers import SentenceTransformer
+except ImportError:
+    pass  # Allow import for diagnostic tests even if not installed yet
+
 KNOWLEDGE_BASE_DIR = Path(__file__).resolve().parent / "knowledge_base"
+INDEX_DIR = Path(__file__).resolve().parents[3] / "results" / "zone2" / "rag_index"
 
 
-def load_knowledge_entries() -> list:
-    """TODO: read every .md/.json file in KNOWLEDGE_BASE_DIR and return a
-    list of plain-text chunks ready for embedding."""
-    raise NotImplementedError("TODO: implement knowledge entry loading.")
+def load_knowledge_entries() -> list[str]:
+    """Read every .md file in KNOWLEDGE_BASE_DIR and return a list of plain-text chunks."""
+    entries = []
+    for md_file in KNOWLEDGE_BASE_DIR.glob("*.md"):
+        if md_file.name == "README.md":
+            continue
+        with open(md_file, "r", encoding="utf-8") as f:
+            entries.append(f.read().strip())
+    return entries
 
 
 def build_index():
-    """TODO: embed entries + build FAISS/Chroma index, persist to disk."""
-    raise NotImplementedError("TODO: implement index building. See module docstring.")
+    """Embed entries + build FAISS index, persist to disk."""
+    entries = load_knowledge_entries()
+    if not entries:
+        print("No knowledge base entries found to index.")
+        return
+
+    print(f"Loading SentenceTransformer model... (embedding {len(entries)} entries)")
+    model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+    
+    embeddings = model.encode(entries, convert_to_numpy=True)
+    
+    dimension = embeddings.shape[1]
+    index = faiss.IndexFlatL2(dimension)
+    index.add(embeddings)
+    
+    INDEX_DIR.mkdir(parents=True, exist_ok=True)
+    
+    faiss.write_index(index, str(INDEX_DIR / "knowledge.index"))
+    
+    with open(INDEX_DIR / "knowledge_texts.pkl", "wb") as f:
+        pickle.dump(entries, f)
+        
+    print(f"Successfully built FAISS index at {INDEX_DIR}")
 
 
 if __name__ == "__main__":
