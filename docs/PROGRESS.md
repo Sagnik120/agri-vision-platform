@@ -67,10 +67,10 @@ signatures, and agent-ready prompts. None have real logic yet.
 | RAG builder | `zone2_cloud/rag/build_knowledge_base.py` | Implement embedding + FAISS/Chroma indexing |
 | RAG retriever | `zone2_cloud/rag/retriever.py` | Implement `retrieve()` |
 | Farm memory schema | `zone3_memory/schema/schema.sql` | **Done** — tables defined |
-| Farm memory functions | `zone3_memory/db/farm_memory.py` | Implement `init_db`, `save_observation`, `save_diagnosis`, `save_advisory`, `get_farm_history` |
+| Farm memory functions | `zone3_memory/db/farm_memory.py` | **Done** — implemented SQLite CRUD and tested |
 | Streamlit UI | `app/streamlit_app.py` | Crop tab wired to Person A; Livestock/Voice tabs + cloud branch + TTS playback + farm-memory writes still TODO |
 | Zone 2 tests (real) | `tests/zone2/test_zone2_stubs.py` | Add real functional tests AFTER each stub is implemented (currently validates scaffold shape) |
-| Zone 3 tests (real) | `tests/zone3/test_zone3_stubs.py` | Add real functional tests AFTER each stub is implemented (currently validates schema + scaffold) |
+| Zone 3 tests (real) | `tests/zone3/test_zone3_stubs.py` | **Done** — real functional tests added and passing |
 
 ---
 
