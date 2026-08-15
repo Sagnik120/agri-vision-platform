@@ -1,0 +1,26 @@
+# --- Core (Person A, Zone 1 — required to run today) ---
+pillow>=10.0.0
+pytest>=7.4.0
+numpy>=1.26.0
+
+# --- Hugging Face model download + inference (Person A real-model mode) ---
+huggingface_hub>=0.24.0
+transformers>=4.42.0
+torch>=2.2.0                 # CPU build is fine on Mac M5; MPS accel works automatically
+timm>=1.0.0                  # some HF vision checkpoints need timm backbones
+
+# --- UI shell (Streamlit app, wired by Person B / jointly at the end) ---
+streamlit>=1.36.0
+
+# --- Person B: Zone 2 (Cloud / RAG / ASR / TTS) — boilerplate deps, install when starting Zone 2 ---
+google-generativeai>=0.7.0   # Gemini API client
+faiss-cpu>=1.8.0             # or chromadb>=0.5.0, pick one — see zone2_cloud/rag/README
+sentence-transformers>=3.0.0
+soundfile>=0.12.1
+librosa>=0.10.2
+
+# --- Person B: Zone 3 (Farm Memory) ---
+# sqlite3 is part of Python's standard library — no install needed
+
+# --- Dev tooling ---
+python-dotenv>=1.0.0

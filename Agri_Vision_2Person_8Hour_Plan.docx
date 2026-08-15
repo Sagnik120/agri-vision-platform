@@ -1,0 +1,162 @@
+2-Person / 8-Hour Build Plan
+
+**Unified AI Agri-Vision Platform — End-to-End Prototype**
+
+*Two people working fully in parallel, with AI coding agents, to a single integrated demo in 8 hours*
+
+# 0. How the Architecture Diagram Maps to This Plan
+
+Your diagram has 3 zones. This plan assigns each zone to a person so both can code simultaneously without blocking each other:
+
+| **Diagram Zone** | **Contents** | **Owner in this plan** |
+| --- | --- | --- |
+| Zone 1 — Farmer's Phone (Edge) | Capture+Quality Check, Task Router, MoE Specialist Experts (Crop/Livestock), Confidence & Safety Gate, On-Device Advisory Output | PERSON A |
+| Zone 2 — Cloud Advisory Layer | Cloud Gateway, RAG Engine (Trusted KB + Retrieval + Farm Context), Actionable Advisory, Farmer-Ready Output | PERSON B |
+| Zone 3 — Farm Memory & Learning | Private Farm Memory (Farm Records Store), My Farm History Timeline | PERSON B (owns DB; both write to it) |
+| Voice path (Photo/Voice/Sensor input, cross-cutting) | Hindi ASR → text evidence → fed into Task Router / fusion | PERSON B builds ASR+TTS; PERSON A consumes the text evidence output |
+
+*Why this split: Person A owns everything that must run fully offline on-device (Zone 1 — vision models, sensor rules, fusion, confidence gate). Person B owns everything that talks to the outside world or persists data (Zone 2 cloud/RAG, Zone 3 memory, plus Hindi speech I/O, which is model-heavy but independent of the vision models). Neither person**'**s core work blocks the other**'**s, as long as the JSON data contract (Section 2) is frozen first.*
+
+# 1. Tech Stack — Frozen From the Doc (Do Not Deviate)
+
+| **Component** | **Exact choice (from your doc)** | **Hugging Face / source reference** |
+| --- | --- | --- |
+| UI | Streamlit |  |
+| Backend | Python / FastAPI |  |
+| Crop specialist | Pretrained PlantVillage MobileNetV3 | search HF for a PlantVillage-finetuned MobileNetV3 checkpoint, e.g. models tagged 'plant-disease mobilenetv3' |
+| Livestock specialist | Pretrained cattle-disease model (EfficientNet-B3 class) | search HF for 'cattle disease classification efficientnet' |
+| ASR (Hindi, offline) | AI4Bharat IndicConformer — Hindi, ~30M params, built for real-time on-device Indian-language ASR | huggingface.co/collections/ai4bharat/indicconformer |
+| Text evidence | Rule-based symptom extractor (no model) | hand-written dictionary — no HF model needed |
+| Sensor | Simulated values + threshold rules (no model) | hand-written — no HF model needed |
+| Fusion | Rule/score-based late fusion (no model) | hand-written logic — no HF model needed |
+| Confidence gate | Threshold + modality agreement (no model) | hand-written logic — no HF model needed |
+| Local advisory | Local JSON knowledge mapping (no model) | hand-written knowledge/local_advisories.json |
+| Cloud LLM | Gemini API |  |
+| RAG | FAISS or Chroma + small curated knowledge base |  |
+| Farm memory | SQLite |  |
+| Hindi TTS (primary) | AI4Bharat Hindi FastPitch + HiFi-GAN | github.com/AI4Bharat/Indic-TTS |
+| Hindi TTS (fallback) | IndicF5 (~0.4B params, Hindi + 10 other languages, MIT licensed) | huggingface.co/ai4bharat/IndicF5 |
+| Hindi TTS (stretch, GPU only) | Indic Parler-TTS (~3.75GB, gated) — do not use unless everything else already works | huggingface.co/ai4bharat/indic-parler-tts |
+| Privacy-preserving learning | Not implemented (explicitly out of scope) |  |
+
+**Important correction carried over from the doc: IndicConformer is ASR only, not TTS. Never label it as Hindi TTS in your slides — ASR and TTS are two separate AI4Bharat models.**
+
+# 2. The Shared Data Contract — Freeze This Before Writing Any Code (Minute 0–15)
+
+Both people must agree on this JSON shape together, in the first 15 minutes, before splitting up. This is the only thing that makes true parallel work possible.
+
+**Image expert output (Person A):**
+
+- {"domain":"crop"|"livestock", "input_type":"image", "prediction": str, "confidence": float, "top_k": [[label, prob], ...]}
+
+**ASR output (Person B):**
+
+- {"text": str, "language":"hi", "confidence": null}
+
+**Text evidence output (Person A, consumes Person B\****'****s ASR text):**
+
+- {"symptoms": [str,...], "crop": str, "severity_hint": str}
+
+**Sensor output (Person A):**
+
+- {"domain":"livestock", "temperature": float, "activity": str, "feed_intake": str, "anomaly": bool}
+
+**Fusion output (Person A, this is what Person B\****'****s cloud call and UI consume):**
+
+- {"prediction": str, "visual_confidence": float, "text_support": bool, "sensor_support": bool|null, "evidence_agreement": "high"|"medium"|"low", "final_confidence": float, "route": "local"|"cloud"}
+
+**Cloud request payload (Person B builds this from Person A\****'****s fusion output):**
+
+- {"domain": str, "image_prediction": str, "visual_confidence": float, "farmer_text": str, "text_evidence": [str,...], "sensor_data": obj|null, "farm_history": str, "retrieved_knowledge": str}
+
+*Agree on this literally by pasting it into a shared file (contract.md) at minute 15. Do not change a shape later without telling the other person.*
+
+# 3. PERSON A — Edge / Vision / Fusion Track (Zone 1)
+
+Owns: crop expert, livestock expert, sensor expert, text-evidence consumption, task router, fusion, confidence gate, local advisory. Everything that must work fully offline.
+
+## Hour-by-Hour Plan — Person A
+
+| **Time** | **Task** | **How to implement** | **Model / reference** |
+| --- | --- | --- | --- |
+| 0:00–0:15 | Agree data contract with Person B; set up repo skeleton (experts/, multimodal/, knowledge/, demo_data/) | Shared step — see Section 2 |  |
+| 0:15–1:15 | Crop specialist: image → MobileNetV3 → softmax → top-3 | Download a PlantVillage-pretrained MobileNetV3 checkpoint from Hugging Face (search 'plant disease mobilenetv3' or 'plantvillage'). Load with transformers/timm, run inference on demo_data/crop images, wrap output in the contract JSON. Use an AI coding agent (Claude Code / Cursor) with the prompt: 'write crop_expert.py that loads a HF image classifier, preprocesses a PIL image, returns top-3 as the JSON contract below' — paste the contract. | PlantVillage MobileNetV3 (HF) |
+| 1:15–2:00 | Livestock specialist: same interface, different model | Same pattern as crop — find a cattle-disease HF checkpoint (or if unavailable in time, use a general animal-health image classifier and clearly relabel classes in local_advisories.json). Keep it image-only, same contract shape. | Cattle-disease EfficientNet-B3 class (HF) |
+| 2:00–2:30 | INTEGRATION CHECKPOINT 1 — sync with Person B: confirm ASR text-evidence format matches contract | Quick call/message — verify shapes match exactly |  |
+| 2:30–3:15 | Text evidence extractor (rule-based, no model) | Write multimodal/text_evidence.py with a Hindi + English keyword dictionary (भूरे धब्बे→brown_spots, पीली पत्तियां→yellow_leaves, सफेद पाउडर→white_powder, पत्तियां मुड़→leaf_curl, कीड़े→insects, मुरझा→wilting). Have the coding agent generate the dict scaffolding, you fill in domain terms. Deterministic string matching only — no model. |  |
+| 3:15–3:45 | Sensor expert (simulated) | Hard-code a demo sensor panel (temperature, activity%, feed_intake%) + threshold rules → alerts + anomaly bool. No model needed — a dict + if-statements. |  |
+| 3:45–4:15 | Task router | Explicit UI-driven selection (Crop / Livestock buttons) — not a learned classifier. Just a function that dispatches to the right expert based on a passed-in domain string. Still print 'Detected task → Expert selected' for the demo. |  |
+| 4:15–5:15 | Late evidence fusion (multimodal/fusion.py) — the key new component | score = visual_confidence; if text supports → +0.10; if text conflicts → -0.20; cap at 0.99. Do not let text arbitrarily override image. Output the full fusion JSON from Section 2. Ask the coding agent: 'implement this exact rule-based fusion logic returning this exact JSON shape' and hand it the contract + these rules verbatim. |  |
+| 5:15–5:45 | Confidence & safety gate | 3 inputs: model confidence, evidence agreement, input quality. HIGH = confidence≥threshold(e.g. 0.75) AND evidence consistent AND quality OK → route='local'. Else → route='cloud'. |  |
+| 5:45–6:15 | Local advisory | knowledge/local_advisories.json keyed by condition name: {summary, actions[], warning}. Write 6–10 entries (tomato early/late blight, potato blight, maize rust, lumpy skin disease, FMD, abnormal temp). High-confidence path returns this directly — fully offline. |  |
+| 6:15–6:45 | INTEGRATION CHECKPOINT 2 — hand fusion+confidence output to Person B for their cloud escalation call and UI |  |  |
+| 6:45–7:30 | Wire Person A's whole pipeline into Streamlit tabs (Crop, Livestock) alongside Person B's shell | Person B owns the Streamlit shell; Person A plugs expert calls into it |  |
+| 7:30–8:00 | End-to-end test with Person B: 4 fixed Hindi sentences, confirm 2 route local / 1–2 route cloud |  |  |
+
+# 4. PERSON B — Voice / Cloud / RAG / Memory Track (Zone 2 + 3)
+
+Owns: Hindi ASR, Hindi TTS, Gemini cloud escalation, RAG knowledge base, SQLite farm memory, and the Streamlit UI shell. Everything that talks to the outside world or persists data.
+
+## Hour-by-Hour Plan — Person B
+
+| **Time** | **Task** | **How to implement** | **Model / reference** |
+| --- | --- | --- | --- |
+| 0:00–0:15 | Agree data contract with Person A (same session, see Section 2) |  |  |
+| 0:15–1:30 | Hindi ASR — standalone test first | Pull AI4Bharat IndicConformer Hindi (~30M) from the HF collection. Write test_asr.py: load model → run on demo_data/audio/*.wav (record 3–4 fixed Hindi sentences yourself first: crop / livestock / healthy / ambiguous) → print transcript. Prove load time, inference time, and transcript quality BEFORE wiring into anything else. Use an agent: 'write a script that loads AI4Bharat IndicConformer Hindi from Hugging Face and transcribes a wav file, return {text, language, confidence} JSON'. | AI4Bharat IndicConformer (HF collection: ai4bharat/indicconformer) |
+| 1:30–2:00 | Wrap ASR as a function returning the contract JSON; hand text output format to Person A |  |  |
+| 2:00–2:30 | INTEGRATION CHECKPOINT 1 — confirm ASR JSON shape with Person A (same as their entry) |  |  |
+| 2:30–3:30 | Hindi TTS — primary path | Try AI4Bharat Hindi FastPitch + HiFi-GAN first (github.com/AI4Bharat/Indic-TTS — clone repo, use provided Hindi checkpoint + inference script). If setup stalls past ~45 min, fall back immediately to IndicF5 (huggingface.co/ai4bharat/IndicF5, simpler HF pipeline call). Do not attempt Indic Parler-TTS — it's 3.75GB and gated, wrong for an 8-hour budget. | AI4Bharat FastPitch+HiFi-GAN → fallback IndicF5 |
+| 3:30–4:15 | SQLite farm memory schema + functions | Tables: farm, observations, diagnoses, advisories, livestock. Write save_observation() and get_farm_history(farm_id) functions. Every analysis run should insert a row; get_farm_history returns prior diagnoses as a string for cloud context. Ask the agent to scaffold the schema + CRUD functions from this table list. |  |
+| 4:15–5:15 | RAG knowledge base | Write 8–10 short knowledge entries as .md or .json (Condition / Symptoms / Visual indicators / Recommended actions / Prevention / When to seek expert / Source) covering: tomato early/late blight, potato early/late blight, maize rust, maize leaf blight, lumpy skin disease, FMD, abnormal temperature/activity. Embed with a small sentence-transformer and index with FAISS or Chroma (both pip-installable, no HF auth needed for the embedding model, e.g. 'sentence-transformers/all-MiniLM-L6-v2' from HF). | sentence-transformers/all-MiniLM-L6-v2 (HF) + FAISS/Chroma |
+| 5:15–6:15 | Gemini cloud escalation + strict prompt | gemini_client.py: takes the cloud request payload (Section 2) + RAG-retrieved snippets, sends a strict system prompt: use image+text+sensor+farm history+retrieved knowledge; never invent diagnoses/dosages; distinguish possible vs confirmed; say so if evidence insufficient; recommend expert consultation when appropriate; return structured JSON. Ask the agent to draft this prompt string then you tighten the safety rules. |  |
+| 6:15–6:45 | INTEGRATION CHECKPOINT 2 — receive Person A's fusion/confidence output, wire the local-vs-cloud branch, call Gemini only when route='cloud' |  |  |
+| 6:45–7:30 | Streamlit UI shell + wiring both people's pipelines together | 3 tabs (Crop, Livestock, Voice); top banner 🟢 LOCAL MODE / 🟡 CLOUD ASSIST; 'Why cloud?' panel showing confidence % + evidence conflict; call Person A's fusion+gate, branch to local_advisories.json or Gemini+RAG, then call your TTS on the final advisory text. |  |
+| 7:30–8:00 | End-to-end test together: 4 fixed Hindi sentences through full pipeline; confirm memory persists and second run shows farm history recall |  |  |
+
+# 5. Using AI Coding Agents to Hit 8 Hours
+
+Both people should run a coding agent (Claude Code, Cursor, or similar) locally the entire session, not just for isolated snippets. Concretely:
+
+- Paste the full data contract (Section 2) into the agent's context once at the start of your track so every generated function already returns the right shape.
+
+- For each HF model integration, give the agent the exact model name/collection and ask it to write the load+preprocess+infer+format function in one shot, then you just run and debug — don't hand-write boilerplate.
+
+- For rule-based components (fusion, confidence gate, sensor rules, text evidence), give the agent the exact logic described in this plan and your contract shapes — these are small enough that agent-generated code should need only minor edits.
+
+- Use the agent to generate synthetic test fixtures (mock fusion JSON, mock ASR output) so each person can build against realistic data before the other person's real component is ready.
+
+- Keep prompts scoped to one function/file at a time — asking an agent for 'the whole app' produces code neither of you can quickly debug under a time limit.
+
+# 6. Integration Timeline Summary (Both People)
+
+| **Checkpoint** | **Time** | **What****'****s proven** |
+| --- | --- | --- |
+| Contract freeze | 0:00–0:15 | Both agree on every JSON shape before writing model code |
+| Checkpoint 1 | 2:00–2:30 | Person A's experts return contract JSON; Person B's ASR returns contract JSON |
+| Checkpoint 2 | 6:15–6:45 | Person A's fusion+confidence output correctly drives Person B's local-vs-cloud branch |
+| UI wiring | 6:45–7:30 | Both pipelines run inside one Streamlit app with the offline/cloud banner |
+| Final test | 7:30–8:00 | 4 fixed Hindi sentences run end-to-end; 2 stay local, 1–2 escalate to cloud; farm memory recalls a prior visit |
+
+# 7. What to Explicitly Skip in 8 Hours
+
+- Federated / privacy-preserving learning — not implemented.
+
+- Learned multimodal fusion or a learned task router — rule-based / UI selection only.
+
+- Training any model — pretrained checkpoints only.
+
+- Physical IoT hardware — simulated sensor data only.
+
+- Indic Parler-TTS — too large/gated for this budget; FastPitch+HiFi-GAN → IndicF5 fallback only.
+
+- A large RAG corpus — 8–10 curated entries is enough to prove the mechanism.
+
+# 8. Final Demo Script (What the Judges See)
+
+- Speak a Hindi sentence → 🟢 'Voice processed locally, no cloud required for transcription' → transcript shown.
+
+- Upload a matching crop image → expert activated → fusion combines image+text → confidence shown → HIGH → 🟢 LOCAL DECISION card with advisory, entirely offline.
+
+- Upload an ambiguous/low-confidence case → 🟡 CLOUD ESCALATION card → 'Why cloud?' panel explains conflicting evidence → Gemini+RAG advisory returned with farm-history reference.
+
+- Re-run a similar case → system says 'a similar issue was recorded on this farm N days ago' — proving Private Farm Memory.

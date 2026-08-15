@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# Model caches (large, download via setup scripts instead)
+models_cache/
+
+# Env secrets
+.env
+
+# OS
+.DS_Store
+
+# Results / generated data (keep folder structure via .gitkeep, ignore heavy outputs)
+results/zone3/*.db
+results/zone2/tts_runs/*.wav
+demo_data/audio/*.wav
+demo_data/crop/*.jpg
+demo_data/crop/*.png
+demo_data/livestock/*.jpg
+demo_data/livestock/*.png
+!**/.gitkeep
