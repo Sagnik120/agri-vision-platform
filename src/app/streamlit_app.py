@@ -39,7 +39,7 @@ FARM_ID = "FARM-001"
 if "farmer_text_from_voice" not in st.session_state:
     st.session_state.farmer_text_from_voice = ""
 
-tab_crop, tab_livestock, tab_voice, tab_history = st.tabs(["🌱 Crop", "🐄 Livestock", "🎙️ Voice", "📖 Farm History"])
+tab_auto, tab_crop, tab_livestock, tab_voice, tab_history = st.tabs(["⚡ Auto-Detect", "🌱 Crop", "🐄 Livestock", "🎙️ Voice", "📖 Farm History"])
 
 def process_pipeline_result(result, farmer_text):
     gate = result["gate"]
@@ -55,10 +55,26 @@ def process_pipeline_result(result, farmer_text):
         route=gate.get("route", "local")
     )
     
-    if gate["route"] == "local":
-        # Clean up prediction name for display (e.g. Potato___Early_Blight -> Potato Early Blight)
+    if gate.get("route") == "reject":
+        st.error(f"❌ {gate.get('reason', 'Image too blurry or dark. Please retake the photo.')}")
+        st.button("Retake Photo", on_click=lambda: st.experimental_rerun() if hasattr(st, "experimental_rerun") else st.rerun())
+        return None
+
+    quality_flag = result.get("quality", {}).get("quality_flag", "ok")
+    if quality_flag == "warn":
+        st.warning("⚠️ Image quality is low (blurry/dark). Predictions may be less accurate.")
+
+    if gate.get("route") == "local":
         clean_pred = gate.get("prediction", "Unknown").replace("___", " ").replace("_", " ")
         st.success(f"🟢 LOCAL DECISION — {clean_pred} (confidence {gate.get('final_confidence', 0.0):.0%})")
+        
+        if "explainability" in result:
+            with st.expander("Explainability & Confidence Reasons"):
+                expl = result["explainability"]
+                st.write("**Top Predictions:**")
+                for rank, data in expl.get("top3", {}).items():
+                    st.write(f"- {data['label']}: {data['confidence']:.0%}")
+                st.write(f"**Routing Reason:** {expl.get('reason_string', '')}")
         
         # Zone 1: Offline Advisory
         adv = result.get("local_advisory", {}) or {}
@@ -88,6 +104,14 @@ def process_pipeline_result(result, farmer_text):
     else:
         st.warning(f"🟡 CLOUD ASSIST needed — confidence {gate.get('final_confidence', 0.0):.0%}, "
                    f"evidence agreement: {gate.get('evidence_agreement', 'unknown')}")
+        
+        if "explainability" in result:
+            with st.expander("Explainability & Confidence Reasons"):
+                expl = result["explainability"]
+                st.write("**Top Predictions:**")
+                for rank, data in expl.get("top3", {}).items():
+                    st.write(f"- {data['label']}: {data['confidence']:.0%}")
+                st.write(f"**Routing Reason:** {expl.get('reason_string', '')}")
         
         with st.spinner("Retrieving RAG knowledge and farm history... escalating to Gemini"):
             # RAG Retrieval
@@ -137,6 +161,28 @@ def process_pipeline_result(result, farmer_text):
                         
         return adv.get("summary", "")
 
+
+with tab_auto:
+    st.subheader("Auto-Detect Check")
+    uploaded_auto = st.file_uploader("Upload a crop or livestock photo", type=["jpg", "jpeg", "png"], key="auto_upload")
+    farmer_text_auto = st.text_input("Farmer description", value=st.session_state.farmer_text_from_voice, key="auto_text")
+    if uploaded_auto and st.button("Auto-Detect", key="auto_btn"):
+        tmp_path = os.path.join(tempfile.gettempdir(), f"auto_{uploaded_auto.name}")
+        with open(tmp_path, "wb") as f:
+            f.write(uploaded_auto.getbuffer())
+            
+        with st.spinner("Auto-routing and analyzing..."):
+            # Pass domain="auto" to use Task A5 auto-route
+            result = run_zone1_pipeline("auto", tmp_path, farmer_text=farmer_text_auto or None, mode="auto")
+            
+        summary_for_tts = process_pipeline_result(result, farmer_text_auto)
+        
+        if summary_for_tts:
+            st.markdown("🔊 **Play Advisory in Hindi:**")
+            with st.spinner("Synthesizing audio..."):
+                tts_out = os.path.join(tempfile.gettempdir(), "tts_auto.wav")
+                tts_res = hindi_tts.synthesize(summary_for_tts, tts_out)
+                st.audio(tts_res["audio_path"])
 
 with tab_crop:
     st.subheader("Crop Disease Check")

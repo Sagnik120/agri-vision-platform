@@ -11,7 +11,7 @@ demo script scenarios and the Final Test in Section 6
 from src.zone1_edge.pipeline import run_zone1_pipeline, build_cloud_payload_stub
 
 REQUIRED_TOP_KEYS = {"image_output", "text_evidence", "sensor_output", "fusion",
-                     "gate", "local_advisory"}
+                     "gate", "explainability", "local_advisory"}
 
 
 def test_pipeline_output_shape_crop(synthetic_crop_image):

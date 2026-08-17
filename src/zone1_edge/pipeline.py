@@ -38,35 +38,39 @@ def run_zone1_pipeline(
     mode: str = None,
 ) -> dict:
     """
-    domain: "crop" | "livestock"
-    image_path: path to the farmer's photo
-    farmer_text: raw ASR text string from Person B's Hindi ASR (already
-                 transcribed) OR None if no voice input was given
-    sensor_reading: contract #4 dict, or None (crop domain never uses this)
-    input_quality_ok: bool from the Capture+Quality Check step
-    mode: "auto"|"real"|"mock" — forwarded to the image experts
-
-    Returns a dict bundling every intermediate contract output PLUS the
-    final advisory (if routed local) so both debugging and the UI can use
-    whichever piece they need:
-
-        {
-          "image_output": {...contract #1...},
-          "text_evidence": {...contract #3...} | None,
-          "sensor_output": {...contract #4...} | None,
-          "fusion": {...contract #5, pre-gate...},
-          "gate": {...contract #5, post-gate, authoritative route...},
-          "local_advisory": {...} | None   # None when route == "cloud"
-        }
+    domain: "crop" | "livestock" | "auto"
     """
-    image_output = task_router.route(domain, image_path, mode=mode)
+    import cv2
+    from src.zone1_edge.quality import quality_check
+    
+    # 1. Quality Check
+    img = cv2.imread(image_path)
+    if img is not None:
+        quality_res = quality_check.compute_quality(img)
+        if quality_res["quality_flag"] == "reject" and mode != "mock":
+            return {
+                "gate": {"route": "reject", "reason": "Image too blurry or dark. Please retake the photo."},
+                "quality": quality_res
+            }
+        input_quality_ok = True
+    else:
+        quality_res = {"quality_flag": "ok"} # fallback if image path is bad or synthetic
+
+    # 2. Task Routing
+    if domain == "auto":
+        router_res = task_router.auto_route(image_path, mode=mode)
+        actual_domain = router_res["chosen_domain"]
+        image_output = router_res["expert_output"]
+    else:
+        actual_domain = domain
+        image_output = task_router.route(actual_domain, image_path, mode=mode)
 
     text_ev = None
     if farmer_text:
         text_ev = text_evidence.run({"text": farmer_text, "language": "hi", "confidence": None})
 
     sensor_out = None
-    if domain == "livestock" and sensor_reading is not None:
+    if actual_domain == "livestock" and sensor_reading is not None:
         sensor_out = sensor_expert.run(
             temperature=sensor_reading.get("temperature"),
             activity=sensor_reading.get("activity"),
@@ -76,6 +80,18 @@ def run_zone1_pipeline(
 
     fusion_out = fusion.fuse(image_output, text_ev, sensor_out)
     gate_out = confidence_gate.decide_route(fusion_out, input_quality_ok=input_quality_ok)
+
+    # 5. Explainability
+    from src.zone1_edge.explainability import explainability
+    explain_top3 = explainability.format_top3(image_output.get("top_k", []))
+    explain_reason = explainability.format_reason(
+        gate_out.get("threshold_reason", []), 
+        gate_out.get("advisory_tier", "local")
+    )
+    explain_out = {
+        "top3": explain_top3,
+        "reason_string": explain_reason
+    }
 
     local_adv = None
     if gate_out["route"] == "local":
@@ -87,6 +103,7 @@ def run_zone1_pipeline(
         "sensor_output": sensor_out,
         "fusion": fusion_out,
         "gate": gate_out,
+        "explainability": explain_out,
         "local_advisory": local_adv,
     }
 
