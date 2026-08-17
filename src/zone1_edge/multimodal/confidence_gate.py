@@ -33,8 +33,18 @@ def decide_route(fusion_output: dict, input_quality_ok: bool = True) -> dict:
     norm_pred = prediction.lower().replace("___", "_").replace("__", "_")
     is_critical = norm_pred in safety_critical
     
-    threshold = 0.80 if is_critical else config.GATE_CONFIDENCE_THRESHOLD
+    tier = config.get_device_tier()
+    base_threshold = config.GATE_CONFIDENCE_THRESHOLD
     
+    if tier == "low":
+        threshold = base_threshold + 0.10
+    elif tier == "high":
+        threshold = base_threshold - 0.05
+    else:
+        threshold = base_threshold
+        
+    if is_critical:
+        threshold += 0.10
     confidence_ok = base_confidence >= threshold
     evidence_ok = fusion_output.get("evidence_agreement") in ("high", "medium")
     text_support = fusion_output.get("text_support")
@@ -52,7 +62,7 @@ def decide_route(fusion_output: dict, input_quality_ok: bool = True) -> dict:
     if not evidence_ok and fusion_output.get("evidence_agreement") == "low":
         reasons.append("Low evidence agreement")
         
-    is_high_confidence = confidence_ok and evidence_ok and input_quality_ok and text_support is not False
+    is_high_confidence = confidence_ok and evidence_ok and input_quality_ok and not is_critical and text_support is not False
     
     route = "local" if is_high_confidence else "cloud"
     

@@ -52,7 +52,8 @@ def run_zone1_pipeline(
                 "gate": {"route": "reject", "reason": "Image too blurry or dark. Please retake the photo."},
                 "quality": quality_res
             }
-        input_quality_ok = True
+        if mode != "mock":
+            input_quality_ok = (quality_res["quality_flag"] == "ok")
     else:
         quality_res = {"quality_flag": "ok"} # fallback if image path is bad or synthetic
 
