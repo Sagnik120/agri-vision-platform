@@ -34,7 +34,7 @@ We built a **Single Unified Application** that solves all three problems:
 
 ## 🏗️ Proposed Architecture
 
-![Architecture Diagram](architecture_diagram.jpg)
+![Architecture Diagram](architecture_diagram.png)
 
 *Our 3-Zone Architecture ensures rapid response times while maintaining fallback capabilities for complex anomalies.*
 
