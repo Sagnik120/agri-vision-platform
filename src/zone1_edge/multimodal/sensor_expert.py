@@ -68,11 +68,20 @@ def top_k_first_aid(sensor_reading: dict, trend: str) -> list[dict]:
             score += 0.2
         if activity in LOW_ACTIVITY_LEVELS:
             score += 0.1
-        candidates.append({
-            "condition": "Fever/Heat Stress",
-            "score": round(score, 2),
-            "first_aid": ["Move animal to shade", "Provide plenty of cool water", "Monitor temperature closely"]
-        })
+            
+        if temp > 40.5 and activity in LOW_ACTIVITY_LEVELS:
+            # Heat stress / Extreme fever
+            candidates.append({
+                "condition": "Severe Heat Stress / Extreme Fever",
+                "score": round(score + 0.15, 2),
+                "first_aid": ["Move animal to shade immediately", "Spray with cool water", "Provide fans and cool drinking water", "Call vet urgently"]
+            })
+        else:
+            candidates.append({
+                "condition": "Fever/Heat Stress",
+                "score": round(score, 2),
+                "first_aid": ["Move animal to shade", "Provide plenty of cool water", "Monitor temperature closely"]
+            })
         
     if temp < ABNORMAL_TEMP_LOW:
         score = 0.7
@@ -80,6 +89,13 @@ def top_k_first_aid(sensor_reading: dict, trend: str) -> list[dict]:
             "condition": "Hypothermia/Cold Stress",
             "score": round(score, 2),
             "first_aid": ["Provide a dry, draft-free shelter", "Provide additional bedding", "Monitor closely"]
+        })
+        
+    if temp > ABNORMAL_TEMP_HIGH and activity in LOW_ACTIVITY_LEVELS and sensor_reading.get("feed_intake") in LOW_FEED_LEVELS:
+        candidates.append({
+            "condition": "Infectious Disease Suspected",
+            "score": 0.85,
+            "first_aid": ["Isolate animal immediately", "Do not allow sharing of water/feed troughs", "Consult veterinarian"]
         })
         
     if activity in LOW_ACTIVITY_LEVELS:

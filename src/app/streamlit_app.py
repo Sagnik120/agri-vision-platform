@@ -28,9 +28,56 @@ from src.zone2_cloud.rag import retriever
 from src.zone3_memory.db import farm_memory
 from src.zone3_memory.db import auth
 
-st.set_page_config(page_title="Agri-Vision Platform", layout="wide")
+st.set_page_config(page_title="Agri-Vision Platform", layout="wide", page_icon="🌾")
+
+# Inject Custom CSS for professional look and animations
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+html, body, [class*="css"]  {
+    font-family: 'Inter', sans-serif;
+}
+.stButton > button {
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(46, 204, 113, 0.2);
+}
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(46, 204, 113, 0.3);
+    color: white;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.result-box {
+    animation: fadeIn 0.5s ease-out forwards;
+    padding: 1.5rem;
+    border-radius: 12px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+.cloud-box {
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+.local-box {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+}
+</style>
+""", unsafe_allow_html=True)
+
 st.title("🌾 Unified AI Agri-Vision Platform")
 st.caption("Crop Disease ID + Livestock Monitoring + Historical Records — Offline-First")
+st.divider()
 
 # Ensure DB is initialized
 farm_memory.init_db()
@@ -76,9 +123,13 @@ if not st.session_state.farmer_id:
 
 # If logged in:
 FARM_ID = st.session_state.farmer_id
+FARMER_NAME = auth.get_farmer_name(FARM_ID)
+EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "auto")
 
 with st.sidebar:
-    st.write(f"**Logged in as:** {FARM_ID}")
+    st.write(f"👨‍🌾 **Logged in as:** {FARMER_NAME}")
+    st.caption(f"ID: {FARM_ID}")
+    st.caption(f"Mode: {EXPERT_MODE}")
     if st.button("Logout"):
         st.session_state.farmer_id = None
         st.rerun()
@@ -110,15 +161,6 @@ def process_pipeline_result(result, farmer_text):
 
     if gate.get("route") == "local":
         clean_pred = gate.get("prediction", "Unknown").replace("___", " ").replace("_", " ")
-        st.success(f"🟢 LOCAL DECISION — {clean_pred} (confidence {gate.get('final_confidence', 0.0):.0%})")
-        
-        if "explainability" in result:
-            with st.expander("Explainability & Confidence Reasons"):
-                expl = result["explainability"]
-                st.write("**Top Predictions:**")
-                for rank, data in expl.get("top3", {}).items():
-                    st.write(f"- {data['label']}: {data['confidence']:.0%}")
-                st.write(f"**Routing Reason:** {expl.get('reason_string', '')}")
         
         # Zone 1: Offline Advisory
         adv = result.get("local_advisory", {}) or {}
@@ -138,39 +180,58 @@ def process_pipeline_result(result, farmer_text):
             warning=adv.get("warning", "")
         )
         
-        st.write(f"**Summary:** {adv.get('summary', '')}")
+        st.markdown(f'''
+        <div class="result-box local-box">
+            <h3 style="margin-top:0;">🟢 Local AI Decision: {clean_pred}</h3>
+            <p><strong>Confidence:</strong> {gate.get('final_confidence', 0.0):.0%}</p>
+            <p><strong>Summary:</strong> {adv.get('summary', '')}</p>
+        </div>
+        ''', unsafe_allow_html=True)
+        
         for a in adv.get("actions", []):
             st.write(f"- {a}")
+            
         if adv.get("warning") and adv.get("warning") != "None — recheck if new symptoms appear.":
             st.warning(adv.get("warning"))
             
-        return adv.get("summary", "")
-    else:
-        st.warning(f"🟡 CLOUD ASSIST needed — confidence {gate.get('final_confidence', 0.0):.0%}, "
-                   f"evidence agreement: {gate.get('evidence_agreement', 'unknown')}")
-        
         if "explainability" in result:
-            with st.expander("Explainability & Confidence Reasons"):
+            with st.expander("🔍 View AI Reasoning & Confidence Details"):
                 expl = result["explainability"]
                 st.write("**Top Predictions:**")
                 for rank, data in expl.get("top3", {}).items():
                     st.write(f"- {data['label']}: {data['confidence']:.0%}")
                 st.write(f"**Routing Reason:** {expl.get('reason_string', '')}")
+            
+        return adv.get("summary", "")
+    else:
+        st.warning(f"🟡 CLOUD ASSIST needed — Low confidence or complex anomaly detected. Escaling to Gemini via Satellite/Cloud...")
         
-        with st.spinner("Retrieving RAG knowledge and farm history... escalating to Gemini"):
-            # RAG Retrieval
+        if "explainability" in result:
+            with st.expander("🔍 View AI Reasoning for Escalation"):
+                expl = result["explainability"]
+                st.write("**Top Local Predictions (Too low to trust):**")
+                for rank, data in expl.get("top3", {}).items():
+                    st.write(f"- {data['label']}: {data['confidence']:.0%}")
+                st.write(f"**Evidence Agreement:** {gate.get('evidence_agreement', 'unknown')}")
+                st.write(f"**Routing Reason:** {expl.get('reason_string', '')}")
+        
+        with st.status("☁️ Processing Cloud Diagnostic...", expanded=True) as status:
+            st.write("1. Retrieving localized farming knowledge (RAG)...")
             query = f"{gate.get('prediction', '')} {farmer_text or ''}"
             rag_knowledge = retriever.retrieve(query)
+            
+            st.write("2. Fetching historical farm health records...")
             farm_hist = farm_memory.get_farm_history(FARM_ID)
             
-            # Build payload
+            st.write("3. Packaging sensor data and visual embeddings...")
             payload = build_cloud_payload_stub(result)
             payload["farmer_text"] = farmer_text or ""
             payload["farm_history"] = farm_hist
             payload["retrieved_knowledge"] = rag_knowledge
             
-            # Gemini Call
+            st.write("4. Consulting Gemini Agronomy Expert...")
             cloud_result = gemini_client.call_gemini(payload)
+            status.update(label="Cloud Diagnostic Complete!", state="complete", expanded=False)
             
             diag = cloud_result.get("diagnosis", {})
             adv = cloud_result.get("advisory", {})
@@ -190,16 +251,25 @@ def process_pipeline_result(result, farmer_text):
                 warning=adv.get("warning", "")
             )
             
-            st.write(f"**Diagnosis:** {diag.get('condition', 'Unknown')} ({diag.get('certainty', 'possible')})")
-            st.write(f"**Summary:** {adv.get('summary', '')}")
+            st.markdown(f'''
+            <div class="result-box cloud-box">
+                <h3 style="margin-top:0;">☁️ Cloud Expert Diagnosis</h3>
+                <p><strong>Condition:</strong> {diag.get('condition', 'Unknown')} ({diag.get('certainty', 'possible')})</p>
+                <p><strong>Summary:</strong> {adv.get('summary', '')}</p>
+            </div>
+            ''', unsafe_allow_html=True)
+            
             for a in adv.get("actions", []):
                 st.write(f"- {a}")
+                
             if adv.get("warning"):
                 st.warning(adv.get("warning"))
+                
             if cloud_result.get("expert_consultation_recommended"):
-                st.error("🚨 Expert consultation strongly recommended!")
+                st.error("🚨 **CRITICAL:** Expert consultation strongly recommended immediately!")
+                
             if cloud_result.get("cited_knowledge"):
-                with st.expander("Cited Knowledge snippets from RAG"):
+                with st.expander("📚 View RAG Citations (Knowledge Base)"):
                     for k in cloud_result.get("cited_knowledge", []):
                         st.write(f"- {k}")
                         
@@ -217,7 +287,7 @@ with tab_auto:
             
         with st.spinner("Auto-routing and analyzing..."):
             # Pass domain="auto" to use Task A5 auto-route
-            result = run_zone1_pipeline("auto", tmp_path, farmer_text=farmer_text_auto or None, mode="auto")
+            result = run_zone1_pipeline("auto", tmp_path, farmer_text=farmer_text_auto or None, mode=EXPERT_MODE)
             
         summary_for_tts = process_pipeline_result(result, farmer_text_auto)
         
@@ -238,7 +308,7 @@ with tab_crop:
             f.write(uploaded.getbuffer())
             
         with st.spinner("Analyzing locally..."):
-            result = run_zone1_pipeline("crop", tmp_path, farmer_text=farmer_text_crop or None, mode="auto")
+            result = run_zone1_pipeline("crop", tmp_path, farmer_text=farmer_text_crop or None, mode=EXPERT_MODE)
             
         summary_for_tts = process_pipeline_result(result, farmer_text_crop)
         
@@ -269,7 +339,7 @@ with tab_livestock:
         sensor_data = {"temperature": temp, "activity": activity, "feed_intake": feed}
         
         with st.spinner("Analyzing locally..."):
-            result = run_zone1_pipeline("livestock", tmp_path, farmer_text=farmer_text_ls or None, sensor_reading=sensor_data, mode="auto")
+            result = run_zone1_pipeline("livestock", tmp_path, farmer_text=farmer_text_ls or None, sensor_reading=sensor_data, mode=EXPERT_MODE)
             
         summary_for_tts = process_pipeline_result(result, farmer_text_ls)
             

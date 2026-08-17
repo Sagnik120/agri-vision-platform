@@ -244,5 +244,58 @@
     "warning": "Can cause severe post-harvest rot.",
     "canonical_description": "Fungal disease causing dark irregular spots on leaves, blossoms, and fruits of mango.",
     "is_safety_critical": false
+  },
+  "crop_nitrogen_deficiency": {
+    "summary": "Nutrient deficiency causing overall yellowing of older leaves and stunted growth.",
+    "actions": [
+      "Apply a nitrogen-rich fertilizer (e.g., urea) immediately.",
+      "Ensure soil moisture is adequate to allow nutrient uptake."
+    ],
+    "warning": "Prolonged deficiency will severely reduce yield.",
+    "canonical_description": "Nutrient deficiency causing overall yellowing of older leaves and stunted growth.",
+    "is_safety_critical": false
+  },
+  "crop_phosphorus_deficiency": {
+    "summary": "Nutrient deficiency causing dark green leaves with purplish discoloration, especially on leaf edges.",
+    "actions": [
+      "Apply phosphorus-based fertilizer (e.g., DAP or superphosphate) near the root zone.",
+      "Check soil pH; high acidity or alkalinity can lock up phosphorus."
+    ],
+    "warning": "Can delay crop maturity and reduce root development.",
+    "canonical_description": "Nutrient deficiency causing dark green leaves with purplish discoloration, especially on leaf edges.",
+    "is_safety_critical": false
+  },
+  "livestock_heat_stress": {
+    "summary": "Animal showing excessive panting, lethargy, and reduced feed intake due to high environmental temperatures.",
+    "actions": [
+      "Move the animal to a shaded, well-ventilated area immediately.",
+      "Provide access to abundant cool drinking water.",
+      "Spray the animal with cool water or use fans."
+    ],
+    "warning": "Severe heat stress can lead to fatal heat stroke. Monitor closely.",
+    "canonical_description": "Animal showing excessive panting, lethargy, and reduced feed intake due to high environmental temperatures.",
+    "is_safety_critical": true
+  },
+  "livestock_ketosis": {
+    "summary": "Metabolic disorder usually occurring in high-yielding dairy cows shortly after calving, causing sweet-smelling breath and weight loss.",
+    "actions": [
+      "Provide high-energy feed supplements (e.g., propylene glycol or molasses).",
+      "Ensure access to high-quality forage.",
+      "Consult a veterinarian if the animal refuses to eat."
+    ],
+    "warning": "Can lead to severe milk drop and liver damage if untreated.",
+    "canonical_description": "Metabolic disorder usually occurring in high-yielding dairy cows shortly after calving, causing sweet-smelling breath and weight loss.",
+    "is_safety_critical": false
+  },
+  "banana_bunchy_top": {
+    "summary": "Devastating viral disease causing stunted growth and bunching of leaves at the top of the banana plant.",
+    "actions": [
+      "Uproot and completely destroy the infected plant to prevent spread.",
+      "Control aphid populations which spread the virus.",
+      "Use certified virus-free planting material in the future."
+    ],
+    "warning": "Highly infectious and cannot be cured. Eradicate infected plants immediately.",
+    "canonical_description": "Devastating viral disease causing stunted growth and bunching of leaves at the top of the banana plant.",
+    "is_safety_critical": true
   }
 }

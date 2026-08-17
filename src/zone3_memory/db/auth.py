@@ -35,3 +35,12 @@ def login(phone: str, pin: str) -> str | None:
     row = c.fetchone()
     conn.close()
     return row[0] if row else None
+
+def get_farmer_name(farm_id: str) -> str:
+    """Fetch the farmer's name by farm_id."""
+    conn = _get_conn()
+    c = conn.cursor()
+    c.execute("SELECT farmer_name FROM farm WHERE farm_id = ?", (farm_id,))
+    row = c.fetchone()
+    conn.close()
+    return row[0] if row else "Unknown Farmer"
