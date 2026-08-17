@@ -15,7 +15,7 @@ mock_st.tabs = MagicMock(side_effect=lambda x: [MagicMock()] * len(x))
 mock_st.session_state = MagicMock()
 mock_st.session_state.farmer_id = "FARM-001"
 mock_st.session_state.__contains__.side_effect = lambda key: key in ["farmer_id", "farmer_text_from_voice"]
-mock_st.columns.return_value = [MagicMock(), MagicMock(), MagicMock()]
+mock_st.columns.side_effect = lambda n: [MagicMock()] * n
 mock_st.button.return_value = False
 with patch.dict('sys.modules', {'streamlit': mock_st}):
     from src.app.streamlit_app import process_pipeline_result

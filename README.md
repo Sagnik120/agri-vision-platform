@@ -34,7 +34,7 @@ We built a **Single Unified Application** that solves all three problems:
 
 ## 🏗️ Proposed Architecture
 
-<img src="./architecture_diagram.jpeg" alt="Architecture Diagram" width="100%">
+![Architecture Diagram](./architecture_diagram.jpeg)
 
 *Our 3-Zone Architecture ensures rapid response times while maintaining fallback capabilities for complex anomalies.*
 
