@@ -18,6 +18,13 @@ Develop a digital platform prototype that enables farmers to access crop disease
 - Tests: 4/4 passing, pipeline integration passed
 - Notes: Relaxed exposure threshold to avoid flagging sharp images with bright backgrounds as bad. Generated test fixtures dynamically inside tests/demo_data.
 
+### Task A2 — Sensor Feature/Rule Upgrade
+- Status: DONE
+- Time taken: 10 min (planned 30)
+- Files touched: `src/zone1_edge/multimodal/sensor_expert.py`, `src/zone1_edge/multimodal/fusion.py`, `src/zone1_edge/pipeline.py`, `tests/zone1/test_sensor_expert.py`
+- Tests: 5/5 passing, pipeline integration passed
+- Notes: Added trend tracking and top-k generic first-aid recommendations. Updated pipeline to pass previous readings through the sensor dictionary.
+
 ## Person B Log (append newest at bottom)
 
 ## What Was Completed (final summary, filled at Hour 8:00)

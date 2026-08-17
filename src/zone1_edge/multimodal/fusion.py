@@ -57,15 +57,25 @@ def _text_agreement(prediction: str, symptoms: list) -> Optional[bool]:
     """Return True (supports), False (conflicts), or None (no signal)."""
     if not symptoms:
         return None
+        
+    tier = config.get_device_tier()
+    
     if prediction in HEALTHY_LABELS:
         # if farmer reports symptoms but model says healthy -> conflict;
         # checked BEFORE the CONDITION_SYMPTOM_MAP lookup since healthy
         # labels are never keys in that map.
+        if tier == "low":
+            return None # On low tier, don't penalize healthy predictions harshly based on text alone
         return len(symptoms) == 0
+        
     expected = CONDITION_SYMPTOM_MAP.get(prediction)
     if expected is None:
         return None  # unknown label -> no opinion, don't penalize
+        
     overlap = expected.intersection(set(symptoms))
+    if tier == "low" and not overlap:
+        return None # On low tier, if no overlap, just ignore rather than penalize
+        
     return len(overlap) > 0
 
 

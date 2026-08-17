@@ -22,34 +22,84 @@ from typing import Dict, List
 # Hindi + English keyword -> canonical symptom. Extend freely; deterministic
 # substring match only, case-insensitive for English.
 SYMPTOM_KEYWORDS: Dict[str, str] = {
+    # Brown spots
     "भूरे धब्बे": "brown_spots",
     "brown spots": "brown_spots",
+    "spote": "brown_spots",
+    "dhhabe": "brown_spots",
+    "dhhabba": "brown_spots",
+    "marks": "brown_spots",
+    
+    # Yellow leaves
     "पीली पत्तियां": "yellow_leaves",
     "पीली पत्ती": "yellow_leaves",
     "yellow leaves": "yellow_leaves",
+    "yellowing": "yellow_leaves",
+    "peeli": "yellow_leaves",
+    "peela": "yellow_leaves",
+    
+    # White powder
     "सफेद पाउडर": "white_powder",
     "white powder": "white_powder",
+    "safed powder": "white_powder",
+    
+    # Leaf curl
     "पत्तियां मुड़": "leaf_curl",
     "leaf curl": "leaf_curl",
     "curling leaves": "leaf_curl",
+    "mod": "leaf_curl",
+    
+    # Insects / pests
     "कीड़े": "insects",
     "insects": "insects",
     "pests": "insects",
+    "bugs": "insects",
+    "kide": "insects",
+    
+    # Wilting
     "मुरझा": "wilting",
     "wilting": "wilting",
+    "drooping": "wilting",
+    "murjha": "wilting",
+    
+    # Black spots
     "काले धब्बे": "black_spots",
     "black spots": "black_spots",
+    "dark spots": "black_spots",
+    "kaale": "black_spots",
+    
+    # Drying
     "सूखना": "drying",
     "drying": "drying",
+    "sookhna": "drying",
+    
+    # Fever
     "बुखार": "fever",
     "fever": "fever",
+    "bukhar": "fever",
+    "temperature": "fever",
+    "heat": "fever",
+    
+    # Limping
     "लंगड़ा": "limping",
     "limping": "limping",
+    "langda": "limping",
+    "not walking": "limping",
+    
+    # Swelling
     "सूजन": "swelling",
     "swelling": "swelling",
+    "sujan": "swelling",
+    "lumps": "swelling",
+    "nodules": "swelling",
+    "bumps": "swelling",
+    
+    # Loss of appetite
     "भूख नहीं": "loss_of_appetite",
     "not eating": "loss_of_appetite",
     "loss of appetite": "loss_of_appetite",
+    "khana nahi": "loss_of_appetite",
+    "bhookh": "loss_of_appetite",
 }
 
 # Crop keyword dictionary (Hindi + English) -> canonical crop name.

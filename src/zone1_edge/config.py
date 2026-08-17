@@ -82,3 +82,10 @@ GATE_MIN_QUALITY_OK = True  # placeholder toggle wired from capture+quality chec
 # Misc
 # ---------------------------------------------------------------------------
 RANDOM_SEED = 42
+
+def get_device_tier() -> str:
+    """
+    Returns 'high', 'medium', or 'low'.
+    Stub returning 'medium' for now per Section 1 (A3).
+    """
+    return "medium"
