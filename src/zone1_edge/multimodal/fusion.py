@@ -60,7 +60,9 @@ def _text_agreement(prediction: str, symptoms: list) -> Optional[bool]:
         
     tier = config.get_device_tier()
     
-    if prediction in HEALTHY_LABELS:
+    norm_pred = prediction.lower().replace("___", "_").replace("__", "_")
+    
+    if norm_pred in HEALTHY_LABELS:
         # if farmer reports symptoms but model says healthy -> conflict;
         # checked BEFORE the CONDITION_SYMPTOM_MAP lookup since healthy
         # labels are never keys in that map.
@@ -68,7 +70,7 @@ def _text_agreement(prediction: str, symptoms: list) -> Optional[bool]:
             return None # On low tier, don't penalize healthy predictions harshly based on text alone
         return len(symptoms) == 0
         
-    expected = CONDITION_SYMPTOM_MAP.get(prediction)
+    expected = CONDITION_SYMPTOM_MAP.get(norm_pred)
     if expected is None:
         return None  # unknown label -> no opinion, don't penalize
         
@@ -83,7 +85,8 @@ def _sensor_agreement(prediction: str, sensor: Optional[dict]) -> Optional[bool]
     if not sensor:
         return None
     anomaly = sensor.get("anomaly", False)
-    predicted_sick = prediction not in HEALTHY_LABELS
+    norm_pred = prediction.lower().replace("___", "_").replace("__", "_")
+    predicted_sick = norm_pred not in HEALTHY_LABELS
     if predicted_sick and anomaly:
         return True
     if (not predicted_sick) and (not anomaly):
@@ -138,7 +141,7 @@ def fuse(image_output: dict, text_evidence: Optional[dict] = None,
     return {
         "prediction": prediction,
         "visual_confidence": round(visual_confidence, 4),
-        "text_support": bool(text_agree) if text_agree is not None else False,
+        "text_support": text_agree,
         "sensor_support": sensor_agree,
         "evidence_agreement": agreement,
         "final_confidence": round(final_confidence, 4),

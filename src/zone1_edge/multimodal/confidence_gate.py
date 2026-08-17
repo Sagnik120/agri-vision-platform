@@ -30,7 +30,8 @@ def decide_route(fusion_output: dict, input_quality_ok: bool = True) -> dict:
     base_confidence = fusion_output.get("final_confidence", 0.0)
     
     safety_critical = get_safety_critical_conditions()
-    is_critical = prediction in safety_critical
+    norm_pred = prediction.lower().replace("___", "_").replace("__", "_")
+    is_critical = norm_pred in safety_critical
     
     threshold = 0.85 if is_critical else config.GATE_CONFIDENCE_THRESHOLD
     
