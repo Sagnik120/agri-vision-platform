@@ -133,6 +133,7 @@ def fuse(image_output: dict, text_evidence: Optional[dict] = None,
         "evidence_agreement": agreement,
         "final_confidence": round(final_confidence, 4),
         "route": route,
+        "sensor_data": sensor_output,
     }
 
 

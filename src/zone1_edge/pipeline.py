@@ -68,9 +68,10 @@ def run_zone1_pipeline(
     sensor_out = None
     if domain == "livestock" and sensor_reading is not None:
         sensor_out = sensor_expert.run(
-            sensor_reading.get("temperature"),
-            sensor_reading.get("activity"),
-            sensor_reading.get("feed_intake"),
+            temperature=sensor_reading.get("temperature"),
+            activity=sensor_reading.get("activity"),
+            feed_intake=sensor_reading.get("feed_intake"),
+            previous_reading=sensor_reading.get("previous_reading"),
         )
 
     fusion_out = fusion.fuse(image_output, text_ev, sensor_out)
