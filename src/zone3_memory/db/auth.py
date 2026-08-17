@@ -1,5 +1,6 @@
 import sqlite3
 import uuid
+import hashlib
 from src.zone3_memory.db.farm_memory import DEFAULT_DB_PATH
 
 def _get_conn():
@@ -19,9 +20,10 @@ def signup(phone: str, pin: str, name: str) -> str:
         raise ValueError("Phone number already registered")
         
     farmer_id = str(uuid.uuid4())
+    hashed_pin = hashlib.sha256(pin.encode('utf-8')).hexdigest()
     c.execute(
         "INSERT INTO farm (farm_id, phone, pin, farmer_name) VALUES (?, ?, ?, ?)",
-        (farmer_id, phone, pin, name)
+        (farmer_id, phone, hashed_pin, name)
     )
     conn.commit()
     conn.close()
@@ -31,7 +33,8 @@ def login(phone: str, pin: str) -> str | None:
     """Return farmer_id if credentials are correct, else None."""
     conn = _get_conn()
     c = conn.cursor()
-    c.execute("SELECT farm_id FROM farm WHERE phone = ? AND pin = ?", (phone, pin))
+    hashed_pin = hashlib.sha256(pin.encode('utf-8')).hexdigest()
+    c.execute("SELECT farm_id FROM farm WHERE phone = ? AND pin = ?", (phone, hashed_pin))
     row = c.fetchone()
     conn.close()
     return row[0] if row else None
