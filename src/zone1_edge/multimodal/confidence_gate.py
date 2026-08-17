@@ -49,6 +49,15 @@ def decide_route(fusion_output: dict, input_quality_ok: bool = True) -> dict:
     evidence_ok = fusion_output.get("evidence_agreement") in ("high", "medium")
     text_support = fusion_output.get("text_support")
     
+    try:
+        with open(config.KNOWLEDGE_DIR / "local_advisories.json", "r", encoding="utf-8") as f:
+            import json
+            local_db_keys = set(json.load(f).keys())
+    except Exception:
+        local_db_keys = set()
+        
+    is_in_local_db = norm_pred in local_db_keys
+
     reasons = []
     
     if not confidence_ok:
@@ -61,14 +70,16 @@ def decide_route(fusion_output: dict, input_quality_ok: bool = True) -> dict:
         reasons.append("Poor input quality (e.g., blurry/dark)")
     if not evidence_ok and fusion_output.get("evidence_agreement") == "low":
         reasons.append("Low evidence agreement")
+    if not is_in_local_db:
+        reasons.append(f"Prediction '{prediction}' not found in local offline database")
         
-    is_high_confidence = confidence_ok and evidence_ok and input_quality_ok and not is_critical and text_support is not False
+    is_high_confidence = confidence_ok and evidence_ok and input_quality_ok and not is_critical and text_support is not False and is_in_local_db
     
     route = "local" if is_high_confidence else "cloud"
     
     if is_high_confidence:
         advisory_tier = "confident"
-    elif is_critical or not input_quality_ok:
+    elif is_critical or not input_quality_ok or not is_in_local_db:
         advisory_tier = "refer_expert"
     else:
         advisory_tier = "possible"
