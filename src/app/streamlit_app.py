@@ -155,7 +155,7 @@ with st.sidebar:
         st.session_state.farmer_id = None
         st.rerun()
 
-tab_auto, tab_history, tab_crop, tab_livestock = st.tabs(["⚡ Auto-Detect / स्वतः पहचान", "📖 Farm History / खेत का इतिहास", "🌱 Crop / फ़सल", "🐄 Livestock / पशुधन"])
+tab_auto, tab_history = st.tabs(["⚡ Auto-Detect / स्वतः पहचान", "📖 Farm History / खेत का इतिहास"])
 
 def process_pipeline_result(result, farmer_text):
     gate = result["gate"]
@@ -338,43 +338,6 @@ with tab_auto:
             
         process_pipeline_result(result, farmer_text_auto)
 
-with tab_crop:
-    st.subheader("Crop Disease Check / फ़सल रोग जांच")
-    uploaded = st.file_uploader("Upload a crop photo / फ़सल की फ़ोटो अपलोड करें", type=["jpg", "jpeg", "png"], key="crop_upload")
-    farmer_text_crop = st.text_input("Farmer description / किसान का विवरण (लक्षण)", value=st.session_state.farmer_text_from_voice, key="crop_text")
-    if uploaded and st.button("Analyze Crop / फ़सल का विश्लेषण करें", key="crop_btn"):
-        tmp_path = os.path.join(tempfile.gettempdir(), f"crop_{uploaded.name}")
-        with open(tmp_path, "wb") as f:
-            f.write(uploaded.getbuffer())
-            
-        with st.spinner("Analyzing locally..."):
-            result = run_zone1_pipeline("crop", tmp_path, farmer_text=farmer_text_crop or None, mode=EXPERT_MODE)
-            
-        process_pipeline_result(result, farmer_text_crop)
-
-
-with tab_livestock:
-    st.subheader("Livestock Health Check / पशुधन स्वास्थ्य जांच")
-    uploaded_ls = st.file_uploader("Upload a livestock photo / पशुधन की फ़ोटो अपलोड करें", type=["jpg", "jpeg", "png"], key="ls_upload")
-    farmer_text_ls = st.text_input("Farmer description / किसान का विवरण (लक्षण)", value=st.session_state.farmer_text_from_voice, key="ls_text")
-    
-    st.write("Sensor Panel (Simulated) / सेंसर पैनल (सिम्युलेटेड)")
-    col1, col2, col3 = st.columns(3)
-    with col1: temp = st.slider("Temperature (°C) / तापमान", 35.0, 42.0, 38.5)
-    with col2: activity = st.selectbox("Activity Level / गतिविधि स्तर", ["normal / सामान्य", "low / कम", "high / अधिक"], key="ls_act")
-    with col3: feed = st.selectbox("Feed Intake / चारा खाना", ["normal / सामान्य", "low / कम", "none / कुछ नहीं"], key="ls_feed")
-    
-    if uploaded_ls and st.button("Analyze Livestock / पशुधन का विश्लेषण करें", key="ls_btn"):
-        tmp_path = os.path.join(tempfile.gettempdir(), f"ls_{uploaded_ls.name}")
-        with open(tmp_path, "wb") as f:
-            f.write(uploaded_ls.getbuffer())
-            
-        sensor_data = {"temperature": temp, "activity": activity, "feed_intake": feed}
-        
-        with st.spinner("Analyzing locally..."):
-            result = run_zone1_pipeline("livestock", tmp_path, farmer_text=farmer_text_ls or None, sensor_reading=sensor_data, mode=EXPERT_MODE)
-            
-        process_pipeline_result(result, farmer_text_ls)
 
 
 
