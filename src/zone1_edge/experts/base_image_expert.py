@@ -111,7 +111,7 @@ class BaseImageExpert:
         # 1. Prefer an already-downloaded local snapshot
         if self.local_dir and self.local_dir.exists() and any(self.local_dir.iterdir()):
             self._hf_pipeline = pipeline(
-                "image-classification", model=str(self.local_dir)
+                "image-classification", model=str(self.local_dir), device="cpu"
             )
             self._active_model_id = str(self.local_dir)
             logger.info("[%s] Loaded local checkpoint: %s", self.domain, self.local_dir)
@@ -121,7 +121,7 @@ class BaseImageExpert:
         last_err = None
         for repo_id in self.model_candidates:
             try:
-                self._hf_pipeline = pipeline("image-classification", model=repo_id)
+                self._hf_pipeline = pipeline("image-classification", model=repo_id, device="cpu")
                 self._active_model_id = repo_id
                 logger.info("[%s] Loaded HF hub model: %s", self.domain, repo_id)
                 return

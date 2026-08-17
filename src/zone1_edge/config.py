@@ -60,7 +60,7 @@ LIVESTOCK_MODEL_LOCAL_DIR = MODEL_CACHE_DIR / "livestock_model"
 #            proven end-to-end. This is what lets us test today, offline.
 # "real"  -> force real model, raise if unavailable.
 # "mock"  -> force deterministic mock predictor (used by pytest).
-EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "auto")
+EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "mock")
 
 # ---------------------------------------------------------------------------
 # Fusion rules (Section 3, hour 4:15-5:15 of the plan)

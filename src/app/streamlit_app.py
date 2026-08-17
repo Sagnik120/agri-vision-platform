@@ -72,11 +72,31 @@ html, body, [class*="css"]  {
     background: #f0fdf4;
     border-color: #bbf7d0;
 }
+/* Translate internal Streamlit File Uploader text */
+div[data-testid="stFileUploaderDropzoneInstructions"] > div > span {
+    display: none;
+}
+div[data-testid="stFileUploaderDropzoneInstructions"] > div::before {
+    content: "Drag and drop file here / फ़ाइल यहाँ खींचें और छोड़ें";
+    visibility: visible;
+    display: block;
+    margin-bottom: 5px;
+}
+div[data-testid="stFileUploaderDropzoneInstructions"] > div small {
+    display: none;
+}
+div[data-testid="stFileUploaderDropzoneInstructions"] > div::after {
+    content: "Limit 200MB per file • JPG, JPEG, PNG / सीमा 200MB प्रति फ़ाइल";
+    visibility: visible;
+    display: block;
+    font-size: 0.8em;
+    color: #666;
+}
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🌾 Unified AI Agri-Vision Platform")
-st.caption("Crop Disease ID + Livestock Monitoring + Historical Records — Offline-First")
+st.title("🌾 Unified AI Agri-Vision Platform / एकीकृत एआई कृषि-विजन प्लेटफॉर्म")
+st.caption("Crop Disease ID / फ़सल रोग पहचान + Livestock Monitoring / पशुधन निगरानी + Historical Records / ऐतिहासिक रिकॉर्ड — Offline-First / ऑफ़लाइन-प्रथम")
 st.divider()
 
 # Ensure DB is initialized
@@ -89,13 +109,13 @@ if "farmer_text_from_voice" not in st.session_state:
     st.session_state.farmer_text_from_voice = ""
 
 def render_login():
-    st.subheader("Farmer Login / Signup")
-    tab1, tab2 = st.tabs(["Login", "Signup"])
+    st.subheader("Farmer Login / Signup / किसान लॉगिन / साइनअप")
+    tab1, tab2 = st.tabs(["Login / लॉगिन", "Signup / साइनअप"])
     
     with tab1:
-        phone_login = st.text_input("Phone Number", key="login_phone")
-        pin_login = st.text_input("PIN", type="password", key="login_pin")
-        if st.button("Login"):
+        phone_login = st.text_input("Phone Number / फ़ोन नंबर", key="login_phone")
+        pin_login = st.text_input("PIN / पिन", type="password", key="login_pin")
+        if st.button("Login / लॉगिन"):
             fid = auth.login(phone_login, pin_login)
             if fid:
                 st.session_state.farmer_id = fid
@@ -105,10 +125,10 @@ def render_login():
                 st.error("Invalid phone or PIN.")
                 
     with tab2:
-        name_signup = st.text_input("Full Name", key="signup_name")
-        phone_signup = st.text_input("Phone Number", key="signup_phone")
-        pin_signup = st.text_input("Create PIN", type="password", key="signup_pin")
-        if st.button("Signup"):
+        name_signup = st.text_input("Full Name / पूरा नाम", key="signup_name")
+        phone_signup = st.text_input("Phone Number / फ़ोन नंबर", key="signup_phone")
+        pin_signup = st.text_input("Create PIN / पिन बनाएं", type="password", key="signup_pin")
+        if st.button("Signup / साइनअप"):
             try:
                 fid = auth.signup(phone_signup, pin_signup, name_signup)
                 st.session_state.farmer_id = fid
@@ -124,17 +144,17 @@ if not st.session_state.farmer_id:
 # If logged in:
 FARM_ID = st.session_state.farmer_id
 FARMER_NAME = auth.get_farmer_name(FARM_ID)
-EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "auto")
+EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "mock")
 
 with st.sidebar:
     st.write(f"👨‍🌾 **Logged in as:** {FARMER_NAME}")
     st.caption(f"ID: {FARM_ID}")
     st.caption(f"Mode: {EXPERT_MODE}")
-    if st.button("Logout"):
+    if st.button("Logout / लॉग आउट"):
         st.session_state.farmer_id = None
         st.rerun()
 
-tab_auto, tab_crop, tab_livestock, tab_voice, tab_history = st.tabs(["⚡ Auto-Detect", "🌱 Crop", "🐄 Livestock", "🎙️ Voice", "📖 Farm History"])
+tab_auto, tab_crop, tab_livestock, tab_voice, tab_history = st.tabs(["⚡ Auto-Detect / स्वतः पहचान", "🌱 Crop / फ़सल", "🐄 Livestock / पशुधन", "🎙️ Voice / आवाज़", "📖 Farm History / खेत का इतिहास"])
 
 def process_pipeline_result(result, farmer_text):
     gate = result["gate"]
@@ -152,7 +172,7 @@ def process_pipeline_result(result, farmer_text):
     
     if gate.get("route") == "reject":
         st.error(f"❌ {gate.get('reason', 'Image too blurry or dark. Please retake the photo.')}")
-        st.button("Retake Photo", on_click=lambda: st.experimental_rerun() if hasattr(st, "experimental_rerun") else st.rerun())
+        st.button("Retake Photo / फिर से फ़ोटो लें", on_click=lambda: st.experimental_rerun() if hasattr(st, "experimental_rerun") else st.rerun())
         return None
 
     quality_flag = result.get("quality", {}).get("quality_flag", "ok")
@@ -195,43 +215,45 @@ def process_pipeline_result(result, farmer_text):
             st.warning(adv.get("warning"))
             
         if "explainability" in result:
-            with st.expander("🔍 View AI Reasoning & Confidence Details"):
-                expl = result["explainability"]
-                st.write("**Top Predictions:**")
-                for rank, data in expl.get("top3", {}).items():
-                    st.write(f"- {data['label']}: {data['confidence']:.0%}")
-                st.write(f"**Routing Reason:** {expl.get('reason_string', '')}")
+            st.markdown("### 🔍 AI Reasoning & Confidence Details / एआई तर्क और विश्वास विवरण")
+            expl = result["explainability"]
+            st.write("**Top Predictions:**")
+            for rank, data in expl.get("top3", {}).items():
+                st.write(f"- {data['label']}: {data['confidence']:.0%}")
+            st.write(f"**Routing Reason:** {expl.get('reason_string', '')}")
             
         return adv.get("summary", "")
     else:
         st.warning(f"🟡 CLOUD ASSIST needed — Low confidence or complex anomaly detected. Escaling to Gemini via Satellite/Cloud...")
         
         if "explainability" in result:
-            with st.expander("🔍 View AI Reasoning for Escalation"):
-                expl = result["explainability"]
-                st.write("**Top Local Predictions (Too low to trust):**")
-                for rank, data in expl.get("top3", {}).items():
-                    st.write(f"- {data['label']}: {data['confidence']:.0%}")
-                st.write(f"**Evidence Agreement:** {gate.get('evidence_agreement', 'unknown')}")
-                st.write(f"**Routing Reason:** {expl.get('reason_string', '')}")
+            st.markdown("### 🔍 AI Reasoning for Escalation / एस्केलेशन के लिए एआई तर्क")
+            expl = result["explainability"]
+            st.write("**Top Local Predictions (Too low to trust):**")
+            for rank, data in expl.get("top3", {}).items():
+                st.write(f"- {data['label']}: {data['confidence']:.0%}")
+            st.write(f"**Evidence Agreement:** {gate.get('evidence_agreement', 'unknown')}")
+            st.write(f"**Routing Reason:** {expl.get('reason_string', '')}")
         
-        with st.status("☁️ Processing Cloud Diagnostic...", expanded=True) as status:
-            st.write("1. Retrieving localized farming knowledge (RAG)...")
-            query = f"{gate.get('prediction', '')} {farmer_text or ''}"
-            rag_knowledge = retriever.retrieve(query)
+        with st.container():
+            st.write("### ☁️ Processing Cloud Diagnostic... / क्लाउड डायग्नोस्टिक प्रोसेस हो रहा है...")
+            with st.spinner("Processing..."):
+                st.write("1. Retrieving localized farming knowledge (RAG)...")
+                query = f"{gate.get('prediction', '')} {farmer_text or ''}"
+                rag_knowledge = retriever.retrieve(query)
             
-            st.write("2. Fetching historical farm health records...")
-            farm_hist = farm_memory.get_farm_history(FARM_ID)
+                st.write("2. Fetching historical farm health records...")
+                farm_hist = farm_memory.get_farm_history(FARM_ID)
             
-            st.write("3. Packaging sensor data and visual embeddings...")
-            payload = build_cloud_payload_stub(result)
-            payload["farmer_text"] = farmer_text or ""
-            payload["farm_history"] = farm_hist
-            payload["retrieved_knowledge"] = rag_knowledge
+                st.write("3. Packaging sensor data and visual embeddings...")
+                payload = build_cloud_payload_stub(result)
+                payload["farmer_text"] = farmer_text or ""
+                payload["farm_history"] = farm_hist
+                payload["retrieved_knowledge"] = rag_knowledge
             
-            st.write("4. Consulting Gemini Agronomy Expert...")
-            cloud_result = gemini_client.call_gemini(payload)
-            status.update(label="Cloud Diagnostic Complete!", state="complete", expanded=False)
+                st.write("4. Consulting Gemini Agronomy Expert...")
+                cloud_result = gemini_client.call_gemini(payload)
+            st.success("Cloud Diagnostic Complete! / क्लाउड डायग्नोस्टिक पूरा हुआ!")
             
             diag = cloud_result.get("diagnosis", {})
             adv = cloud_result.get("advisory", {})
@@ -269,18 +291,18 @@ def process_pipeline_result(result, farmer_text):
                 st.error("🚨 **CRITICAL:** Expert consultation strongly recommended immediately!")
                 
             if cloud_result.get("cited_knowledge"):
-                with st.expander("📚 View RAG Citations (Knowledge Base)"):
-                    for k in cloud_result.get("cited_knowledge", []):
-                        st.write(f"- {k}")
+                st.markdown("### 📚 RAG Citations (Knowledge Base) / ज्ञानकोष संदर्भ")
+                for k in cloud_result.get("cited_knowledge", []):
+                    st.write(f"- {k}")
                         
         return adv.get("summary", "")
 
 
 with tab_auto:
-    st.subheader("Auto-Detect Check")
-    uploaded_auto = st.file_uploader("Upload a crop or livestock photo", type=["jpg", "jpeg", "png"], key="auto_upload")
-    farmer_text_auto = st.text_input("Farmer description", value=st.session_state.farmer_text_from_voice, key="auto_text")
-    if uploaded_auto and st.button("Auto-Detect", key="auto_btn"):
+    st.subheader("Auto-Detect Check / स्वतः-पहचान जांच")
+    uploaded_auto = st.file_uploader("Upload a crop or livestock photo / फ़सल या पशुधन की फ़ोटो अपलोड करें", type=["jpg", "jpeg", "png"], key="auto_upload")
+    farmer_text_auto = st.text_input("Farmer description / किसान का विवरण (लक्षण)", value=st.session_state.farmer_text_from_voice, key="auto_text")
+    if uploaded_auto and st.button("Auto-Detect / स्वतः विश्लेषण करें", key="auto_btn"):
         tmp_path = os.path.join(tempfile.gettempdir(), f"auto_{uploaded_auto.name}")
         with open(tmp_path, "wb") as f:
             f.write(uploaded_auto.getbuffer())
@@ -299,10 +321,10 @@ with tab_auto:
                 st.audio(tts_res["audio_path"])
 
 with tab_crop:
-    st.subheader("Crop Disease Check")
-    uploaded = st.file_uploader("Upload a crop photo", type=["jpg", "jpeg", "png"], key="crop_upload")
-    farmer_text_crop = st.text_input("Farmer description", value=st.session_state.farmer_text_from_voice, key="crop_text")
-    if uploaded and st.button("Analyze Crop", key="crop_btn"):
+    st.subheader("Crop Disease Check / फ़सल रोग जांच")
+    uploaded = st.file_uploader("Upload a crop photo / फ़सल की फ़ोटो अपलोड करें", type=["jpg", "jpeg", "png"], key="crop_upload")
+    farmer_text_crop = st.text_input("Farmer description / किसान का विवरण (लक्षण)", value=st.session_state.farmer_text_from_voice, key="crop_text")
+    if uploaded and st.button("Analyze Crop / फ़सल का विश्लेषण करें", key="crop_btn"):
         tmp_path = os.path.join(tempfile.gettempdir(), f"crop_{uploaded.name}")
         with open(tmp_path, "wb") as f:
             f.write(uploaded.getbuffer())
@@ -321,17 +343,17 @@ with tab_crop:
 
 
 with tab_livestock:
-    st.subheader("Livestock Health Check")
-    uploaded_ls = st.file_uploader("Upload a livestock photo", type=["jpg", "jpeg", "png"], key="ls_upload")
-    farmer_text_ls = st.text_input("Farmer description", value=st.session_state.farmer_text_from_voice, key="ls_text")
+    st.subheader("Livestock Health Check / पशुधन स्वास्थ्य जांच")
+    uploaded_ls = st.file_uploader("Upload a livestock photo / पशुधन की फ़ोटो अपलोड करें", type=["jpg", "jpeg", "png"], key="ls_upload")
+    farmer_text_ls = st.text_input("Farmer description / किसान का विवरण (लक्षण)", value=st.session_state.farmer_text_from_voice, key="ls_text")
     
-    st.write("Sensor Panel (Simulated)")
+    st.write("Sensor Panel (Simulated) / सेंसर पैनल (सिम्युलेटेड)")
     col1, col2, col3 = st.columns(3)
-    with col1: temp = st.slider("Temperature (°C)", 35.0, 42.0, 38.5)
-    with col2: activity = st.selectbox("Activity Level", ["normal", "low", "high"], key="ls_act")
-    with col3: feed = st.selectbox("Feed Intake", ["normal", "low", "none"], key="ls_feed")
+    with col1: temp = st.slider("Temperature (°C) / तापमान", 35.0, 42.0, 38.5)
+    with col2: activity = st.selectbox("Activity Level / गतिविधि स्तर", ["normal / सामान्य", "low / कम", "high / अधिक"], key="ls_act")
+    with col3: feed = st.selectbox("Feed Intake / चारा खाना", ["normal / सामान्य", "low / कम", "none / कुछ नहीं"], key="ls_feed")
     
-    if uploaded_ls and st.button("Analyze Livestock", key="ls_btn"):
+    if uploaded_ls and st.button("Analyze Livestock / पशुधन का विश्लेषण करें", key="ls_btn"):
         tmp_path = os.path.join(tempfile.gettempdir(), f"ls_{uploaded_ls.name}")
         with open(tmp_path, "wb") as f:
             f.write(uploaded_ls.getbuffer())
@@ -352,12 +374,12 @@ with tab_livestock:
 
 
 with tab_voice:
-    st.subheader("Voice Input (Hindi)")
-    st.write("Record or upload an audio file containing farmer symptoms.")
+    st.subheader("Voice Input (Hindi) / वॉयस इनपुट (हिंदी)")
+    st.write("Record or upload an audio file containing farmer symptoms. / किसान के लक्षणों वाली ऑडियो फ़ाइल रिकॉर्ड या अपलोड करें।")
     
-    uploaded_voice = st.file_uploader("Upload audio (.wav)", type=["wav"], key="voice_upload")
+    uploaded_voice = st.file_uploader("Upload audio (.wav) / ऑडियो अपलोड करें", type=["wav"], key="voice_upload")
     
-    if uploaded_voice and st.button("Transcribe Voice", key="voice_btn"):
+    if uploaded_voice and st.button("Transcribe Voice / आवाज़ को टेक्स्ट में बदलें", key="voice_btn"):
         tmp_path = os.path.join(tempfile.gettempdir(), f"voice_{uploaded_voice.name}")
         with open(tmp_path, "wb") as f:
             f.write(uploaded_voice.getbuffer())
@@ -373,11 +395,26 @@ with tab_voice:
             st.info("Transcript saved to session. You can now switch to the Crop or Livestock tab to continue analysis.")
 
 with tab_history:
-    st.subheader("Farm History Records")
-    st.write("Records saved locally in database.")
+    st.subheader("Farm History Records / खेत के ऐतिहासिक रिकॉर्ड")
+    st.write("Records saved locally in database. / रिकॉर्ड स्थानीय डेटाबेस में सहेजे गए हैं।")
     
     records = farm_memory.get_all_history_records(FARM_ID)
     if not records:
-        st.info("No records found for this farm yet. Run an analysis on the Crop or Livestock tab to generate history.")
+        st.info("No records found for this farm yet. / अभी तक कोई रिकॉर्ड नहीं मिला।")
     else:
-        st.dataframe(records, use_container_width=True)
+        crop_records = [r for r in records if r.get("domain") == "crop"]
+        ls_records = [r for r in records if r.get("domain") == "livestock"]
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("### 🌱 Crop History / फ़सल का इतिहास")
+            if crop_records:
+                st.dataframe(crop_records, use_container_width=True)
+            else:
+                st.write("No crop records.")
+        with col2:
+            st.markdown("### 🐄 Livestock History / पशुधन का इतिहास")
+            if ls_records:
+                st.dataframe(ls_records, use_container_width=True)
+            else:
+                st.write("No livestock records.")
