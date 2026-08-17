@@ -145,7 +145,7 @@ if not st.session_state.farmer_id:
 # If logged in:
 FARM_ID = st.session_state.farmer_id
 FARMER_NAME = auth.get_farmer_name(FARM_ID)
-EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "mock")
+EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "auto")
 
 with st.sidebar:
     st.write(f"👨‍🌾 **Logged in as:** {FARMER_NAME}")
@@ -251,6 +251,7 @@ def process_pipeline_result(result, farmer_text):
                 payload["farmer_text"] = farmer_text or ""
                 payload["farm_history"] = farm_hist
                 payload["retrieved_knowledge"] = rag_knowledge
+                payload["image_path"] = tmp_path
             
                 st.write("4. Consulting Gemini Agronomy Expert...")
                 cloud_result = gemini_client.call_gemini(payload)
