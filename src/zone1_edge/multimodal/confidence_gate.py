@@ -18,28 +18,53 @@ import json
 from typing import Optional
 
 from src.zone1_edge import config
+from src.zone1_edge.knowledge.kb_loader import get_safety_critical_conditions
 
 
 def decide_route(fusion_output: dict, input_quality_ok: bool = True) -> dict:
     """
     fusion_output: contract #5 dict from fusion.fuse()
     input_quality_ok: bool from Capture+Quality Check (blur/lighting check).
-                       Defaults True (assume good capture) for pipelines
-                       that haven't wired the quality check yet.
     """
-    confidence_ok = fusion_output["final_confidence"] >= config.GATE_CONFIDENCE_THRESHOLD
-    evidence_ok = fusion_output["evidence_agreement"] in ("high", "medium")
-
-    is_high_confidence = confidence_ok and evidence_ok and input_quality_ok
+    prediction = fusion_output.get("prediction", "")
+    base_confidence = fusion_output.get("final_confidence", 0.0)
+    
+    safety_critical = get_safety_critical_conditions()
+    is_critical = prediction in safety_critical
+    
+    threshold = 0.85 if is_critical else config.GATE_CONFIDENCE_THRESHOLD
+    
+    confidence_ok = base_confidence >= threshold
+    evidence_ok = fusion_output.get("evidence_agreement") in ("high", "medium")
+    text_support = fusion_output.get("text_support")
+    
+    reasons = []
+    
+    if not confidence_ok:
+        reasons.append(f"Confidence {base_confidence:.2f} below threshold {threshold:.2f}")
+    if is_critical:
+        reasons.append("Safety critical prediction")
+    if text_support is False:
+        reasons.append("Farmer symptoms conflict")
+    if not input_quality_ok:
+        reasons.append("Poor input quality (e.g., blurry/dark)")
+    if not evidence_ok and fusion_output.get("evidence_agreement") == "low":
+        reasons.append("Low evidence agreement")
+        
+    is_high_confidence = confidence_ok and evidence_ok and input_quality_ok and not is_critical and text_support is not False
+    
     route = "local" if is_high_confidence else "cloud"
 
     result = dict(fusion_output)  # copy, preserve contract #5 shape
     result["route"] = route
+    result["advisory_tier"] = route
+    result["threshold_reason"] = reasons
     result["_debug_gate"] = {
         "confidence_ok": confidence_ok,
         "evidence_ok": evidence_ok,
         "input_quality_ok": input_quality_ok,
-        "threshold_used": config.GATE_CONFIDENCE_THRESHOLD,
+        "threshold_used": threshold,
+        "is_safety_critical": is_critical
     }
     return result
 
