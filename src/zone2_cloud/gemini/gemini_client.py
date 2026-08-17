@@ -54,6 +54,7 @@ def strip_pii(payload: dict) -> dict:
     cleaned = payload.copy()
     cleaned.pop("farmer_name", None)
     cleaned.pop("phone", None)
+    cleaned.pop("image_path", None) # Do not send path string in JSON context
     return cleaned
 
 def build_prompt(payload: dict) -> str:
@@ -101,9 +102,19 @@ def call_gemini(payload: dict) -> dict:
         client = MockGeminiClient()
         
     try:
+        from PIL import Image
+        image_path = payload.get("image_path")
+        
+        # If an image path is provided, we send it natively to Gemini!
+        if image_path and os.path.exists(image_path):
+            img = Image.open(image_path)
+            contents = [img, prompt]
+        else:
+            contents = prompt
+
         response = client.models.generate_content(
             model=model_name,
-            contents=prompt,
+            contents=contents,
             config=genai.types.GenerateContentConfig(
                 response_mime_type="application/json",
             )
