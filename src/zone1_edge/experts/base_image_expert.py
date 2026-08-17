@@ -69,6 +69,7 @@ class BaseImageExpert:
     model_candidates: List[str] = []
     local_dir: Path = None
     labels: List[str] = []  # used only by MockPredictor / fallback relabeling
+    zero_shot_map: dict = {}  # mapping from natural language prompt to standard DB ID
 
     def __init__(self, mode: str = None):
         self.mode = mode or config.EXPERT_MODE
@@ -151,12 +152,18 @@ class BaseImageExpert:
             img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
             
             if self._hf_pipeline.task == "zero-shot-image-classification":
-                raw = self._hf_pipeline(img, candidate_labels=self.labels)
+                # Use natural language prompts if zero_shot_map is defined, otherwise fallback to labels
+                candidate_labels = list(self.zero_shot_map.keys()) if self.zero_shot_map else self.labels
+                raw = self._hf_pipeline(img, candidate_labels=candidate_labels)
+                # Map the output strings back to DB IDs if map exists
+                if self.zero_shot_map:
+                    top_k = [[self.zero_shot_map[r["label"]], round(float(r["score"]), 4)] for r in raw]
+                else:
+                    top_k = [[r["label"], round(float(r["score"]), 4)] for r in raw]
             else:
                 raw = self._hf_pipeline(img, top_k=3)
-                
-            # transformers pipeline returns [{"label":..., "score":...}, ...]
-            top_k = [[r["label"], round(float(r["score"]), 4)] for r in raw]
+                # transformers pipeline returns [{"label":..., "score":...}, ...]
+                top_k = [[r["label"], round(float(r["score"]), 4)] for r in raw]
         else:
             top_k = self._predictor.predict(image_bytes)
             top_k = [[label, round(float(prob), 4)] for label, prob in top_k]

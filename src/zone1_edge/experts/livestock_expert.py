@@ -34,11 +34,20 @@ LIVESTOCK_MOCK_LABELS = [
 ]
 
 
+# Mapping natural language prompts for zero-shot (CLIP) to expected database IDs
+LIVESTOCK_ZERO_SHOT_MAP = {
+    "a photo of a cow with lumpy skin disease": "lumpy_skin_disease",
+    "a photo of a cow with foot and mouth disease": "foot_and_mouth_disease",
+    "a photo of a completely healthy cow": "healthy"
+}
+
+
 class LivestockExpert(BaseImageExpert):
     domain = "livestock"
     model_candidates = config.LIVESTOCK_MODEL_CANDIDATES
     local_dir = config.LIVESTOCK_MODEL_LOCAL_DIR
     labels = LIVESTOCK_MOCK_LABELS
+    zero_shot_map = LIVESTOCK_ZERO_SHOT_MAP
 
 
 def run(image_path: str, mode: str = None) -> dict:
