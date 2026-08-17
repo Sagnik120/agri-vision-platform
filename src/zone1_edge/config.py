@@ -43,11 +43,8 @@ CROP_MODEL_LOCAL_DIR = MODEL_CACHE_DIR / "crop_model"
 # Livestock / cattle disease classifier — EfficientNet-B3 class model.
 # Cattle-disease-specific checkpoints are scarce on HF; we try a couple of
 # candidates and the download script clearly logs which one actually loaded.
-# If none work, expert falls back to a general animal/skin-condition model —
-# relabel classes in knowledge/local_advisories.json as instructed in the plan.
 LIVESTOCK_MODEL_CANDIDATES = [
-    "Diginsa/Cattle-Disease-Classifier-EfficientNetB3",
-    "microsoft/resnet-50",  # generic fallback vision backbone (relabel classes)
+    "openai/clip-vit-base-patch32",
 ]
 LIVESTOCK_MODEL_LOCAL_DIR = MODEL_CACHE_DIR / "livestock_model"
 
@@ -60,7 +57,7 @@ LIVESTOCK_MODEL_LOCAL_DIR = MODEL_CACHE_DIR / "livestock_model"
 #            proven end-to-end. This is what lets us test today, offline.
 # "real"  -> force real model, raise if unavailable.
 # "mock"  -> force deterministic mock predictor (used by pytest).
-EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "mock")
+EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "auto")
 
 # ---------------------------------------------------------------------------
 # Fusion rules (Section 3, hour 4:15-5:15 of the plan)

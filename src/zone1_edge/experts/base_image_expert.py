@@ -110,8 +110,15 @@ class BaseImageExpert:
 
         # 1. Prefer an already-downloaded local snapshot
         if self.local_dir and self.local_dir.exists() and any(self.local_dir.iterdir()):
+            is_clip = False
+            for cand in self.model_candidates:
+                if "clip" in cand.lower():
+                    is_clip = True
+                    break
+            
+            task = "zero-shot-image-classification" if is_clip else "image-classification"
             self._hf_pipeline = pipeline(
-                "image-classification", model=str(self.local_dir), device="cpu"
+                task, model=str(self.local_dir), device="cpu"
             )
             self._active_model_id = str(self.local_dir)
             logger.info("[%s] Loaded local checkpoint: %s", self.domain, self.local_dir)
@@ -121,7 +128,8 @@ class BaseImageExpert:
         last_err = None
         for repo_id in self.model_candidates:
             try:
-                self._hf_pipeline = pipeline("image-classification", model=repo_id, device="cpu")
+                task = "zero-shot-image-classification" if "clip" in repo_id.lower() else "image-classification"
+                self._hf_pipeline = pipeline(task, model=repo_id, device="cpu")
                 self._active_model_id = repo_id
                 logger.info("[%s] Loaded HF hub model: %s", self.domain, repo_id)
                 return
@@ -141,7 +149,12 @@ class BaseImageExpert:
             import io
 
             img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
-            raw = self._hf_pipeline(img, top_k=3)
+            
+            if self._hf_pipeline.task == "zero-shot-image-classification":
+                raw = self._hf_pipeline(img, candidate_labels=self.labels)
+            else:
+                raw = self._hf_pipeline(img, top_k=3)
+                
             # transformers pipeline returns [{"label":..., "score":...}, ...]
             top_k = [[r["label"], round(float(r["score"]), 4)] for r in raw]
         else:

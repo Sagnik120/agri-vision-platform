@@ -39,9 +39,14 @@ def download_and_verify(repo_id: str) -> bool:
         return False
 
     try:
-        clf = pipeline("image-classification", model=str(config.LIVESTOCK_MODEL_LOCAL_DIR))
-        dummy = Image.new("RGB", (224, 224), color=(180, 140, 100))
-        preds = clf(dummy, top_k=3)
+        if "clip" in repo_id.lower():
+            clf = pipeline("zero-shot-image-classification", model=str(config.LIVESTOCK_MODEL_LOCAL_DIR))
+            dummy = Image.new("RGB", (224, 224), color=(180, 140, 100))
+            preds = clf(dummy, candidate_labels=["healthy", "sick"])
+        else:
+            clf = pipeline("image-classification", model=str(config.LIVESTOCK_MODEL_LOCAL_DIR))
+            dummy = Image.new("RGB", (224, 224), color=(180, 140, 100))
+            preds = clf(dummy, top_k=3)
         print("Sanity inference OK. Sample output:")
         for p in preds:
             print(f"  {p['label']}: {p['score']:.4f}")
@@ -60,15 +65,10 @@ def main():
 
     for repo_id in candidates:
         if download_and_verify(repo_id):
-            is_fallback = repo_id != config.LIVESTOCK_MODEL_CANDIDATES[0]
-            print(f"\n✅ Livestock model ready: {repo_id}")
+            print(f"\n[OK] Livestock model ready: {repo_id}")
             print(f"   Cached at: {config.LIVESTOCK_MODEL_LOCAL_DIR}")
-            if is_fallback:
-                print("   ⚠️  This is a GENERIC fallback backbone, not cattle-disease-specific.")
-                print("   Relabel its output classes in knowledge/local_advisories.json")
-                print("   (map generic ImageNet-style labels -> lumpy_skin_disease / fmd / etc.)")
             return
-    print("\n❌ All candidate livestock models failed to download/verify.")
+    print("\n[FAILED] All candidate livestock models failed to download/verify.")
     print("   The pipeline will keep using the MOCK predictor until this is fixed.")
     sys.exit(1)
 
