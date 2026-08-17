@@ -67,6 +67,17 @@ def run_diagnostics():
         farm_memory.init_db(db_path)
     step1()
 
+    @check("1.5. Image Quality Module Check")
+    def step1_5():
+        from src.zone1_edge.quality.quality_check import compute_quality
+        import numpy as np
+        img = np.zeros((224, 224, 3), dtype=np.uint8)
+        res = compute_quality(img)
+        assert "quality_score" in res
+        assert "quality_flag" in res
+        assert "reasons" in res
+    step1_5()
+
     @check("2. Offline Voice ASR (Mock Fallback)")
     def step2():
         res = hindi_asr.transcribe("fake.wav")

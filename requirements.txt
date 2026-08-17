@@ -26,3 +26,4 @@ librosa>=0.10.2
 
 # --- Dev tooling ---
 python-dotenv>=1.0.0
+opencv-python-headless
