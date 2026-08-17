@@ -155,7 +155,7 @@ with st.sidebar:
         st.session_state.farmer_id = None
         st.rerun()
 
-tab_auto, tab_history, tab_voice, tab_crop, tab_livestock = st.tabs(["⚡ Auto-Detect / स्वतः पहचान", "📖 Farm History / खेत का इतिहास", "🎙️ Voice / आवाज़", "🌱 Crop / फ़सल", "🐄 Livestock / पशुधन"])
+tab_auto, tab_history, tab_crop, tab_livestock = st.tabs(["⚡ Auto-Detect / स्वतः पहचान", "📖 Farm History / खेत का इतिहास", "🌱 Crop / फ़सल", "🐄 Livestock / पशुधन"])
 
 def process_pipeline_result(result, farmer_text):
     gate = result["gate"]
@@ -302,6 +302,23 @@ def process_pipeline_result(result, farmer_text):
 with tab_auto:
     st.subheader("Auto-Detect Check / स्वतः-पहचान जांच")
     uploaded_auto = st.file_uploader("Upload a crop or livestock photo / फ़सल या पशुधन की फ़ोटो अपलोड करें", type=["jpg", "jpeg", "png"], key="auto_upload")
+    
+    st.markdown("---")
+    st.write("🎙️ **Voice Input (Hindi) / वॉयस इनपुट (हिंदी)** - *Optional / वैकल्पिक*")
+    uploaded_voice = st.file_uploader("Upload audio (.wav) / ऑडियो अपलोड करें", type=["wav"], key="auto_voice_upload")
+    if uploaded_voice and st.button("Transcribe Voice / आवाज़ को टेक्स्ट में बदलें", key="auto_voice_btn"):
+        tmp_path = os.path.join(tempfile.gettempdir(), f"voice_{uploaded_voice.name}")
+        with open(tmp_path, "wb") as f:
+            f.write(uploaded_voice.getbuffer())
+        with st.spinner("Transcribing..."):
+            asr_res = hindi_asr.transcribe(tmp_path)
+            transcript = asr_res.get("text", "")
+        if transcript:
+            st.success("Transcription complete!")
+            st.write(f"**Transcript:** {transcript}")
+            st.session_state.farmer_text_from_voice = transcript
+            st.info("Transcript saved! You can now edit it below or click Auto-Detect.")
+
     farmer_text_auto = st.text_input("Farmer description / किसान का विवरण (लक्षण)", value=st.session_state.farmer_text_from_voice, key="auto_text")
     
     with st.expander("Livestock Sensors (Optional) / पशुधन सेंसर (वैकल्पिक)"):
@@ -360,26 +377,6 @@ with tab_livestock:
         process_pipeline_result(result, farmer_text_ls)
 
 
-with tab_voice:
-    st.subheader("Voice Input (Hindi) / वॉयस इनपुट (हिंदी)")
-    st.write("Record or upload an audio file containing farmer symptoms. / किसान के लक्षणों वाली ऑडियो फ़ाइल रिकॉर्ड या अपलोड करें।")
-    
-    uploaded_voice = st.file_uploader("Upload audio (.wav) / ऑडियो अपलोड करें", type=["wav"], key="voice_upload")
-    
-    if uploaded_voice and st.button("Transcribe Voice / आवाज़ को टेक्स्ट में बदलें", key="voice_btn"):
-        tmp_path = os.path.join(tempfile.gettempdir(), f"voice_{uploaded_voice.name}")
-        with open(tmp_path, "wb") as f:
-            f.write(uploaded_voice.getbuffer())
-            
-        with st.spinner("Transcribing..."):
-            asr_res = hindi_asr.transcribe(tmp_path)
-            transcript = asr_res.get("text", "")
-            
-        if transcript:
-            st.success("Transcription complete!")
-            st.write(f"**Transcript:** {transcript}")
-            st.session_state.farmer_text_from_voice = transcript
-            st.info("Transcript saved to session. You can now switch to the Crop or Livestock tab to continue analysis.")
 
 with tab_history:
     st.subheader("Farm History Records / खेत के ऐतिहासिक रिकॉर्ड")
