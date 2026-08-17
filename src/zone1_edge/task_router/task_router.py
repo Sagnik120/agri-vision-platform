@@ -24,29 +24,54 @@ def compute_entropy(top_k: list) -> float:
     return entropy
 
 def auto_route(image_path: str, mode: str = None) -> dict:
-    crop_res = run_crop_expert(image_path, mode=mode)
-    livestock_res = run_livestock_expert(image_path, mode=mode)
+    from src.zone1_edge import config
     
-    crop_conf = crop_res.get("confidence", 0.0)
-    livestock_conf = livestock_res.get("confidence", 0.0)
+    # 1. If in mock mode, fallback to the old math comparison
+    if mode == "mock" or config.EXPERT_MODE == "mock":
+        crop_res = run_crop_expert(image_path, mode=mode)
+        livestock_res = run_livestock_expert(image_path, mode=mode)
+        if crop_res.get("confidence", 0.0) >= livestock_res.get("confidence", 0.0):
+            return {"chosen_domain": "crop", "expert_output": crop_res}
+        return {"chosen_domain": "livestock", "expert_output": livestock_res}
+        
+    # 2. Real AI Two-Stage Semantic Routing
+    import torch
+    from transformers import pipeline
+    from PIL import Image
     
-    crop_ent = compute_entropy(crop_res.get("top_k", []))
-    livestock_ent = compute_entropy(livestock_res.get("top_k", []))
-    
-    if crop_conf >= livestock_conf:
-        chosen = "crop"
-        res = crop_res
-    else:
-        chosen = "livestock"
-        res = livestock_res
+    try:
+        # Load the zero-shot model purely for high-level domain classification
+        classifier = pipeline(
+            "zero-shot-image-classification",
+            model=str(config.LIVESTOCK_MODEL_LOCAL_DIR),
+            device="cuda" if torch.cuda.is_available() else "cpu"
+        )
+        img = Image.open(image_path).convert("RGB")
+        # Ask it a balanced, high-level question
+        res = classifier(img, candidate_labels=["a photo of a plant leaf or crop", "a photo of a cow or livestock animal"])
+        
+        if "plant" in res[0]["label"]:
+            chosen = "crop"
+            expert_res = run_crop_expert(image_path, mode=mode)
+        else:
+            chosen = "livestock"
+            expert_res = run_livestock_expert(image_path, mode=mode)
+            
+    except Exception as e:
+        # Fallback if pipeline fails
+        print(f"Warning: Semantic router failed ({e}), falling back to math.")
+        crop_res = run_crop_expert(image_path, mode=mode)
+        livestock_res = run_livestock_expert(image_path, mode=mode)
+        if crop_res.get("confidence", 0.0) >= livestock_res.get("confidence", 0.0):
+            chosen = "crop"
+            expert_res = crop_res
+        else:
+            chosen = "livestock"
+            expert_res = livestock_res
         
     return {
         "chosen_domain": chosen,
-        "crop_confidence": crop_conf,
-        "livestock_confidence": livestock_conf,
-        "crop_entropy": crop_ent,
-        "livestock_entropy": livestock_ent,
-        "expert_output": res
+        "expert_output": expert_res
     }
 
 def route(domain: str, image_path: str, mode: str = None) -> dict:
