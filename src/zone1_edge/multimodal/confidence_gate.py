@@ -55,10 +55,17 @@ def decide_route(fusion_output: dict, input_quality_ok: bool = True) -> dict:
     is_high_confidence = confidence_ok and evidence_ok and input_quality_ok and text_support is not False
     
     route = "local" if is_high_confidence else "cloud"
+    
+    if is_high_confidence:
+        advisory_tier = "confident"
+    elif is_critical or not input_quality_ok:
+        advisory_tier = "refer_expert"
+    else:
+        advisory_tier = "possible"
 
     result = dict(fusion_output)  # copy, preserve contract #5 shape
     result["route"] = route
-    result["advisory_tier"] = route
+    result["advisory_tier"] = advisory_tier
     result["threshold_reason"] = reasons
     result["_debug_gate"] = {
         "confidence_ok": confidence_ok,

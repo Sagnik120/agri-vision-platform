@@ -17,16 +17,11 @@ def run_eval():
 
     # We will use mock mode
     results = {"total": len(cases), "route_correct": 0, "tier_correct": 0, "schema_valid": 0}
-    
-    # Just mock an image for tests that don't have the demo files
-    dummy_img = np.zeros((100, 100, 3), dtype=np.uint8)
-    cv2.imwrite("dummy_test.jpg", dummy_img)
 
     for case in cases:
         print(f"Evaluating {case['id']}...")
         
-        # Override the image path with our dummy for now just so it doesn't crash on missing files
-        img_path = case["image_path"] if Path(case["image_path"]).exists() else "dummy_test.jpg"
+        img_path = case["image_path"]
         
         try:
             res = run_zone1_pipeline(
@@ -42,9 +37,10 @@ def run_eval():
             if route == case["expected_route"]:
                 results["route_correct"] += 1
                 
-            tier = (res.get("local_advisory") or {}).get("advisory_tier")
-            # Just simple validation for now
-            results["tier_correct"] += 1
+            tier = res.get("gate", {}).get("advisory_tier")
+            if tier == case.get("expected_advisory_tier"):
+                results["tier_correct"] += 1
+                
             results["schema_valid"] += 1
             
         except Exception as e:
@@ -56,9 +52,6 @@ def run_eval():
     print(f"Total Cases: {results['total']}")
     print(f"Route Accuracy: {results['route_correct']}/{results['total']}")
     print(f"Schema valid: {results['schema_valid']}/{results['total']}")
-    
-    if Path("dummy_test.jpg").exists():
-        os.remove("dummy_test.jpg")
     
 if __name__ == "__main__":
     run_eval()
