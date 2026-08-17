@@ -25,6 +25,13 @@ Develop a digital platform prototype that enables farmers to access crop disease
 - Tests: 5/5 passing, pipeline integration passed
 - Notes: Added trend tracking and top-k generic first-aid recommendations. Updated pipeline to pass previous readings through the sensor dictionary.
 
+### Task A3 — Text Evidence (Symptoms) Upgrade
+- Status: DONE
+- Time taken: 15 min (planned 40)
+- Files touched: `src/zone1_edge/multimodal/text_evidence.py`, `src/zone1_edge/config.py`, `src/zone1_edge/multimodal/fusion.py`, `tests/zone1/test_fusion.py`
+- Tests: 10/10 passing, pipeline integration passed
+- Notes: Expanded dictionary to 20-25 entries including Hindi and English fuzzy spellings. Added `get_device_tier` stub returning 'medium'. Updated fusion logic to skip harsh penalties on 'low' tier devices.
+
 ## Person B Log (append newest at bottom)
 
 ## What Was Completed (final summary, filled at Hour 8:00)
