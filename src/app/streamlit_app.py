@@ -95,7 +95,8 @@ div[data-testid="stFileUploaderDropzoneInstructions"] > div::after {
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🌾 Unified AI Agri-Vision Platform / एकीकृत एआई कृषि-विजन प्लेटफॉर्म")
+st.title("🚜 Agri-Vision: The Fully Unified Crop & Livestock Platform")
+st.markdown("#### *One Login. One History. Total Farm Management. / एक लॉगिन. एक इतिहास. संपूर्ण खेत प्रबंधन.*")
 st.caption("Crop Disease ID / फ़सल रोग पहचान + Livestock Monitoring / पशुधन निगरानी + Historical Records / ऐतिहासिक रिकॉर्ड — Offline-First / ऑफ़लाइन-प्रथम")
 st.divider()
 
@@ -154,7 +155,7 @@ with st.sidebar:
         st.session_state.farmer_id = None
         st.rerun()
 
-tab_auto, tab_crop, tab_livestock, tab_voice, tab_history = st.tabs(["⚡ Auto-Detect / स्वतः पहचान", "🌱 Crop / फ़सल", "🐄 Livestock / पशुधन", "🎙️ Voice / आवाज़", "📖 Farm History / खेत का इतिहास"])
+tab_auto, tab_history, tab_voice, tab_crop, tab_livestock = st.tabs(["⚡ Auto-Detect / स्वतः पहचान", "📖 Farm History / खेत का इतिहास", "🎙️ Voice / आवाज़", "🌱 Crop / फ़सल", "🐄 Livestock / पशुधन"])
 
 def process_pipeline_result(result, farmer_text):
     gate = result["gate"]
@@ -302,23 +303,23 @@ with tab_auto:
     st.subheader("Auto-Detect Check / स्वतः-पहचान जांच")
     uploaded_auto = st.file_uploader("Upload a crop or livestock photo / फ़सल या पशुधन की फ़ोटो अपलोड करें", type=["jpg", "jpeg", "png"], key="auto_upload")
     farmer_text_auto = st.text_input("Farmer description / किसान का विवरण (लक्षण)", value=st.session_state.farmer_text_from_voice, key="auto_text")
+    
+    with st.expander("Livestock Sensors (Optional) / पशुधन सेंसर (वैकल्पिक)"):
+        col1, col2, col3 = st.columns(3)
+        with col1: temp_auto = st.slider("Temperature (°C) / तापमान", 35.0, 42.0, 38.5, key="auto_temp")
+        with col2: activity_auto = st.selectbox("Activity Level / गतिविधि स्तर", ["normal / सामान्य", "low / कम", "high / अधिक"], key="auto_act")
+        with col3: feed_auto = st.selectbox("Feed Intake / चारा खाना", ["normal / सामान्य", "low / कम", "none / कुछ नहीं"], key="auto_feed")
+        sensor_data_auto = {"temperature": temp_auto, "activity": activity_auto, "feed_intake": feed_auto}
+        
     if uploaded_auto and st.button("Auto-Detect / स्वतः विश्लेषण करें", key="auto_btn"):
         tmp_path = os.path.join(tempfile.gettempdir(), f"auto_{uploaded_auto.name}")
         with open(tmp_path, "wb") as f:
             f.write(uploaded_auto.getbuffer())
             
         with st.spinner("Auto-routing and analyzing..."):
-            # Pass domain="auto" to use Task A5 auto-route
-            result = run_zone1_pipeline("auto", tmp_path, farmer_text=farmer_text_auto or None, mode=EXPERT_MODE)
+            result = run_zone1_pipeline("auto", tmp_path, farmer_text=farmer_text_auto or None, sensor_reading=sensor_data_auto, mode=EXPERT_MODE)
             
-        summary_for_tts = process_pipeline_result(result, farmer_text_auto)
-        
-        if summary_for_tts:
-            st.markdown("🔊 **Play Advisory in Hindi:**")
-            with st.spinner("Synthesizing audio..."):
-                tts_out = os.path.join(tempfile.gettempdir(), "tts_auto.wav")
-                tts_res = hindi_tts.synthesize(summary_for_tts, tts_out)
-                st.audio(tts_res["audio_path"])
+        process_pipeline_result(result, farmer_text_auto)
 
 with tab_crop:
     st.subheader("Crop Disease Check / फ़सल रोग जांच")
@@ -332,14 +333,7 @@ with tab_crop:
         with st.spinner("Analyzing locally..."):
             result = run_zone1_pipeline("crop", tmp_path, farmer_text=farmer_text_crop or None, mode=EXPERT_MODE)
             
-        summary_for_tts = process_pipeline_result(result, farmer_text_crop)
-        
-        if summary_for_tts:
-            st.markdown("🔊 **Play Advisory in Hindi:**")
-            with st.spinner("Synthesizing audio..."):
-                tts_out = os.path.join(tempfile.gettempdir(), "tts_crop.wav")
-                tts_res = hindi_tts.synthesize(summary_for_tts, tts_out)
-                st.audio(tts_res["audio_path"])
+        process_pipeline_result(result, farmer_text_crop)
 
 
 with tab_livestock:
@@ -363,14 +357,7 @@ with tab_livestock:
         with st.spinner("Analyzing locally..."):
             result = run_zone1_pipeline("livestock", tmp_path, farmer_text=farmer_text_ls or None, sensor_reading=sensor_data, mode=EXPERT_MODE)
             
-        summary_for_tts = process_pipeline_result(result, farmer_text_ls)
-            
-        if summary_for_tts:
-            st.markdown("🔊 **Play Advisory in Hindi:**")
-            with st.spinner("Synthesizing audio..."):
-                tts_out = os.path.join(tempfile.gettempdir(), "tts_ls.wav")
-                tts_res = hindi_tts.synthesize(summary_for_tts, tts_out)
-                st.audio(tts_res["audio_path"])
+        process_pipeline_result(result, farmer_text_ls)
 
 
 with tab_voice:
