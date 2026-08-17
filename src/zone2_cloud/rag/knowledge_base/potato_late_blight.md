@@ -1,25 +1,14 @@
-# Condition: Potato Late Blight
+# Potato Late Blight
 
-## Symptoms
-- Irregular, pale green, water-soaked spots on leaves.
-- Lesions turn dark brown/black rapidly.
-- White fuzzy growth on leaf undersides in wet conditions.
-- Tubers show reddish-brown, dry, granular rot under the skin.
+**Description:** Fast-spreading disease causing dark lesions on leaves and stems, especially in cool, wet weather.
 
-## Visual Indicators
-- Rapid blighting of foliage.
-- White mold on the underside of leaf lesions.
+**Safety Critical:** True
 
-## Recommended Actions
-- Destroy infected foliage immediately.
-- Apply systemic fungicides if the infection is caught very early.
+## Actions
+- Destroy infected plant material away from the field.
+- Apply systemic fungicide immediately upon detection.
+- Hill soil around stems to protect tubers from spores.
+- Harvest early if the disease is spreading fast to save remaining tubers.
 
-## Prevention
-- Plant certified disease-free seed potatoes.
-- Eliminate cull piles and volunteer potatoes.
-
-## When to Seek Expert Help
-- Immediate reporting to local agricultural extension is often required as it can destroy entire fields in days.
-
-## Source
-International Potato Center
+## Warning
+This is the disease responsible for historic famine-level crop loss — treat as high priority.

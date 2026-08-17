@@ -1,0 +1,29 @@
+[
+  {
+    "id": "case1",
+    "domain": "crop",
+    "image_path": "src/zone1_edge/demo_data/tomato_late_blight_demo.jpg",
+    "farmer_audio_text": "Plant has brown spots everywhere, rapidly dying.",
+    "sensor_reading": null,
+    "expected_route": "cloud",
+    "expected_advisory_tier": "possible"
+  },
+  {
+    "id": "case2",
+    "domain": "livestock",
+    "image_path": "src/zone1_edge/demo_data/livestock_fmd_demo.jpg",
+    "farmer_audio_text": "Cow is limping and drooling, high fever.",
+    "sensor_reading": {"temperature": 40.5, "activity": "low", "feed_intake": "none"},
+    "expected_route": "cloud",
+    "expected_advisory_tier": "possible"
+  },
+  {
+    "id": "case3",
+    "domain": "crop",
+    "image_path": "src/zone1_edge/demo_data/tomato_healthy_demo.jpg",
+    "farmer_audio_text": "Just a regular check, looks fine.",
+    "sensor_reading": null,
+    "expected_route": "local",
+    "expected_advisory_tier": "confident"
+  }
+]

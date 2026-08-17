@@ -4,6 +4,8 @@
 
 CREATE TABLE IF NOT EXISTS farm (
     farm_id     TEXT PRIMARY KEY,
+    phone       TEXT UNIQUE,
+    pin         TEXT,            -- DEMO ONLY: production must hash+salt
     farmer_name TEXT,
     location    TEXT,
     created_at  TEXT DEFAULT (datetime('now'))

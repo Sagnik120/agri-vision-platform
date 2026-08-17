@@ -1,25 +1,14 @@
-# Condition: Foot and Mouth Disease (FMD)
+# Foot And Mouth Disease
 
-## Symptoms
-- High fever for two to three days.
-- Blisters (vesicles) inside the mouth, on the tongue, and on the hooves.
-- Excessive salivation and drooling.
-- Lameness and reluctance to move.
+**Description:** Highly contagious viral disease causing fever, blisters on mouth/feet, and limping in cattle.
 
-## Visual Indicators
-- Ruptured blisters leaving raw erosions on gums, tongue, and teats.
-- Drooling and lameness.
+**Safety Critical:** True
 
-## Recommended Actions
-- Strict quarantine of the affected farm. No movement of animals, equipment, or people.
-- Contact veterinary authorities immediately.
+## Actions
+- Isolate the animal and restrict herd movement immediately.
+- Contact a veterinarian and local animal husbandry department urgently.
+- Disinfect footwear, vehicles, and equipment entering/leaving the farm.
+- Do not sell or move animals until cleared by an official.
 
-## Prevention
-- Strict biosecurity measures.
-- Vaccination programs depending on the region's endemic status.
-
-## When to Seek Expert Help
-- IMMEDIATELY upon suspicion. FMD is highly contagious and economically devastating.
-
-## Source
-Veterinary Epidemiology Center
+## Warning
+Reportable disease — contact veterinary authorities immediately, do not self-treat.

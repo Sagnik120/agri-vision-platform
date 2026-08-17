@@ -1,23 +1,14 @@
-# Condition: Potato Early Blight
+# Potato Early Blight
 
-## Symptoms
-- Dark, concentric ringed spots on older leaves.
-- Leaves turn yellow and dry up.
-- Sunken, dark, dry rot on potato tubers.
+**Description:** Fungal disease showing target-like brown spots on older potato leaves.
 
-## Visual Indicators
-- "Bullseye" pattern lesions on leaves.
+**Safety Critical:** False
 
-## Recommended Actions
-- Apply appropriate fungicides containing chlorothalonil or mancozeb.
-- Keep plants well-fertilized to reduce susceptibility.
+## Actions
+- Remove severely infected foliage.
+- Apply recommended fungicide at first sign of spots.
+- Ensure balanced fertilization — avoid excess nitrogen.
+- Practice 2-3 year crop rotation with non-solanaceous crops.
 
-## Prevention
-- Harvest only when vines are completely dead to protect tubers.
-- Rotate crops with non-solanaceous plants.
-
-## When to Seek Expert Help
-- If defoliation is severe early in the season.
-
-## Source
-Potato Growers Association Guidelines
+## Warning
+Monitor tubers at harvest for secondary infection.

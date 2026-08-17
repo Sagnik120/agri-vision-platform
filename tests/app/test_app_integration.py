@@ -11,7 +11,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 # Mock Streamlit completely before importing the app
 mock_st = MagicMock()
-mock_st.tabs.return_value = [MagicMock(), MagicMock(), MagicMock()]
+mock_st.tabs = MagicMock(side_effect=lambda x: [MagicMock()] * len(x))
+mock_st.session_state = MagicMock()
+mock_st.session_state.farmer_id = "FARM-001"
+mock_st.session_state.__contains__.side_effect = lambda key: key in ["farmer_id", "farmer_text_from_voice"]
 mock_st.columns.return_value = [MagicMock(), MagicMock(), MagicMock()]
 mock_st.button.return_value = False
 with patch.dict('sys.modules', {'streamlit': mock_st}):

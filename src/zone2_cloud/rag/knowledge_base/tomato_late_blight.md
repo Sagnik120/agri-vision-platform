@@ -1,26 +1,14 @@
-# Condition: Tomato Late Blight
+# Tomato Late Blight
 
-## Symptoms
-- Large, irregular, water-soaked spots on leaves.
-- White fungal growth on the underside of leaves during humid weather.
-- Dark, greasy-looking spots on stems.
-- Firm, dark brown lesions on fruit.
+**Description:** Aggressive fungal-like disease (Phytophthora) causing dark, water-soaked lesions that spread rapidly in humid weather.
 
-## Visual Indicators
-- Rapidly expanding dark lesions on leaves and stems.
-- White mold under leaves in high humidity.
+**Safety Critical:** True
 
-## Recommended Actions
-- Immediately remove and destroy infected plants; do not compost.
-- Apply protective fungicides (like chlorothalonil or copper) if weather is cool and wet.
+## Actions
+- Remove and burn/bury infected plants — do not compost.
+- Apply a preventive fungicide (e.g. mancozeb) to healthy neighboring plants.
+- Improve airflow by spacing plants and pruning dense foliage.
+- Avoid working in the field when leaves are wet to prevent spread.
 
-## Prevention
-- Avoid overhead watering.
-- Destroy volunteer tomato and potato plants.
-- Ensure good spacing for airflow.
-
-## When to Seek Expert Help
-- As soon as late blight is suspected, as it is highly contagious and devastating.
-
-## Source
-National Plant Disease Information System
+## Warning
+Late blight can destroy a field within days. Escalate to an expert if spread is rapid across multiple plants.

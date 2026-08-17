@@ -26,6 +26,7 @@ from src.zone1_edge.speech import hindi_asr, hindi_tts
 from src.zone2_cloud.gemini import gemini_client
 from src.zone2_cloud.rag import retriever
 from src.zone3_memory.db import farm_memory
+from src.zone3_memory.db import auth
 
 st.set_page_config(page_title="Agri-Vision Platform", layout="wide")
 st.title("🌾 Unified AI Agri-Vision Platform")
@@ -33,11 +34,54 @@ st.caption("Crop Disease ID + Livestock Monitoring + Historical Records — Offl
 
 # Ensure DB is initialized
 farm_memory.init_db()
-FARM_ID = "FARM-001"
 
-# Store voice transcripts globally so they can be fed to other tabs
+# Session State for Auth
+if "farmer_id" not in st.session_state:
+    st.session_state.farmer_id = None
 if "farmer_text_from_voice" not in st.session_state:
     st.session_state.farmer_text_from_voice = ""
+
+def render_login():
+    st.subheader("Farmer Login / Signup")
+    tab1, tab2 = st.tabs(["Login", "Signup"])
+    
+    with tab1:
+        phone_login = st.text_input("Phone Number", key="login_phone")
+        pin_login = st.text_input("PIN", type="password", key="login_pin")
+        if st.button("Login"):
+            fid = auth.login(phone_login, pin_login)
+            if fid:
+                st.session_state.farmer_id = fid
+                st.success("Logged in successfully!")
+                st.rerun()
+            else:
+                st.error("Invalid phone or PIN.")
+                
+    with tab2:
+        name_signup = st.text_input("Full Name", key="signup_name")
+        phone_signup = st.text_input("Phone Number", key="signup_phone")
+        pin_signup = st.text_input("Create PIN", type="password", key="signup_pin")
+        if st.button("Signup"):
+            try:
+                fid = auth.signup(phone_signup, pin_signup, name_signup)
+                st.session_state.farmer_id = fid
+                st.success("Account created successfully!")
+                st.rerun()
+            except ValueError as e:
+                st.error(str(e))
+
+if not st.session_state.farmer_id:
+    render_login()
+    st.stop()
+
+# If logged in:
+FARM_ID = st.session_state.farmer_id
+
+with st.sidebar:
+    st.write(f"**Logged in as:** {FARM_ID}")
+    if st.button("Logout"):
+        st.session_state.farmer_id = None
+        st.rerun()
 
 tab_auto, tab_crop, tab_livestock, tab_voice, tab_history = st.tabs(["⚡ Auto-Detect", "🌱 Crop", "🐄 Livestock", "🎙️ Voice", "📖 Farm History"])
 

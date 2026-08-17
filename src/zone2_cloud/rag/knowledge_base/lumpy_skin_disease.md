@@ -1,25 +1,14 @@
-# Condition: Lumpy Skin Disease (Cattle)
+# Lumpy Skin Disease
 
-## Symptoms
-- High fever, increased nasal and eye discharge.
-- Firm, circumscribed skin nodules (lumps) of 1-5 cm developing across the body.
-- Swollen lymph nodes.
-- Significant drop in milk production.
+**Description:** Viral disease in cattle causing firm skin nodules, fever, and reduced milk yield, spread by biting insects.
 
-## Visual Indicators
-- Distinctive skin nodules/lumps on the head, neck, limbs, and udder.
+**Safety Critical:** True
 
-## Recommended Actions
-- Isolate infected animals immediately.
-- Treat secondary bacterial infections with antibiotics (consult a vet).
-- Provide supportive care (soft feed, water).
+## Actions
+- Isolate the affected animal immediately from the herd.
+- Control biting insects (flies, mosquitoes, ticks) around the shed.
+- Contact a veterinarian for supportive treatment and vaccination guidance.
+- Disinfect shared equipment and water troughs.
 
-## Prevention
-- Vaccinate healthy animals.
-- Control vectors (mosquitoes, biting flies, ticks) using insect repellents and environmental management.
-
-## When to Seek Expert Help
-- IMMEDIATELY. LSD is a notifiable disease in many regions and requires veterinary confirmation.
-
-## Source
-World Organisation for Animal Health (WOAH)
+## Warning
+Notifiable disease in many regions — report to local veterinary authority.

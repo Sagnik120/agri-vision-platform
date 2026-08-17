@@ -49,8 +49,16 @@ Return JSON with this exact shape:
 """
 
 
+def strip_pii(payload: dict) -> dict:
+    """Removes sensitive farmer PII before sending to cloud."""
+    cleaned = payload.copy()
+    cleaned.pop("farmer_name", None)
+    cleaned.pop("phone", None)
+    return cleaned
+
 def build_prompt(payload: dict) -> str:
-    return SYSTEM_PROMPT_TEMPLATE.format(context_json=json.dumps(payload, ensure_ascii=False, indent=2))
+    cleaned_payload = strip_pii(payload)
+    return SYSTEM_PROMPT_TEMPLATE.format(context_json=json.dumps(cleaned_payload, ensure_ascii=False, indent=2))
 
 
 class MockGeminiClient:
@@ -100,7 +108,22 @@ def call_gemini(payload: dict) -> dict:
                 response_mime_type="application/json",
             )
         )
-        return json.loads(response.text)
+        parsed = json.loads(response.text)
+        
+        # Validation
+        from src.zone2_cloud.gemini.validator import validate_advisory
+        retrieved_snippets = payload.get("retrieved_knowledge", [])
+        if isinstance(retrieved_snippets, str):
+            retrieved_snippets = [retrieved_snippets]
+            
+        is_valid, reasons = validate_advisory(parsed, retrieved_snippets, payload)
+        if not is_valid:
+            print(f"Validation failed for Gemini output: {reasons}")
+            parsed["advisory"]["warning"] = parsed["advisory"].get("warning", "") + f"\nSystem Note: {reasons[0]}"
+            if "drug" in reasons[0].lower():
+                parsed["advisory"]["actions"] = ["Please consult a local expert for safe treatment guidelines."]
+                
+        return parsed
     except Exception as e:
         print(f"Error calling Gemini: {e}")
         # Safe fallback in case of malformed JSON or API failure

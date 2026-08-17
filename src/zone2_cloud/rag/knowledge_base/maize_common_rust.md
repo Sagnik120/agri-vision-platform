@@ -1,23 +1,14 @@
-# Condition: Maize Common Rust
+# Maize Common Rust
 
-## Symptoms
-- Small, reddish-brown pustules forming on both upper and lower leaf surfaces.
-- Pustules rupture, releasing powdery, rust-colored spores.
-- Leaves may yellow and dry prematurely if infection is severe.
+**Description:** Fungal disease producing reddish-brown pustules on maize leaves.
 
-## Visual Indicators
-- Rust-colored, powdery bumps on leaves.
+**Safety Critical:** False
 
-## Recommended Actions
-- Apply foliar fungicides if the disease is detected early, especially before silking.
-- Ensure balanced nutrition, particularly potassium.
+## Actions
+- Apply fungicide (e.g. propiconazole) if infection is detected early in the season.
+- Plant rust-resistant maize varieties in future seasons.
+- Avoid dense planting to improve air circulation.
+- Monitor weekly during humid growing periods.
 
-## Prevention
-- Plant rust-resistant maize hybrids.
-- Avoid planting in extremely humid, cool environments if possible.
-
-## When to Seek Expert Help
-- If pustules cover more than 5% of the leaf area before the tasseling stage.
-
-## Source
-Maize Pathology Handbook
+## Warning
+Usually manageable; escalate only if yield-bearing leaves are heavily damaged before tasseling.
