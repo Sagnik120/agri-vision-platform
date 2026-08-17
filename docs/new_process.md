@@ -32,6 +32,13 @@ Develop a digital platform prototype that enables farmers to access crop disease
 - Tests: 10/10 passing, pipeline integration passed
 - Notes: Expanded dictionary to 20-25 entries including Hindi and English fuzzy spellings. Added `get_device_tier` stub returning 'medium'. Updated fusion logic to skip harsh penalties on 'low' tier devices.
 
+### Task A5 — Zero-Train Dual-Backbone Task Router
+- Status: DONE
+- Time taken: 15 min (planned 30)
+- Files touched: `src/zone1_edge/task_router/task_router.py`, `tests/zone1/test_task_router.py`
+- Tests: 7/7 passing, pipeline integration passed
+- Notes: Implemented `auto_route` to invoke both crop and livestock experts and compare confidences. Entropy computed as a secondary diagnostic stat. Existing manual routing unchanged.
+
 ## Person B Log (append newest at bottom)
 
 ## What Was Completed (final summary, filled at Hour 8:00)
