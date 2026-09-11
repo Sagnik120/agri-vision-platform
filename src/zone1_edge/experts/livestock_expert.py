@@ -3,7 +3,7 @@ livestock_expert.py — Person A, Zone 1.
 
 Loads a pretrained cattle-disease-style HF image-classification model
 (EfficientNet-B3 class) and returns predictions in the frozen contract shape
-(contract.md #1):
+(instructions/contract.md #1):
 
     {"domain":"livestock", "input_type":"image", "prediction": str,
      "confidence": float, "top_k": [[label, prob], ...]}

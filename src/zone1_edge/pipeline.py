@@ -2,10 +2,10 @@
 pipeline.py — Person A, Zone 1. THE end-to-end orchestrator.
 
 Wires together, in order:
-  1. task_router.route()              -> image expert output   (contract #1)
-  2. multimodal.text_evidence.run()   -> text evidence output   (contract #3)
-  3. multimodal.sensor_expert.run()   -> sensor output           (contract #4)  [livestock only, optional]
-  4. multimodal.fusion.fuse()         -> fusion output           (contract #5)
+  1. task_router.route()              -> image expert output   (instructions/contract.md #1)
+  2. multimodal.text_evidence.run()   -> text evidence output   (instructions/contract.md #3)
+  3. multimodal.sensor_expert.run()   -> sensor output           (instructions/contract.md #4)  [livestock only, optional]
+  4. multimodal.fusion.fuse()         -> fusion output           (instructions/contract.md #5)
   5. multimodal.confidence_gate.decide_route() -> final route + gate debug info
   6. knowledge.local_advisory.get_advisory()   -> ONLY if route == 'local'
 
@@ -111,7 +111,7 @@ def run_zone1_pipeline(
 def build_cloud_payload_stub(pipeline_result: dict, farm_history: str = "",
                               retrieved_knowledge: str = "") -> dict:
     """
-    Convenience helper matching contract.md #6 shape, so Person B can see
+    Convenience helper matching instructions/contract.md #6 shape, so Person B can see
     exactly what Zone 1 hands over when route == 'cloud'. Person B's real
     gemini_client.py will build this for real (with actual RAG retrieval +
     farm history from SQLite) — this stub just proves the shape is correct.

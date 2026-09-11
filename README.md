@@ -58,7 +58,8 @@ We built a **Single Unified Application** that solves all three problems:
 ```text
 agri-vision-platform/
 ├── architecture_diagram.jpeg    # High-level system architecture
-├── contract.md                  # Frozen JSON data contract between Zones
+├── instructions/                # Project instructions and contracts
+│   └── contract.md              # Frozen JSON data contract between Zones
 ├── setup/                       # Environment bootstrap and model download scripts
 │   ├── setup_venv.sh             
 │   ├── download_crop_model.py    

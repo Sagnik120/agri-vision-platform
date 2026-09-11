@@ -2,9 +2,9 @@
 fusion.py — Person A, Zone 1 (Hour 4:15-5:15 of the plan). THE key new component.
 
 Rule/score-based late fusion. NO MODEL. Combines:
-  - image expert output              (contract #1)
-  - text evidence output             (contract #3)
-  - sensor output (livestock only)   (contract #4)
+  - image expert output              (instructions/contract.md #1)
+  - text evidence output             (instructions/contract.md #3)
+  - sensor output (livestock only)   (instructions/contract.md #4)
 
 Rules (frozen, from the plan — do not let text arbitrarily override image):
   score = visual_confidence
@@ -14,7 +14,7 @@ Rules (frozen, from the plan — do not let text arbitrarily override image):
   if sensor conflicts -> -0.15  (config.FUSION_SENSOR_CONFLICT_PENALTY)
   cap at 0.99, floor at 0.01
 
-Produces contract.md #5 (consumed by confidence_gate.py, and later by
+Produces instructions/contract.md #5 (consumed by confidence_gate.py, and later by
 Person B's cloud call + UI):
 
     {"prediction": str, "visual_confidence": float, "text_support": bool,

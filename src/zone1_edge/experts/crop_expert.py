@@ -2,7 +2,7 @@
 crop_expert.py — Person A, Zone 1.
 
 Loads a pretrained PlantVillage-style HF image-classification model and
-returns predictions in the frozen contract shape (contract.md #1):
+returns predictions in the frozen contract shape (instructions/contract.md #1):
 
     {"domain":"crop", "input_type":"image", "prediction": str,
      "confidence": float, "top_k": [[label, prob], ...]}
