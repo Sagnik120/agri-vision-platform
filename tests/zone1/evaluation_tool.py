@@ -106,15 +106,48 @@ def run_evaluation(data_dir: str, labels_path: str, domain: str, mode: str = "au
         if t == p:
             class_correct[t] += 1
             
+    # Per-class accuracy
     print("\nPer-class accuracy:")
     for c, count in class_total.items():
         acc = class_correct[c] / count
         print(f"  - {c}: {acc:.2%} ({class_correct[c]}/{count})")
         
+    # Calibration Reporting (Phase 2.2)
+    # Bucket into ranges: [0.0-0.5), [0.5-0.7), [0.7-0.9), [0.9-1.0]
+    buckets = {
+        "0.0-0.5": {"correct": 0, "total": 0},
+        "0.5-0.7": {"correct": 0, "total": 0},
+        "0.7-0.9": {"correct": 0, "total": 0},
+        "0.9-1.0": {"correct": 0, "total": 0},
+    }
+    for res in results_log:
+        conf = res["confidence"]
+        if conf < 0.5: b = "0.0-0.5"
+        elif conf < 0.7: b = "0.5-0.7"
+        elif conf < 0.9: b = "0.7-0.9"
+        else: b = "0.9-1.0"
+        
+        buckets[b]["total"] += 1
+        if res["correct"]:
+            buckets[b]["correct"] += 1
+            
+    print("\n" + "="*50)
+    print("CALIBRATION REPORT")
+    print(f"Dataset Nature: {'MOCK' if 'Mock' in expert.backend_info else 'REAL MODEL'}")
+    print("="*50)
+    for b_name, b_stats in buckets.items():
+        b_acc = (b_stats["correct"] / b_stats["total"]) if b_stats["total"] > 0 else 0.0
+        print(f"Confidence {b_name:7} -> Accuracy: {b_acc:6.2%} (N={b_stats['total']})")
+    print("="*50)
+        
     # Save detailed report
     report_path = f"evaluation_report_{domain}.json"
     with open(report_path, 'w') as f:
-        json.dump({"summary": {"accuracy": accuracy, "total": total, "source": expert.backend_info}, "details": results_log}, f, indent=2)
+        json.dump({
+            "summary": {"accuracy": accuracy, "total": total, "source": expert.backend_info},
+            "calibration": buckets,
+            "details": results_log
+        }, f, indent=2)
     print(f"\nDetailed report saved to {report_path}")
 
 

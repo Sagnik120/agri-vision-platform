@@ -62,10 +62,9 @@ EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "auto")
 # ---------------------------------------------------------------------------
 # Fusion rules (Section 3, hour 4:15-5:15 of the plan)
 # ---------------------------------------------------------------------------
-FUSION_TEXT_SUPPORT_BONUS = 0.10
-FUSION_TEXT_CONFLICT_PENALTY = 0.20
-FUSION_SENSOR_SUPPORT_BONUS = 0.08
-FUSION_SENSOR_CONFLICT_PENALTY = 0.15
+WEIGHT_VISUAL = 0.60        # Base importance of the image model's prediction
+WEIGHT_TEXT_SUPPORT = 0.20  # Importance of farmer-reported symptoms
+WEIGHT_SENSOR_SUPPORT = 0.20 # Importance of IoT sensor data (livestock only)
 FUSION_CONFIDENCE_CAP = 0.99
 FUSION_CONFIDENCE_FLOOR = 0.01
 

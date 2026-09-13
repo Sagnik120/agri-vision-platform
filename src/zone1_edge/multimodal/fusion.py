@@ -110,16 +110,19 @@ def fuse(image_output: dict, text_evidence: Optional[dict] = None,
     text_agree = _text_agreement(prediction, symptoms)
     sensor_agree = _sensor_agreement(prediction, sensor_output)
 
-    score = visual_confidence
-    if text_agree is True:
-        score += config.FUSION_TEXT_SUPPORT_BONUS
-    elif text_agree is False:
-        score -= config.FUSION_TEXT_CONFLICT_PENALTY
-
-    if sensor_agree is True:
-        score += config.FUSION_SENSOR_SUPPORT_BONUS
-    elif sensor_agree is False:
-        score -= config.FUSION_SENSOR_CONFLICT_PENALTY
+    # Calculate normalized weighted score
+    weights_total = config.WEIGHT_VISUAL
+    score_components = config.WEIGHT_VISUAL * visual_confidence
+    
+    if text_agree is not None:
+        weights_total += config.WEIGHT_TEXT_SUPPORT
+        score_components += config.WEIGHT_TEXT_SUPPORT * (1.0 if text_agree else 0.0)
+        
+    if sensor_agree is not None:
+        weights_total += config.WEIGHT_SENSOR_SUPPORT
+        score_components += config.WEIGHT_SENSOR_SUPPORT * (1.0 if sensor_agree else 0.0)
+        
+    score = score_components / weights_total
 
     final_confidence = max(config.FUSION_CONFIDENCE_FLOOR,
                             min(config.FUSION_CONFIDENCE_CAP, score))
