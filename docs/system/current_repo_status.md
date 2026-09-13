@@ -72,8 +72,8 @@ Code references HF checkpoints (`CROP_MODEL_LOCAL_DIR`, `LIVESTOCK_MODEL_LOCAL_D
 Uses `faiss-cpu` and `sentence-transformers` for local vector indexing and retrieval. `retriever.py` fetches the top-K relevant documents.
 
 ## 12. Voice / Multimodal Status
-🟡 PARTIALLY_IMPLEMENTED.
-UI accepts audio files and calls `hindi_asr.transcribe`. However, it relies heavily on external models/services. Sensor data is completely simulated via UI sliders. Fusion logic is purely rule-based, adjusting confidence mathematically rather than learning joint representations.
+🟠 DISABLED (Feature Flagged).
+UI previously accepted audio files and called `hindi_asr.transcribe`. This is now hidden behind `VOICE_INPUT_ENABLED=False` to ensure demo stability. The underlying ASR implementation is fully preserved for future reactivation.
 
 ## 13. Offline Capability Status
 ✅ IMPLEMENTED.
@@ -118,25 +118,29 @@ A rich pytest suite exists under `tests/` covering Zone 1 (gate, experts, fusion
 | Cloud Gateway | Escalation | `src/zone2_cloud/gemini/gemini_client.py` | ✅ IMPLEMENTED | Validated schema outputs, integrates Google GenAI. |
 | RAG | Knowledge grounding | `src/zone2_cloud/rag/retriever.py` | ✅ IMPLEMENTED | Uses `faiss` and `sentence-transformers`. |
 | Farm Memory | Persistent history | `src/zone3_memory/db/farm_memory.py` | ✅ IMPLEMENTED | Uses SQLite, schema logic is active. |
-| Voice | Hindi ASR/TTS | `src/zone1_edge/speech/hindi_asr.py` | 🟡 PARTIAL | Referenced in UI, uses uploaded WAVs. |
+| Voice | Hindi ASR/TTS | `src/zone1_edge/speech/hindi_asr.py` | 🟠 DISABLED | UI access disabled via feature flag. Code preserved for future scope. |
 | Model Improvement| Secure aggregation | N/A | ⚪ DOC_ONLY | Mentioned as architectural concept, no code exists. |
 
 ## 21. End-to-End Demo Flows Currently Possible
 1. **Flow A (Local Advisory)**: Image Upload -> Routing -> Crop/Livestock Expert -> High Confidence/High Agreement Fusion -> Local Advisory -> Memory Persist.
-2. **Flow B (Cloud Escalation)**: Image + Mock Voice Upload -> Low Confidence OR Conflicting Symptoms OR Safety Critical -> Cloud Escalation via Gemini + RAG -> Structured Gemini Advisory -> Memory Persist.
+2. **Flow B (Cloud Escalation)**: Image + Text Upload -> Low Confidence OR Conflicting Symptoms OR Safety Critical -> Cloud Escalation via Gemini + RAG -> Structured Gemini Advisory -> Memory Persist.
 3. **Flow C (Mock Mode)**: Hardware constrained offline execution bypassing real model loading for rapid prototyping.
 
 ## 22. Known Technical Issues / Risks
 - Voice input models (ASR) are heavy and complex to run locally on low-end devices.
 - Fusion logic is naive (rule-based score addition/subtraction) rather than an actual trained multi-modal representation.
 
-## 23. Important Missing or Incomplete Components
-- Secure Model Aggregation/Improvement.
-- Real sensor integrations (IoT).
-- True multi-modal representation learning.
+## 23. Consolidated Future Scope (A-E & Voice)
+- **Voice/ASR Re-enablement**: Reintegrate `hindi_asr.py` once models are optimized for edge hardware.
+- **Future Scope A**: Multi-Agent Cloud Redesign.
+- **Future Scope B**: Secure Aggregation/Federated Learning.
+- **Future Scope C**: Real IoT Hardware Integration.
+- **Future Scope D**: Admin Dashboard.
+- **Future Scope E**: Farm Memory Image Storage (blob storage).
+- True multi-modal representation learning (learned fusion).
 
 ## 24. Overall Implementation Maturity
-High for a hackathon prototype. The separation of concerns via data contracts between zones is excellently executed. The system relies heavily on rule-based orchestration to bridge disparate deep-learning capabilities, making it highly robust for live demonstrations.
+High for a prototype. All three roadmap phases (Phase 1: Verification, Phase 2: RAG/Calibration, Phase 3: Cleanup & Voice Detachment) are complete. The separation of concerns via data contracts between zones is excellently executed and robust.
 
 ## 25. Audit Notes / Evidence
 - **Pipeline trace**: Fully traced via `src/zone1_edge/pipeline.py::run_zone1_pipeline()`.
