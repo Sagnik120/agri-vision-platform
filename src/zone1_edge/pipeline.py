@@ -123,11 +123,12 @@ def build_cloud_payload_stub(pipeline_result: dict, farm_history: str = "",
     gemini_client.py will build this for real (with actual RAG retrieval +
     farm history from SQLite) — this stub just proves the shape is correct.
     """
-    gate = pipeline_result["gate"]
-    text_ev = pipeline_result["text_evidence"] or {"symptoms": []}
-    sensor_out = pipeline_result["sensor_output"]
+    gate = pipeline_result.get("gate", {})
+    text_ev = pipeline_result.get("text_evidence") or {"symptoms": []}
+    sensor_out = pipeline_result.get("sensor_output")
+    image_output = pipeline_result.get("image_output", {"domain": "unknown"})
     return {
-        "domain": pipeline_result["image_output"]["domain"],
+        "domain": image_output["domain"],
         "image_prediction": gate["prediction"],
         "visual_confidence": gate["visual_confidence"],
         "farmer_text": "",  # Person B fills raw farmer text here
