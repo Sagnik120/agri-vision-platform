@@ -52,9 +52,7 @@ class LivestockExpert(BaseImageExpert):
 
 def run(image_path: str, mode: str = None) -> dict:
     expert = LivestockExpert(mode=mode)
-    result = expert.predict(image_path)
-    result["_debug_backend"] = expert.backend_info
-    return result
+    return expert.predict(image_path)
 
 
 if __name__ == "__main__":

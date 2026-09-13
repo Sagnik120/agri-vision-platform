@@ -170,6 +170,8 @@ class BaseImageExpert:
 
         top_k = sorted(top_k, key=lambda x: x[1], reverse=True)[:3]
         prediction, confidence = top_k[0]
+        
+        logger.info("[%s] Inference source: %s", self.domain, self.backend_info)
 
         return {
             "domain": self.domain,
