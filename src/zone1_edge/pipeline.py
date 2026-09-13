@@ -47,13 +47,13 @@ def run_zone1_pipeline(
     img = cv2.imread(image_path)
     if img is not None:
         quality_res = quality_check.compute_quality(img)
-        if quality_res["quality_flag"] == "reject" and mode != "mock":
+        if quality_res["quality_flag"] == "reject":
+            reason_str = " ".join(quality_res.get("reasons", ["Image too blurry or dark. Please retake the photo."]))
             return {
-                "gate": {"route": "reject", "reason": "Image too blurry or dark. Please retake the photo."},
+                "gate": {"route": "reject", "reason": reason_str},
                 "quality": quality_res
             }
-        if mode != "mock":
-            input_quality_ok = (quality_res["quality_flag"] == "ok")
+        input_quality_ok = (quality_res["quality_flag"] == "ok")
     else:
         quality_res = {"quality_flag": "ok"} # fallback if image path is bad or synthetic
 
@@ -65,6 +65,12 @@ def run_zone1_pipeline(
     else:
         actual_domain = domain
         image_output = task_router.route(actual_domain, image_path, mode=mode)
+
+    if actual_domain == "none":
+        return {
+            "gate": {"route": "reject", "reason": "This image doesn't appear to be a crop or livestock photo — please retake or upload a relevant photo."},
+            "quality": {"quality_flag": "ok"}
+        }
 
     text_ev = None
     if farmer_text:
@@ -141,8 +147,15 @@ def _selftest():
     os.makedirs(tmp_dir, exist_ok=True)
     crop_img = os.path.join(tmp_dir, "crop.jpg")
     livestock_img = os.path.join(tmp_dir, "livestock.jpg")
-    Image.new("RGB", (64, 64), color=(120, 200, 80)).save(crop_img)
-    Image.new("RGB", (64, 64), color=(200, 150, 100)).save(livestock_img)
+    import numpy as np
+
+    def create_noisy_image(base_color, size=(64, 64)):
+        arr = np.random.normal(loc=base_color, scale=30, size=(size[0], size[1], 3))
+        arr = np.clip(arr, 0, 255).astype(np.uint8)
+        return Image.fromarray(arr)
+
+    create_noisy_image((120, 200, 80)).save(crop_img)
+    create_noisy_image((200, 150, 100)).save(livestock_img)
 
     print("=" * 70)
     print("SCENARIO 1: Crop, with supporting Hindi text -> expect route=local")

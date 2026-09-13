@@ -26,15 +26,25 @@ def compute_entropy(top_k: list) -> float:
 def auto_route(image_path: str, mode: str = None) -> dict:
     from src.zone1_edge import config
     
-    # 1. If in mock mode, fallback to the old math comparison
+    # 1. If in mock mode, use a simple filename heuristic to simulate semantic routing
+    # This ensures exactly ONE expert is invoked per valid case.
     if mode == "mock" or config.EXPERT_MODE == "mock":
-        crop_res = run_crop_expert(image_path, mode=mode)
-        livestock_res = run_livestock_expert(image_path, mode=mode)
-        if crop_res.get("confidence", 0.0) >= livestock_res.get("confidence", 0.0):
-            return {"chosen_domain": "crop", "expert_output": crop_res}
-        return {"chosen_domain": "livestock", "expert_output": livestock_res}
+        img_name = image_path.lower()
+        if any(w in img_name for w in ["crop", "tomato", "potato", "maize", "pepper", "plant", "leaf"]):
+            chosen = "crop"
+        elif any(w in img_name for w in ["livestock", "cow", "cattle", "animal", "health"]):
+            chosen = "livestock"
+        else:
+            chosen = "none"
+            
+        if chosen == "none":
+            return {"chosen_domain": "none", "expert_output": None}
+        elif chosen == "crop":
+            return {"chosen_domain": "crop", "expert_output": run_crop_expert(image_path, mode=mode)}
+        else:
+            return {"chosen_domain": "livestock", "expert_output": run_livestock_expert(image_path, mode=mode)}
         
-    # 2. Real AI Two-Stage Semantic Routing
+    # 2. Real AI Semantic Routing
     import torch
     from transformers import pipeline
     from PIL import Image
@@ -47,27 +57,28 @@ def auto_route(image_path: str, mode: str = None) -> dict:
             device="cuda" if torch.cuda.is_available() else "cpu"
         )
         img = Image.open(image_path).convert("RGB")
-        # Ask it a balanced, high-level question
-        res = classifier(img, candidate_labels=["a photo of a plant leaf or crop", "a photo of a cow or livestock animal"])
+        # Ask it a balanced, high-level question including a rejection class
+        res = classifier(img, candidate_labels=[
+            "a photo of a plant leaf or crop", 
+            "a photo of a cow or livestock animal",
+            "a photo of something else entirely"
+        ])
         
-        if "plant" in res[0]["label"]:
+        top_label = res[0]["label"]
+        if "plant" in top_label:
             chosen = "crop"
             expert_res = run_crop_expert(image_path, mode=mode)
-        else:
+        elif "cow" in top_label or "livestock" in top_label:
             chosen = "livestock"
             expert_res = run_livestock_expert(image_path, mode=mode)
+        else:
+            chosen = "none"
+            expert_res = None
             
     except Exception as e:
         # Fallback if pipeline fails
-        print(f"Warning: Semantic router failed ({e}), falling back to math.")
-        crop_res = run_crop_expert(image_path, mode=mode)
-        livestock_res = run_livestock_expert(image_path, mode=mode)
-        if crop_res.get("confidence", 0.0) >= livestock_res.get("confidence", 0.0):
-            chosen = "crop"
-            expert_res = crop_res
-        else:
-            chosen = "livestock"
-            expert_res = livestock_res
+        print(f"Warning: Semantic router failed ({e}), falling back to heuristic mock.")
+        return auto_route(image_path, mode="mock")
         
     return {
         "chosen_domain": chosen,

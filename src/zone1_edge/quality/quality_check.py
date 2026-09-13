@@ -37,6 +37,17 @@ def compute_exposure_score(img: np.ndarray) -> float:
     
     return float(extreme_dark + extreme_bright) / total_pixels
 
+def compute_resolution_score(img: np.ndarray) -> bool:
+    h, w = img.shape[:2]
+    return h >= 50 and w >= 50
+
+def compute_contrast_score(img: np.ndarray) -> float:
+    if len(img.shape) == 3:
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = img
+    return float(np.std(gray))
+
 def compute_quality(img: np.ndarray) -> dict:
     """
     Computes overall image quality.
@@ -44,6 +55,8 @@ def compute_quality(img: np.ndarray) -> dict:
     """
     blur_raw = compute_blur_score(img)
     exposure_raw = compute_exposure_score(img)
+    res_ok = compute_resolution_score(img)
+    contrast_raw = compute_contrast_score(img)
     
     # Normalize blur: variance of 150+ is good (1.0), 0 is bad (0.0)
     blur_norm = min(1.0, blur_raw / 150.0)
@@ -58,8 +71,12 @@ def compute_quality(img: np.ndarray) -> dict:
         reasons.append("Image is too blurry.")
     if exposure_norm < 0.6:
         reasons.append("Image is poorly exposed (too dark or too bright).")
+    if not res_ok:
+        reasons.append("Image resolution is too low (< 50px).")
+    if contrast_raw < 5.0:
+        reasons.append("Image contrast is too low.")
         
-    if quality_score < 0.45 or blur_norm < 0.2 or exposure_norm < 0.2:
+    if quality_score < 0.45 or blur_norm < 0.2 or exposure_norm < 0.2 or not res_ok or contrast_raw < 5.0:
         flag = "reject"
         if not reasons:
             reasons.append("Overall quality is very low.")

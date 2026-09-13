@@ -160,6 +160,11 @@ tab_auto, tab_history = st.tabs(["⚡ Auto-Detect / स्वतः पहचा
 def process_pipeline_result(result, farmer_text):
     gate = result["gate"]
     
+    if gate.get("route") == "reject":
+        st.error(f"❌ {gate.get('reason', 'Image too blurry or dark. Please retake the photo.')}")
+        st.button("Retake Photo / फिर से फ़ोटो लें", on_click=lambda: st.experimental_rerun() if hasattr(st, "experimental_rerun") else st.rerun())
+        return None
+        
     # Zone 3: Save Observation
     obs_id = farm_memory.save_observation(
         farm_id=FARM_ID,
@@ -170,11 +175,6 @@ def process_pipeline_result(result, farmer_text):
         sensor_json=json.dumps(result.get("sensor_output") or {}),
         route=gate.get("route", "local")
     )
-    
-    if gate.get("route") == "reject":
-        st.error(f"❌ {gate.get('reason', 'Image too blurry or dark. Please retake the photo.')}")
-        st.button("Retake Photo / फिर से फ़ोटो लें", on_click=lambda: st.experimental_rerun() if hasattr(st, "experimental_rerun") else st.rerun())
-        return None
 
     quality_flag = result.get("quality", {}).get("quality_flag", "ok")
     if quality_flag == "warn":
