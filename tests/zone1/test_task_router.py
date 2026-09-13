@@ -39,8 +39,7 @@ def test_auto_route_score_logic(monkeypatch):
     monkeypatch.setattr(task_router, "run_crop_expert", lambda img, mode: {"confidence": 0.9, "domain": "crop", "top_k": [("crop", 0.9), ("other", 0.1)]})
     monkeypatch.setattr(task_router, "run_livestock_expert", lambda img, mode: {"confidence": 0.3, "domain": "livestock", "top_k": [("livestock", 0.3)]})
     
-    out = task_router.auto_route("fake_img", mode="mock")
-    assert out["chosen_domain"] == "crop"
+    out = task_router.auto_route("fake_crop_img", mode="mock")
     assert out["chosen_domain"] == "crop"
     assert out["expert_output"]["confidence"] == 0.9
 
@@ -48,7 +47,11 @@ def test_auto_route_score_logic_livestock(monkeypatch):
     monkeypatch.setattr(task_router, "run_crop_expert", lambda img, mode: {"confidence": 0.2, "domain": "crop", "top_k": []})
     monkeypatch.setattr(task_router, "run_livestock_expert", lambda img, mode: {"confidence": 0.85, "domain": "livestock", "top_k": []})
     
-    out = task_router.auto_route("fake_img", mode="mock")
-    assert out["chosen_domain"] == "livestock"
+    out = task_router.auto_route("fake_livestock_img", mode="mock")
     assert out["chosen_domain"] == "livestock"
     assert out["expert_output"]["confidence"] == 0.85
+
+def test_auto_route_none():
+    out = task_router.auto_route("fake_random_img_wall", mode="mock")
+    assert out["chosen_domain"] == "none"
+    assert out["expert_output"] is None
