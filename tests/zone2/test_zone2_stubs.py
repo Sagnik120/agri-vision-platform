@@ -109,10 +109,13 @@ def test_transcribe_runs_mock():
 
 
 def test_synthesize_runs_mock():
+    # If fastpitch or indicf5 aren't setup locally, should fallback to mock without crashing
     from src.zone1_edge.speech.hindi_tts import synthesize
-    res = synthesize("test text", "/tmp/tts_test.wav")
-    assert isinstance(res, dict)
-    assert "audio_path" in res
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        res = synthesize("hello world", os.path.join(tmpdirname, "test.wav"))
+        assert res["engine"] in ("fastpitch_hifigan", "hf_tts", "mock")
+        assert "audio_path" in res
     assert "engine" in res
 
 
@@ -194,12 +197,15 @@ def test_results_zone2_directories_exist():
 
 def test_zone1_produces_cloud_payload_matching_contract_6():
     import tempfile
+    import numpy as np
     from PIL import Image
     from src.zone1_edge.pipeline import run_zone1_pipeline, build_cloud_payload_stub
 
     tmp = Path(tempfile.mkdtemp())
     img_path = str(tmp / "test.jpg")
-    Image.new("RGB", (64, 64), (100, 200, 80)).save(img_path)
+    arr = np.random.normal(loc=(100, 200, 80), scale=30, size=(64, 64, 3))
+    arr = np.clip(arr, 0, 255).astype(np.uint8)
+    Image.fromarray(arr).save(img_path)
 
     result = run_zone1_pipeline("crop", img_path,
                                 farmer_text="brown spots on leaves",

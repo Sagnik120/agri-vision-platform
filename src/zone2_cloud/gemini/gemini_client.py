@@ -35,6 +35,8 @@ STRICT RULES — follow all of them:
    (e.g. Foot-and-Mouth Disease, Lumpy Skin Disease).
 7. Return ONLY valid JSON matching the schema below — no prose, no markdown \
    fences.
+8. ALWAYS cite specific retrieved knowledge in the `cited_knowledge` array if used.
+9. If farm history is provided, you MUST acknowledge it.
 
 Context:
 {context_json}
@@ -44,7 +46,8 @@ Return JSON with this exact shape:
   "diagnosis": {{"condition": "...", "certainty": "possible|confirmed|insufficient_evidence"}},
   "advisory": {{"summary": "...", "actions": ["..."], "warning": "..."}},
   "expert_consultation_recommended": true|false,
-  "cited_knowledge": ["..."]
+  "cited_knowledge": ["..."],
+  "farm_history_acknowledged": true|false
 }}
 """
 
@@ -78,7 +81,8 @@ class MockGeminiClient:
                                 "warning": "Mock warning: handle with care."
                             },
                             "expert_consultation_recommended": True,
-                            "cited_knowledge": ["Mock knowledge snippet about mock_disease"]
+                            "cited_knowledge": ["Mock knowledge snippet about mock_disease"],
+                            "farm_history_acknowledged": True
                         })
                 return MockResponse()
         self.models = MockModels()

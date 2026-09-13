@@ -6,7 +6,8 @@ def test_validate_clean():
         "diagnosis": {"condition": "Tomato Early Blight", "certainty": "possible"},
         "advisory": {"summary": "Use copper spray", "actions": [], "warning": ""},
         "expert_consultation_recommended": False,
-        "cited_knowledge": []
+        "cited_knowledge": [],
+        "farm_history_acknowledged": True
     }
     is_valid, reasons = validate_advisory(resp, ["Tomato Early blight is bad"], {})
     assert is_valid
@@ -17,7 +18,8 @@ def test_validate_ungrounded():
         "diagnosis": {"condition": "Alien Virus", "certainty": "possible"},
         "advisory": {"summary": "Panic", "actions": [], "warning": ""},
         "expert_consultation_recommended": True,
-        "cited_knowledge": []
+        "cited_knowledge": [],
+        "farm_history_acknowledged": True
     }
     is_valid, reasons = validate_advisory(resp, ["Just normal plants here"], {})
     assert not is_valid
@@ -28,7 +30,8 @@ def test_validate_drug_dosage():
         "diagnosis": {"condition": "Lumpy Skin Disease", "certainty": "possible"},
         "advisory": {"summary": "Give 50 mg antibiotics", "actions": [], "warning": ""},
         "expert_consultation_recommended": True,
-        "cited_knowledge": []
+        "cited_knowledge": [],
+        "farm_history_acknowledged": True
     }
     is_valid, reasons = validate_advisory(resp, ["Lumpy Skin Disease is viral"], {})
     assert not is_valid

@@ -8,10 +8,10 @@ def test_rag_kb_schema_and_retrieval():
         data = json.load(f)
         
     for key, entry in data.items():
-        assert "canonical_description" in entry or "summary" in entry
+        assert "description" in entry
         assert "is_safety_critical" in entry
         assert isinstance(entry["is_safety_critical"], bool)
-        assert "actions" in entry
+        assert "immediate_action" in entry
 
     # Test retrieval
     results = retrieve("tomato with brown concentric spots on leaves", k=3)
