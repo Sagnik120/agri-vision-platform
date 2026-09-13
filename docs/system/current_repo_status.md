@@ -108,9 +108,11 @@ A rich pytest suite exists under `tests/` covering Zone 1 (gate, experts, fusion
 ## 20. Architecture-to-Code Gap Table
 | Intended Component | Expected Role | Actual Code Location | Status | Evidence/Notes |
 |--------------------|---------------|----------------------|--------|----------------|
-| Edge Router | Crop/Livestock routing | `src/zone1_edge/task_router/task_router.py` | ✅ IMPLEMENTED | Semantic zero-shot classification with math fallback. |
-| Crop Expert | Crop disease inference | `src/zone1_edge/experts/crop_expert.py` | ✅ IMPLEMENTED | Wraps `BaseImageExpert`, loads HF models, uses mock labels. |
-| Livestock Expert | Livestock health inference | `src/zone1_edge/experts/livestock_expert.py` | ✅ IMPLEMENTED | Wraps `BaseImageExpert`, loads HF models, uses zero-shot maps. |
+| Edge Router | Crop/Livestock routing | `src/zone1_edge/task_router/task_router.py` | ✅ IMPLEMENTED | Correctly handles 3-way routing (Crop, Livestock, None) in real and mock modes without improperly invoking both experts. |
+| Crop Expert | Crop disease inference | `src/zone1_edge/experts/crop_expert.py` | ✅ IMPLEMENTED | Wraps `BaseImageExpert`, loads HF models, implements transparent logging of backend inference source. |
+| Livestock Expert | Livestock health inference | `src/zone1_edge/experts/livestock_expert.py` | ✅ IMPLEMENTED | Wraps `BaseImageExpert`, loads HF models, implements transparent logging of backend inference source. |
+| Quality Check | Input validation | `src/zone1_edge/pipeline/quality_check.py` | ✅ IMPLEMENTED | Handles blur, exposure, resolution, and contrast rejection. |
+| Evaluation Tooling | Model baseline testing | `tests/zone1/evaluation_tool.py` | ✅ IMPLEMENTED | Built for offline testing of model baselines. |
 | Multimodal Fusion | Combine evidence | `src/zone1_edge/multimodal/fusion.py` | ✅ IMPLEMENTED | Rule-based late fusion (+/- confidence adjustments). |
 | Confidence Gate | Local/cloud decision | `src/zone1_edge/multimodal/confidence_gate.py` | ✅ IMPLEMENTED | Evaluates fusion output, safety criticality, input quality. |
 | Cloud Gateway | Escalation | `src/zone2_cloud/gemini/gemini_client.py` | ✅ IMPLEMENTED | Validated schema outputs, integrates Google GenAI. |

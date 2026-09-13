@@ -3,12 +3,12 @@
 ## 1. Purpose
 Provides the offline-first edge AI reasoning.
 
-## 2. Responsibilities
-- Quality checking inputs.
-- Semantic routing between crop/livestock.
-- Visual classification (ViT/MobileNet/EfficientNet).
-- Multimodal data fusion (rule-based).
-- Confidence gating.
+## Key Responsibilities
+- **Quality Gate:** Checks image blur (Laplacian variance), exposure, resolution (>= 50px), and contrast. Rejects invalid images immediately.
+- **Task Router:** Identifies whether the input is a crop, livestock, or "none" (irrelevant image). If "none", it short-circuits the pipeline before invoking any expert.
+- **Multimodal Experts:** Dedicated submodules for image, text, and sensor data.
+  - Image experts embed transparent tracking (real vs. mock backend).
+- **Fusion:** Late-fusion rules combining visual confidence with text/sensor support.
 
 ## 3. Architecture Role
 The primary inference engine. Determines if cloud escalation is necessary.

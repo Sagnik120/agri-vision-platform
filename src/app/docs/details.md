@@ -3,12 +3,14 @@
 ## 1. Purpose
 Provides the primary farmer-facing, bilingual interface (English/Hindi).
 
-## 2. Responsibilities
-- User authentication.
-- File (Image/Voice) uploading.
-- Sensor data simulation (via sliders).
-- Wires the execution of Zone 1 (`pipeline.py`).
-- Handles UI branching based on the final decision (`local` vs `cloud`).
+## Key Responsibilities
+- **User Interface:** Simple, accessible UI for farmers with Hindi/English bilingual support.
+- **Input Capture:** Handles image uploads, optional text descriptions, and optional sensor data inputs.
+- **Edge Orchestration:** Directly calls `src.zone1_edge.pipeline.run_zone1_pipeline()`.
+- **Response Handling:**
+  - Displays rejection messages for poor quality or irrelevant ("none") images.
+  - Presents the offline local advisory if confidence is high.
+  - Triggers the Zone 2 Cloud Escalation if confidence is low or complex anomalies are found.
 
 ## 3. Architecture Role
 The presentation layer spanning all three zones.
