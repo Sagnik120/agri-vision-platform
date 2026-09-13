@@ -8,6 +8,11 @@ demo script scenarios and the Final Test in Section 6
 (4 fixed sentences: ~2 route local, 1-2 route cloud).
 """
 
+import sys
+import pytest
+
+pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="Windows OpenCV pytest module import collision")
+
 from src.zone1_edge.pipeline import run_zone1_pipeline, build_cloud_payload_stub
 
 REQUIRED_TOP_KEYS = {"image_output", "text_evidence", "sensor_output", "fusion",

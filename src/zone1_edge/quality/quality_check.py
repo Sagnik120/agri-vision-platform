@@ -1,9 +1,10 @@
 """Task A1: Quality Check Module"""
 
-import cv2
-import numpy as np
+from __future__ import annotations
 
 def compute_blur_score(img: np.ndarray) -> float:
+    import numpy as np
+    import cv2
     """Computes a blur score based on Laplacian variance (resized max 512px grayscale)."""
     # Resize to max 512px on the longest side for performance
     h, w = img.shape[:2]
@@ -25,6 +26,8 @@ def compute_blur_score(img: np.ndarray) -> float:
     return float(var)
 
 def compute_exposure_score(img: np.ndarray) -> float:
+    import numpy as np
+    import cv2
     """Computes fraction of pixels in extreme luminance bins (<10 or >250)."""
     if len(img.shape) == 3:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -42,6 +45,8 @@ def compute_resolution_score(img: np.ndarray) -> bool:
     return h >= 50 and w >= 50
 
 def compute_contrast_score(img: np.ndarray) -> float:
+    import numpy as np
+    import cv2
     if len(img.shape) == 3:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     else:

@@ -13,13 +13,19 @@ os.environ["AGRIVISION_EXPERT_MODE"] = "mock"
 
 import pytest
 from PIL import Image
-import numpy as np
+import random
 
 
 def create_noisy_image(base_color, size=(64, 64)):
-    arr = np.random.normal(loc=base_color, scale=30, size=(size[0], size[1], 3))
-    arr = np.clip(arr, 0, 255).astype(np.uint8)
-    return Image.fromarray(arr)
+    img = Image.new("RGB", size)
+    pixels = img.load()
+    for i in range(size[0]):
+        for j in range(size[1]):
+            r = max(0, min(255, int(random.gauss(base_color[0], 30))))
+            g = max(0, min(255, int(random.gauss(base_color[1], 30))))
+            b = max(0, min(255, int(random.gauss(base_color[2], 30))))
+            pixels[i, j] = (r, g, b)
+    return img
 
 
 @pytest.fixture(scope="session")

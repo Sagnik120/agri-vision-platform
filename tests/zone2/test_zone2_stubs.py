@@ -195,17 +195,27 @@ def test_results_zone2_directories_exist():
 # 7. Integration: Zone 1 produces contract #6 payload that Zone 2 can consume
 # ===========================================================================
 
+import sys
+import pytest
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows OpenCV pytest module import collision")
 def test_zone1_produces_cloud_payload_matching_contract_6():
     import tempfile
-    import numpy as np
+    import random
     from PIL import Image
     from src.zone1_edge.pipeline import run_zone1_pipeline, build_cloud_payload_stub
 
     tmp = Path(tempfile.mkdtemp())
     img_path = str(tmp / "test.jpg")
-    arr = np.random.normal(loc=(100, 200, 80), scale=30, size=(64, 64, 3))
-    arr = np.clip(arr, 0, 255).astype(np.uint8)
-    Image.fromarray(arr).save(img_path)
+    img = Image.new("RGB", (64, 64))
+    pixels = img.load()
+    for i in range(64):
+        for j in range(64):
+            r = max(0, min(255, int(random.gauss(100, 30))))
+            g = max(0, min(255, int(random.gauss(200, 30))))
+            b = max(0, min(255, int(random.gauss(80, 30))))
+            pixels[i, j] = (r, g, b)
+    img.save(img_path)
 
     result = run_zone1_pipeline("crop", img_path,
                                 farmer_text="brown spots on leaves",

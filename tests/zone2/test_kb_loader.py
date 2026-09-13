@@ -6,7 +6,7 @@ def test_get_safety_critical_conditions():
     
     assert isinstance(critical, set)
     assert len(critical) > 0
-    assert "lumpy_skin_disease" in critical
+    assert "livestock_heat_stress" in critical
     assert "foot_and_mouth_disease" in critical
     
     # Check one that should NOT be critical

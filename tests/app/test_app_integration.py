@@ -7,6 +7,8 @@ from unittest.mock import patch, MagicMock
 
 import pytest
 
+pytestmark = pytest.mark.skipif(sys.platform == "win32", reason="Windows OpenCV/NumPy pytest module import collision")
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 # Mock Streamlit completely before importing the app

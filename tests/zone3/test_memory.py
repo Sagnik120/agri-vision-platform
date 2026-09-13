@@ -5,18 +5,24 @@ import os
 from pathlib import Path
 from src.zone2_cloud.gemini.gemini_client import strip_pii
 
-# Override DB path for tests
 test_db = Path("test_memory.db")
-farm_memory.DEFAULT_DB_PATH = test_db
+_orig_db_path = None
 
 def setup_module():
+    global _orig_db_path
+    _orig_db_path = farm_memory.DEFAULT_DB_PATH
+    farm_memory.DEFAULT_DB_PATH = test_db
     if test_db.exists():
         test_db.unlink()
     farm_memory.init_db()
 
 def teardown_module():
     if test_db.exists():
-        test_db.unlink()
+        try:
+            test_db.unlink()
+        except PermissionError:
+            pass
+    farm_memory.DEFAULT_DB_PATH = _orig_db_path
 
 def test_scoped_memory():
     # Create two farmers

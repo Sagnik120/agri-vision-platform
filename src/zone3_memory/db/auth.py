@@ -1,11 +1,11 @@
 import sqlite3
 import uuid
 import hashlib
-from src.zone3_memory.db.farm_memory import DEFAULT_DB_PATH
+from src.zone3_memory.db import farm_memory
 
 def _get_conn():
-    DEFAULT_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    return sqlite3.connect(DEFAULT_DB_PATH)
+    farm_memory.DEFAULT_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    return sqlite3.connect(farm_memory.DEFAULT_DB_PATH)
 
 def signup(phone: str, pin: str, name: str) -> str:
     """Create a new farmer and return their farmer_id."""
