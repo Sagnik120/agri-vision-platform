@@ -146,6 +146,7 @@ if not st.session_state.farmer_id:
 FARM_ID = st.session_state.farmer_id
 FARMER_NAME = auth.get_farmer_name(FARM_ID)
 EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "auto")
+VOICE_INPUT_ENABLED = False
 
 with st.sidebar:
     st.write(f"👨‍🌾 **Logged in as:** {FARMER_NAME}")
@@ -304,21 +305,22 @@ with tab_auto:
     st.subheader("Auto-Detect Check / स्वतः-पहचान जांच")
     uploaded_auto = st.file_uploader("Upload a crop or livestock photo / फ़सल या पशुधन की फ़ोटो अपलोड करें", type=["jpg", "jpeg", "png"], key="auto_upload")
     
-    st.markdown("---")
-    st.write("🎙️ **Voice Input (Hindi) / वॉयस इनपुट (हिंदी)** - *Optional / वैकल्पिक*")
-    uploaded_voice = st.file_uploader("Upload audio (.wav) / ऑडियो अपलोड करें", type=["wav"], key="auto_voice_upload")
-    if uploaded_voice and st.button("Transcribe Voice / आवाज़ को टेक्स्ट में बदलें", key="auto_voice_btn"):
-        tmp_path = os.path.join(tempfile.gettempdir(), f"voice_{uploaded_voice.name}")
-        with open(tmp_path, "wb") as f:
-            f.write(uploaded_voice.getbuffer())
-        with st.spinner("Transcribing..."):
-            asr_res = hindi_asr.transcribe(tmp_path)
-            transcript = asr_res.get("text", "")
-        if transcript:
-            st.success("Transcription complete!")
-            st.write(f"**Transcript:** {transcript}")
-            st.session_state.farmer_text_from_voice = transcript
-            st.info("Transcript saved! You can now edit it below or click Auto-Detect.")
+    if VOICE_INPUT_ENABLED:
+        st.markdown("---")
+        st.write("🎙️ **Voice Input (Hindi) / वॉयस इनपुट (हिंदी)** - *Optional / वैकल्पिक*")
+        uploaded_voice = st.file_uploader("Upload audio (.wav) / ऑडियो अपलोड करें", type=["wav"], key="auto_voice_upload")
+        if uploaded_voice and st.button("Transcribe Voice / आवाज़ को टेक्स्ट में बदलें", key="auto_voice_btn"):
+            tmp_path = os.path.join(tempfile.gettempdir(), f"voice_{uploaded_voice.name}")
+            with open(tmp_path, "wb") as f:
+                f.write(uploaded_voice.getbuffer())
+            with st.spinner("Transcribing..."):
+                asr_res = hindi_asr.transcribe(tmp_path)
+                transcript = asr_res.get("text", "")
+            if transcript:
+                st.success("Transcription complete!")
+                st.write(f"**Transcript:** {transcript}")
+                st.session_state.farmer_text_from_voice = transcript
+                st.info("Transcript saved! You can now edit it below or click Auto-Detect.")
 
     farmer_text_auto = st.text_input("Farmer description / किसान का विवरण (लक्षण)", value=st.session_state.farmer_text_from_voice, key="auto_text")
     
