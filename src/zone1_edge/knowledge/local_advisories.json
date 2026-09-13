@@ -1,301 +1,353 @@
 {
   "tomato_early_blight": {
-    "summary": "Fungal disease causing concentric brown spots on lower leaves, spreading upward.",
-    "actions": [
-      "Remove and destroy infected lower leaves immediately.",
-      "Apply a copper-based or chlorothalonil fungicide as per label instructions.",
-      "Avoid overhead watering; water at the base in the morning.",
-      "Rotate crops \u2014 avoid planting tomato/potato in the same spot next season."
+    "condition_name": "Tomato Early Blight",
+    "description": "Fungal disease causing concentric brown spots on lower leaves, spreading upward.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "If more than 50% of the plant is affected, consult a local agriculture officer before further chemical use.",
-    "canonical_description": "Fungal disease causing concentric brown spots on lower leaves, spreading upward.",
+    "immediate_action": "Remove and destroy infected lower leaves immediately.",
+    "preventive_action": "Rotate crops \u2014 avoid planting tomato/potato in the same spot next season.",
+    "escalation_trigger": "If more than 50% of the plant is affected, consult a local agriculture officer before further chemical use.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "tomato_late_blight": {
-    "summary": "Aggressive fungal-like disease (Phytophthora) causing dark, water-soaked lesions that spread rapidly in humid weather.",
-    "actions": [
-      "Remove and burn/bury infected plants \u2014 do not compost.",
-      "Apply a preventive fungicide (e.g. mancozeb) to healthy neighboring plants.",
-      "Improve airflow by spacing plants and pruning dense foliage.",
-      "Avoid working in the field when leaves are wet to prevent spread."
+    "condition_name": "Tomato Late Blight",
+    "description": "Aggressive fungal-like disease (Phytophthora) causing dark, water-soaked lesions that spread rapidly in humid weather.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Late blight can destroy a field within days. Escalate to an expert if spread is rapid across multiple plants.",
-    "canonical_description": "Aggressive fungal-like disease (Phytophthora) causing dark, water-soaked lesions that spread rapidly in humid weather.",
+    "immediate_action": "Remove and burn/bury infected plants \u2014 do not compost.",
+    "preventive_action": "Avoid working in the field when leaves are wet to prevent spread.",
+    "escalation_trigger": "Late blight can destroy a field within days. Escalate to an expert if spread is rapid across multiple plants.",
+    "safety_note": "High priority disease.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": true
   },
   "potato_early_blight": {
-    "summary": "Fungal disease showing target-like brown spots on older potato leaves.",
-    "actions": [
-      "Remove severely infected foliage.",
-      "Apply recommended fungicide at first sign of spots.",
-      "Ensure balanced fertilization \u2014 avoid excess nitrogen.",
-      "Practice 2-3 year crop rotation with non-solanaceous crops."
+    "condition_name": "Potato Early Blight",
+    "description": "Fungal disease showing target-like brown spots on older potato leaves.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Monitor tubers at harvest for secondary infection.",
-    "canonical_description": "Fungal disease showing target-like brown spots on older potato leaves.",
+    "immediate_action": "Remove severely infected foliage.",
+    "preventive_action": "Practice 2-3 year crop rotation with non-solanaceous crops.",
+    "escalation_trigger": "Monitor tubers at harvest for secondary infection.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "potato_late_blight": {
-    "summary": "Fast-spreading disease causing dark lesions on leaves and stems, especially in cool, wet weather.",
-    "actions": [
-      "Destroy infected plant material away from the field.",
-      "Apply systemic fungicide immediately upon detection.",
-      "Hill soil around stems to protect tubers from spores.",
-      "Harvest early if the disease is spreading fast to save remaining tubers."
+    "condition_name": "Potato Late Blight",
+    "description": "Fast-spreading disease causing dark lesions on leaves and stems, especially in cool, wet weather.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "This is the disease responsible for historic famine-level crop loss \u2014 treat as high priority.",
-    "canonical_description": "Fast-spreading disease causing dark lesions on leaves and stems, especially in cool, wet weather.",
+    "immediate_action": "Destroy infected plant material away from the field.",
+    "preventive_action": "Harvest early if the disease is spreading fast to save remaining tubers.",
+    "escalation_trigger": "This is the disease responsible for historic famine-level crop loss \u2014 treat as high priority.",
+    "safety_note": "High priority disease.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": true
   },
   "maize_common_rust": {
-    "summary": "Fungal disease producing reddish-brown pustules on maize leaves.",
-    "actions": [
-      "Apply fungicide (e.g. propiconazole) if infection is detected early in the season.",
-      "Plant rust-resistant maize varieties in future seasons.",
-      "Avoid dense planting to improve air circulation.",
-      "Monitor weekly during humid growing periods."
+    "condition_name": "Maize Common Rust",
+    "description": "Fungal disease producing reddish-brown pustules on maize leaves.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Usually manageable; escalate only if yield-bearing leaves are heavily damaged before tasseling.",
-    "canonical_description": "Fungal disease producing reddish-brown pustules on maize leaves.",
+    "immediate_action": "Apply fungicide (e.g. propiconazole) if infection is detected early in the season.",
+    "preventive_action": "Monitor weekly during humid growing periods.",
+    "escalation_trigger": "Usually manageable; escalate only if yield-bearing leaves are heavily damaged before tasseling.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "maize_healthy": {
-    "summary": "No disease symptoms detected on this maize sample.",
-    "actions": [
-      "Continue regular monitoring, especially after rain.",
-      "Maintain balanced irrigation and fertilization schedule."
+    "condition_name": "Maize Healthy",
+    "description": "No disease symptoms detected on this maize sample.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "None \u2014 recheck if new symptoms appear.",
-    "canonical_description": "No disease symptoms detected on this maize sample.",
+    "immediate_action": "Continue regular monitoring, especially after rain.",
+    "preventive_action": "Maintain balanced irrigation and fertilization schedule.",
+    "escalation_trigger": "None \u2014 recheck if new symptoms appear.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "tomato_healthy": {
-    "summary": "No disease symptoms detected on this tomato sample.",
-    "actions": [
-      "Continue regular monitoring for early signs of blight.",
-      "Maintain consistent watering and mulching."
+    "condition_name": "Tomato Healthy",
+    "description": "No disease symptoms detected on this tomato sample.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "None \u2014 recheck if new symptoms appear.",
-    "canonical_description": "No disease symptoms detected on this tomato sample.",
+    "immediate_action": "Continue regular monitoring for early signs of blight.",
+    "preventive_action": "Maintain consistent watering and mulching.",
+    "escalation_trigger": "None \u2014 recheck if new symptoms appear.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "pepper_bacterial_spot": {
-    "summary": "Bacterial disease causing small, dark, raised spots on pepper leaves and fruit.",
-    "actions": [
-      "Remove infected plant debris and avoid working with wet plants.",
-      "Apply copper-based bactericide as a preventive measure.",
-      "Use certified disease-free seed in future planting.",
-      "Avoid overhead irrigation."
+    "condition_name": "Pepper Bacterial Spot",
+    "description": "Bacterial disease causing small, dark, raised spots on pepper leaves and fruit.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Bacterial spot does not respond to fungicides \u2014 use copper-based bactericides only.",
-    "canonical_description": "Bacterial disease causing small, dark, raised spots on pepper leaves and fruit.",
+    "immediate_action": "Remove infected plant debris and avoid working with wet plants.",
+    "preventive_action": "Avoid overhead irrigation.",
+    "escalation_trigger": "Bacterial spot does not respond to fungicides \u2014 use copper-based bactericides only.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "lumpy_skin_disease": {
-    "summary": "Viral disease in cattle causing firm skin nodules, fever, and reduced milk yield, spread by biting insects.",
-    "actions": [
-      "Isolate the affected animal immediately from the herd.",
-      "Control biting insects (flies, mosquitoes, ticks) around the shed.",
-      "Contact a veterinarian for supportive treatment and vaccination guidance.",
-      "Disinfect shared equipment and water troughs."
+    "condition_name": "Lumpy Skin Disease",
+    "description": "Viral disease in cattle causing firm skin nodules, fever, and reduced milk yield, spread by biting insects.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Notifiable disease in many regions \u2014 report to local veterinary authority.",
-    "canonical_description": "Viral disease in cattle causing firm skin nodules, fever, and reduced milk yield, spread by biting insects.",
+    "immediate_action": "Isolate the affected animal immediately from the herd.",
+    "preventive_action": "Disinfect shared equipment and water troughs.",
+    "escalation_trigger": "Notifiable disease in many regions \u2014 report to local veterinary authority.",
+    "safety_note": "High priority disease.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": true
   },
   "foot_and_mouth_disease": {
-    "summary": "Highly contagious viral disease causing fever, blisters on mouth/feet, and limping in cattle.",
-    "actions": [
-      "Isolate the animal and restrict herd movement immediately.",
-      "Contact a veterinarian and local animal husbandry department urgently.",
-      "Disinfect footwear, vehicles, and equipment entering/leaving the farm.",
-      "Do not sell or move animals until cleared by an official."
+    "condition_name": "Foot And Mouth Disease",
+    "description": "Highly contagious viral disease causing fever, blisters on mouth/feet, and limping in cattle.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Reportable disease \u2014 contact veterinary authorities immediately, do not self-treat.",
-    "canonical_description": "Highly contagious viral disease causing fever, blisters on mouth/feet, and limping in cattle.",
+    "immediate_action": "Isolate the animal and restrict herd movement immediately.",
+    "preventive_action": "Do not sell or move animals until cleared by an official.",
+    "escalation_trigger": "Reportable disease \u2014 contact veterinary authorities immediately, do not self-treat.",
+    "safety_note": "High priority disease.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": true
   },
   "mastitis_suspected": {
-    "summary": "Suspected udder inflammation, often from bacterial infection, reducing milk quality/yield.",
-    "actions": [
-      "Milk the affected quarter separately and discard the milk.",
-      "Keep the animal in a clean, dry area.",
-      "Contact a veterinarian for antibiotic/anti-inflammatory guidance.",
-      "Check milking equipment hygiene to prevent spread to other animals."
+    "condition_name": "Mastitis Suspected",
+    "description": "Suspected udder inflammation, often from bacterial infection, reducing milk quality/yield.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Untreated mastitis can become chronic \u2014 seek veterinary care promptly.",
-    "canonical_description": "Suspected udder inflammation, often from bacterial infection, reducing milk quality/yield.",
+    "immediate_action": "Milk the affected quarter separately and discard the milk.",
+    "preventive_action": "Check milking equipment hygiene to prevent spread to other animals.",
+    "escalation_trigger": "Untreated mastitis can become chronic \u2014 seek veterinary care promptly.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "abnormal_temperature": {
-    "summary": "Sensor detected temperature outside the normal range for cattle, combined with behavioural signs.",
-    "actions": [
-      "Recheck temperature with a manual thermometer to confirm sensor reading.",
-      "Ensure adequate shade, water and ventilation.",
-      "Monitor feed intake and activity over the next 12 hours.",
-      "Contact a veterinarian if fever persists beyond 24 hours."
+    "condition_name": "Abnormal Temperature",
+    "description": "Sensor detected temperature outside the normal range for cattle, combined with behavioural signs.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Persistent high fever combined with low feed intake needs urgent veterinary attention.",
-    "canonical_description": "Sensor detected temperature outside the normal range for cattle, combined with behavioural signs.",
+    "immediate_action": "Recheck temperature with a manual thermometer to confirm sensor reading.",
+    "preventive_action": "Contact a veterinarian if fever persists beyond 24 hours.",
+    "escalation_trigger": "Persistent high fever combined with low feed intake needs urgent veterinary attention.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "healthy": {
-    "summary": "No disease symptoms detected on this livestock sample.",
-    "actions": [
-      "Continue routine health monitoring.",
-      "Maintain vaccination and deworming schedule."
+    "condition_name": "Healthy",
+    "description": "No disease symptoms detected on this livestock sample.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "None \u2014 recheck if new symptoms appear.",
-    "canonical_description": "No disease symptoms detected on this livestock sample.",
+    "immediate_action": "Continue routine health monitoring.",
+    "preventive_action": "Maintain vaccination and deworming schedule.",
+    "escalation_trigger": "None \u2014 recheck if new symptoms appear.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "wheat_rust": {
-    "summary": "Fungal disease causing orange/brown pustules on wheat leaves.",
-    "actions": [
-      "Apply systemic fungicides (e.g. tebuconazole) at first sign.",
-      "Use resistant wheat varieties in future."
+    "condition_name": "Wheat Rust",
+    "description": "Fungal disease causing orange/brown pustules on wheat leaves.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Can cause severe yield loss if not treated before heading.",
-    "canonical_description": "Fungal disease causing orange/brown pustules on wheat leaves.",
+    "immediate_action": "Apply systemic fungicides (e.g. tebuconazole) at first sign.",
+    "preventive_action": "Use resistant wheat varieties in future.",
+    "escalation_trigger": "Can cause severe yield loss if not treated before heading.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "rice_blast": {
-    "summary": "Devastating fungal disease causing diamond-shaped lesions on rice leaves.",
-    "actions": [
-      "Maintain proper flooding in paddies.",
-      "Avoid excessive nitrogen fertilization.",
-      "Apply tricyclazole or similar fungicide."
+    "condition_name": "Rice Blast",
+    "description": "Devastating fungal disease causing diamond-shaped lesions on rice leaves.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Highly destructive; treat early.",
-    "canonical_description": "Devastating fungal disease causing diamond-shaped lesions on rice leaves.",
+    "immediate_action": "Maintain proper flooding in paddies.",
+    "preventive_action": "Apply tricyclazole or similar fungicide.",
+    "escalation_trigger": "Highly destructive; treat early.",
+    "safety_note": "High priority disease.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": true
   },
   "cotton_bollworm": {
-    "summary": "Pest larvae that feed on cotton bolls, destroying the fiber.",
-    "actions": [
-      "Monitor with pheromone traps.",
-      "Apply targeted insecticides if threshold is reached.",
-      "Destroy crop residues after harvest."
+    "condition_name": "Cotton Bollworm",
+    "description": "Pest larvae that feed on cotton bolls, destroying the fiber.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Pests can develop resistance; rotate chemicals.",
-    "canonical_description": "Pest larvae that feed on cotton bolls, destroying the fiber.",
+    "immediate_action": "Monitor with pheromone traps.",
+    "preventive_action": "Destroy crop residues after harvest.",
+    "escalation_trigger": "Pests can develop resistance; rotate chemicals.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "poultry_avian_influenza": {
-    "summary": "Highly contagious viral disease in poultry causing sudden death and respiratory distress.",
-    "actions": [
-      "Isolate the flock immediately.",
-      "Report to veterinary authorities.",
-      "Implement strict biosecurity and cull infected birds."
+    "condition_name": "Poultry Avian Influenza",
+    "description": "Highly contagious viral disease in poultry causing sudden death and respiratory distress.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Zoonotic potential! Notify authorities immediately.",
-    "canonical_description": "Highly contagious viral disease in poultry causing sudden death and respiratory distress.",
+    "immediate_action": "Isolate the flock immediately.",
+    "preventive_action": "Implement strict biosecurity and cull infected birds.",
+    "escalation_trigger": "Zoonotic potential! Notify authorities immediately.",
+    "safety_note": "High priority disease.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": true
   },
   "poultry_newcastle_disease": {
-    "summary": "Viral disease in birds causing twisting of the neck, paralysis, and drop in egg production.",
-    "actions": [
-      "Vaccinate healthy birds immediately.",
-      "Isolate sick birds.",
-      "Disinfect premises thoroughly."
+    "condition_name": "Poultry Newcastle Disease",
+    "description": "Viral disease in birds causing twisting of the neck, paralysis, and drop in egg production.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Highly contagious; strict quarantine required.",
-    "canonical_description": "Viral disease in birds causing twisting of the neck, paralysis, and drop in egg production.",
+    "immediate_action": "Vaccinate healthy birds immediately.",
+    "preventive_action": "Disinfect premises thoroughly.",
+    "escalation_trigger": "Highly contagious; strict quarantine required.",
+    "safety_note": "High priority disease.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": true
   },
   "goat_peste_des_petits_ruminants": {
-    "summary": "Severe viral disease (PPR) of sheep and goats causing fever, sores in the mouth, and diarrhea.",
-    "actions": [
-      "Quarantine new animals.",
-      "Vaccinate flock.",
-      "Provide supportive care and antibiotics for secondary infections."
+    "condition_name": "Goat Peste Des Petits Ruminants",
+    "description": "Severe viral disease (PPR) of sheep and goats causing fever, sores in the mouth, and diarrhea.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "High mortality rate; notify vet services.",
-    "canonical_description": "Severe viral disease (PPR) of sheep and goats causing fever, sores in the mouth, and diarrhea.",
+    "immediate_action": "Quarantine new animals.",
+    "preventive_action": "Provide supportive care and antibiotics for secondary infections.",
+    "escalation_trigger": "High mortality rate; notify vet services.",
+    "safety_note": "High priority disease.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": true
   },
   "soybean_rust": {
-    "summary": "Aggressive fungal disease causing premature defoliation in soybean.",
-    "actions": [
-      "Apply fungicide immediately upon detection.",
-      "Ensure good canopy penetration of spray."
+    "condition_name": "Soybean Rust",
+    "description": "Aggressive fungal disease causing premature defoliation in soybean.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Can spread rapidly by wind.",
-    "canonical_description": "Aggressive fungal disease causing premature defoliation in soybean.",
+    "immediate_action": "Apply fungicide immediately upon detection.",
+    "preventive_action": "Ensure good canopy penetration of spray.",
+    "escalation_trigger": "Can spread rapidly by wind.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "citrus_canker": {
-    "summary": "Bacterial disease causing raised corky lesions on citrus leaves, stems, and fruit.",
-    "actions": [
-      "Use copper-based sprays preventatively.",
-      "Prune and destroy infected branches.",
-      "Decontaminate tools between trees."
+    "condition_name": "Citrus Canker",
+    "description": "Bacterial disease causing raised corky lesions on citrus leaves, stems, and fruit.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Highly contagious in wet conditions.",
-    "canonical_description": "Bacterial disease causing raised corky lesions on citrus leaves, stems, and fruit.",
+    "immediate_action": "Use copper-based sprays preventatively.",
+    "preventive_action": "Decontaminate tools between trees.",
+    "escalation_trigger": "Highly contagious in wet conditions.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "mango_anthracnose": {
-    "summary": "Fungal disease causing dark irregular spots on leaves, blossoms, and fruits of mango.",
-    "actions": [
-      "Apply fungicides during flowering and early fruit set.",
-      "Prune canopy for better aeration."
+    "condition_name": "Mango Anthracnose",
+    "description": "Fungal disease causing dark irregular spots on leaves, blossoms, and fruits of mango.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Can cause severe post-harvest rot.",
-    "canonical_description": "Fungal disease causing dark irregular spots on leaves, blossoms, and fruits of mango.",
+    "immediate_action": "Apply fungicides during flowering and early fruit set.",
+    "preventive_action": "Prune canopy for better aeration.",
+    "escalation_trigger": "Can cause severe post-harvest rot.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "crop_nitrogen_deficiency": {
-    "summary": "Nutrient deficiency causing overall yellowing of older leaves and stunted growth.",
-    "actions": [
-      "Apply a nitrogen-rich fertilizer (e.g., urea) immediately.",
-      "Ensure soil moisture is adequate to allow nutrient uptake."
+    "condition_name": "Crop Nitrogen Deficiency",
+    "description": "Nutrient deficiency causing overall yellowing of older leaves and stunted growth.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Prolonged deficiency will severely reduce yield.",
-    "canonical_description": "Nutrient deficiency causing overall yellowing of older leaves and stunted growth.",
+    "immediate_action": "Apply a nitrogen-rich fertilizer (e.g., urea) immediately.",
+    "preventive_action": "Ensure soil moisture is adequate to allow nutrient uptake.",
+    "escalation_trigger": "Prolonged deficiency will severely reduce yield.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "crop_phosphorus_deficiency": {
-    "summary": "Nutrient deficiency causing dark green leaves with purplish discoloration, especially on leaf edges.",
-    "actions": [
-      "Apply phosphorus-based fertilizer (e.g., DAP or superphosphate) near the root zone.",
-      "Check soil pH; high acidity or alkalinity can lock up phosphorus."
+    "condition_name": "Crop Phosphorus Deficiency",
+    "description": "Nutrient deficiency causing dark green leaves with purplish discoloration, especially on leaf edges.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Can delay crop maturity and reduce root development.",
-    "canonical_description": "Nutrient deficiency causing dark green leaves with purplish discoloration, especially on leaf edges.",
+    "immediate_action": "Apply phosphorus-based fertilizer (e.g., DAP or superphosphate) near the root zone.",
+    "preventive_action": "Check soil pH; high acidity or alkalinity can lock up phosphorus.",
+    "escalation_trigger": "Can delay crop maturity and reduce root development.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "livestock_heat_stress": {
-    "summary": "Animal showing excessive panting, lethargy, and reduced feed intake due to high environmental temperatures.",
-    "actions": [
-      "Move the animal to a shaded, well-ventilated area immediately.",
-      "Provide access to abundant cool drinking water.",
-      "Spray the animal with cool water or use fans."
+    "condition_name": "Livestock Heat Stress",
+    "description": "Animal showing excessive panting, lethargy, and reduced feed intake due to high environmental temperatures.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Severe heat stress can lead to fatal heat stroke. Monitor closely.",
-    "canonical_description": "Animal showing excessive panting, lethargy, and reduced feed intake due to high environmental temperatures.",
+    "immediate_action": "Move the animal to a shaded, well-ventilated area immediately.",
+    "preventive_action": "Spray the animal with cool water or use fans.",
+    "escalation_trigger": "Severe heat stress can lead to fatal heat stroke. Monitor closely.",
+    "safety_note": "High priority disease.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": true
   },
   "livestock_ketosis": {
-    "summary": "Metabolic disorder usually occurring in high-yielding dairy cows shortly after calving, causing sweet-smelling breath and weight loss.",
-    "actions": [
-      "Provide high-energy feed supplements (e.g., propylene glycol or molasses).",
-      "Ensure access to high-quality forage.",
-      "Consult a veterinarian if the animal refuses to eat."
+    "condition_name": "Livestock Ketosis",
+    "description": "Metabolic disorder usually occurring in high-yielding dairy cows shortly after calving, causing sweet-smelling breath and weight loss.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Can lead to severe milk drop and liver damage if untreated.",
-    "canonical_description": "Metabolic disorder usually occurring in high-yielding dairy cows shortly after calving, causing sweet-smelling breath and weight loss.",
+    "immediate_action": "Provide high-energy feed supplements (e.g., propylene glycol or molasses).",
+    "preventive_action": "Consult a veterinarian if the animal refuses to eat.",
+    "escalation_trigger": "Can lead to severe milk drop and liver damage if untreated.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": false
   },
   "banana_bunchy_top": {
-    "summary": "Devastating viral disease causing stunted growth and bunching of leaves at the top of the banana plant.",
-    "actions": [
-      "Uproot and completely destroy the infected plant to prevent spread.",
-      "Control aphid populations which spread the virus.",
-      "Use certified virus-free planting material in the future."
+    "condition_name": "Banana Bunchy Top",
+    "description": "Devastating viral disease causing stunted growth and bunching of leaves at the top of the banana plant.",
+    "common_symptoms": [
+      "See visual symptoms"
     ],
-    "warning": "Highly infectious and cannot be cured. Eradicate infected plants immediately.",
-    "canonical_description": "Devastating viral disease causing stunted growth and bunching of leaves at the top of the banana plant.",
+    "immediate_action": "Uproot and completely destroy the infected plant to prevent spread.",
+    "preventive_action": "Use certified virus-free planting material in the future.",
+    "escalation_trigger": "Highly infectious and cannot be cured. Eradicate infected plants immediately.",
+    "safety_note": "High priority disease.",
+    "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": true
   }
 }
