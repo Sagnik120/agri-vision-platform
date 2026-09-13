@@ -6,7 +6,7 @@ Provides expert-level agronomic escalation using Gemini and local RAG.
 ## 2. Responsibilities
 - Retrieves context from a FAISS vector index.
 - Packages images, text, sensors, and history into a prompt.
-- Validates the JSON schema returned by Gemini.
+- Validates the JSON schema returned by Gemini, enforcing cited knowledge grounding and farm history acknowledgement.
 
 ## 3. Architecture Role
 The escalation layer (triggered when Zone 1 lacks confidence).

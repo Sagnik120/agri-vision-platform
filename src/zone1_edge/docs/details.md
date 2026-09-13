@@ -8,7 +8,7 @@ Provides the offline-first edge AI reasoning.
 - **Task Router:** Identifies whether the input is a crop, livestock, or "none" (irrelevant image). If "none", it short-circuits the pipeline before invoking any expert.
 - **Multimodal Experts:** Dedicated submodules for image, text, and sensor data.
   - Image experts embed transparent tracking (real vs. mock backend).
-- **Fusion:** Late-fusion rules combining visual confidence with text/sensor support.
+- **Fusion:** Deterministic weighted fusion using `WEIGHT_VISUAL` (0.6), `WEIGHT_TEXT_SUPPORT` (0.2), and `WEIGHT_SENSOR_SUPPORT` (0.2) to calculate the final confidence score. Confidence is strictly bounded [0.01, 0.99] unless maxed.
 
 ## 3. Architecture Role
 The primary inference engine. Determines if cloud escalation is necessary.

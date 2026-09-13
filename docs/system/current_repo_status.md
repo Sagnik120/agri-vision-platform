@@ -19,7 +19,7 @@ The Unified AI Agri-Vision Platform is currently a functional, integrated protot
 
 ## 4. High-Level Architecture — Actual vs Intended
 - **Intended**: Photo/Voice/Sensor → MoE routing → Specialist Analysis → Multimodal Fusion → Confidence/Safety Gate → Offline Advisory OR Cloud Escalation → Persistent Private History.
-- **Actual**: Implemented accurately, but with practical compromises. Routing uses a zero-shot semantic classifier with a fallback to raw confidence scores. Multimodal Fusion is rule-based late fusion rather than a learned model.
+- **Actual**: Implemented accurately, but with practical compromises. Routing uses a zero-shot semantic classifier with a fallback to raw confidence scores. Multimodal Fusion is a deterministic weighted rule-based late fusion.
 
 ## 5. Actual Runtime Pipeline
 User Input (Image + Optional Text/Sensor)
@@ -32,7 +32,7 @@ User Input (Image + Optional Text/Sensor)
     ↓
 `crop_expert.py` OR `livestock_expert.py` (HF Model inference)
     ↓
-`fusion.py` (Rule-based adjustment of visual confidence using text/sensor support)
+`fusion.py` (Deterministic weighted adjustment of visual confidence using text/sensor support)
     ↓
 `confidence_gate.py` (Decides 'local' vs 'cloud' route based on 80% safety/75% standard threshold + evidence + quality)
     ↓
@@ -57,7 +57,7 @@ The pipeline orchestrates routing, expert inference, multimodal fusion, and conf
 
 ## 8. Zone 2 — Cloud Advisory Status
 ✅ IMPLEMENTED.
-Google Gemini client is functional and expects structured JSON output matching schemas. Includes a robust `MockGeminiClient` for offline fallback.
+Google Gemini client is functional and expects structured JSON output matching schemas. Enforces strict grounding for citations and farm history acknowledgements via validator. Includes a robust `MockGeminiClient` for offline fallback.
 
 ## 9. Zone 3 — Farm Memory Status
 ✅ IMPLEMENTED.
@@ -112,8 +112,8 @@ A rich pytest suite exists under `tests/` covering Zone 1 (gate, experts, fusion
 | Crop Expert | Crop disease inference | `src/zone1_edge/experts/crop_expert.py` | ✅ IMPLEMENTED | Wraps `BaseImageExpert`, loads HF models, implements transparent logging of backend inference source. |
 | Livestock Expert | Livestock health inference | `src/zone1_edge/experts/livestock_expert.py` | ✅ IMPLEMENTED | Wraps `BaseImageExpert`, loads HF models, implements transparent logging of backend inference source. |
 | Quality Check | Input validation | `src/zone1_edge/pipeline/quality_check.py` | ✅ IMPLEMENTED | Handles blur, exposure, resolution, and contrast rejection. |
-| Evaluation Tooling | Model baseline testing | `tests/zone1/evaluation_tool.py` | ✅ IMPLEMENTED | Built for offline testing of model baselines. |
-| Multimodal Fusion | Combine evidence | `src/zone1_edge/multimodal/fusion.py` | ✅ IMPLEMENTED | Rule-based late fusion (+/- confidence adjustments). |
+| Evaluation Tooling | Model baseline testing | `tests/zone1/evaluation_tool.py` | ✅ IMPLEMENTED | Built for offline testing of model baselines with calibration reporting. |
+| Multimodal Fusion | Combine evidence | `src/zone1_edge/multimodal/fusion.py` | ✅ IMPLEMENTED | Deterministic weighted late fusion (+/- confidence adjustments). |
 | Confidence Gate | Local/cloud decision | `src/zone1_edge/multimodal/confidence_gate.py` | ✅ IMPLEMENTED | Evaluates fusion output, safety criticality, input quality. |
 | Cloud Gateway | Escalation | `src/zone2_cloud/gemini/gemini_client.py` | ✅ IMPLEMENTED | Validated schema outputs, integrates Google GenAI. |
 | RAG | Knowledge grounding | `src/zone2_cloud/rag/retriever.py` | ✅ IMPLEMENTED | Uses `faiss` and `sentence-transformers`. |
