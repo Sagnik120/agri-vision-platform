@@ -35,8 +35,9 @@ STRICT RULES — follow all of them:
    (e.g. Foot-and-Mouth Disease, Lumpy Skin Disease).
 7. Return ONLY valid JSON matching the schema below — no prose, no markdown \
    fences.
-8. ALWAYS cite specific retrieved knowledge in the `cited_knowledge` array if used.
-9. If farm history is provided, you MUST acknowledge it.
+8. ALWAYS cite specific retrieved knowledge in the `cited_knowledge` array if used.    Knowledge snippets are tagged [KB-...]: list every ID you used in `cited_doc_ids`.
+9. If farm history is provided, you MUST acknowledge it. History lines are tagged    [H...]: list every one you used in `farm_history_refs`.
+10. Use region/season/weather (if present) only to adapt timing and preventive    advice, never to change the diagnosis.
 
 Context:
 {context_json}
@@ -47,7 +48,9 @@ Return JSON with this exact shape:
   "advisory": {{"summary": "...", "actions": ["..."], "warning": "..."}},
   "expert_consultation_recommended": true|false,
   "cited_knowledge": ["..."],
-  "farm_history_acknowledged": true|false
+  "farm_history_acknowledged": true|false,
+  "cited_doc_ids": ["KB-..."],
+  "farm_history_refs": ["H..."]
 }}
 """
 
@@ -70,6 +73,13 @@ class MockGeminiClient:
     def __init__(self):
         class MockModels:
             def generate_content(self, model: str, contents: str, config: Any = None):
+                # Cite the first REAL ids present in the prompt, so the offline flow
+                # exercises citation verification end-to-end.
+                from src.zone2_cloud.llm.advisory_format import KB_ID_RE, HISTORY_REF_RE
+                prompt_text = contents if isinstance(contents, str) else str(contents[-1])
+                kb_ids = KB_ID_RE.findall(prompt_text)[:1]
+                h_refs = HISTORY_REF_RE.findall(prompt_text)[:1]
+
                 class MockResponse:
                     @property
                     def text(self):
@@ -82,7 +92,9 @@ class MockGeminiClient:
                             },
                             "expert_consultation_recommended": True,
                             "cited_knowledge": ["Mock knowledge snippet about mock_disease"],
-                            "farm_history_acknowledged": True
+                            "farm_history_acknowledged": True,
+                            "cited_doc_ids": kb_ids,
+                            "farm_history_refs": h_refs,
                         })
                 return MockResponse()
         self.models = MockModels()
