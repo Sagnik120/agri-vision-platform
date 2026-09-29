@@ -1,0 +1,443 @@
+[
+ {
+  "doc_id": "KB-abnormal_temperature",
+  "condition": "abnormal_temperature",
+  "domain": "livestock",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-apple_black_rot",
+  "condition": "apple_black_rot",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-apple_cedar_rust",
+  "condition": "apple_cedar_rust",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-apple_scab",
+  "condition": "apple_scab",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-banana_bunchy_top",
+  "condition": "banana_bunchy_top",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-cherry_powdery_mildew",
+  "condition": "cherry_powdery_mildew",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-citrus_canker",
+  "condition": "citrus_canker",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-citrus_greening",
+  "condition": "citrus_greening",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-cotton_bollworm",
+  "condition": "cotton_bollworm",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-crop_healthy",
+  "condition": "crop_healthy",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-crop_nitrogen_deficiency",
+  "condition": "crop_nitrogen_deficiency",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-crop_phosphorus_deficiency",
+  "condition": "crop_phosphorus_deficiency",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-foot_and_mouth_disease",
+  "condition": "foot_and_mouth_disease",
+  "domain": "livestock",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-goat_peste_des_petits_ruminants",
+  "condition": "goat_peste_des_petits_ruminants",
+  "domain": "livestock",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-grape_black_rot",
+  "condition": "grape_black_rot",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-grape_esca",
+  "condition": "grape_esca",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-grape_leaf_blight",
+  "condition": "grape_leaf_blight",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-healthy",
+  "condition": "healthy",
+  "domain": "livestock",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-livestock_heat_stress",
+  "condition": "livestock_heat_stress",
+  "domain": "livestock",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-livestock_ketosis",
+  "condition": "livestock_ketosis",
+  "domain": "livestock",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-lumpy_skin_disease",
+  "condition": "lumpy_skin_disease",
+  "domain": "livestock",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-maize_common_rust",
+  "condition": "maize_common_rust",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-maize_gray_leaf_spot",
+  "condition": "maize_gray_leaf_spot",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-maize_healthy",
+  "condition": "maize_healthy",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-maize_northern_leaf_blight",
+  "condition": "maize_northern_leaf_blight",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-mango_anthracnose",
+  "condition": "mango_anthracnose",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-mastitis_suspected",
+  "condition": "mastitis_suspected",
+  "domain": "livestock",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-peach_bacterial_spot",
+  "condition": "peach_bacterial_spot",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-pepper_bacterial_spot",
+  "condition": "pepper_bacterial_spot",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-potato_early_blight",
+  "condition": "potato_early_blight",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-potato_late_blight",
+  "condition": "potato_late_blight",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-poultry_avian_influenza",
+  "condition": "poultry_avian_influenza",
+  "domain": "livestock",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-poultry_newcastle_disease",
+  "condition": "poultry_newcastle_disease",
+  "domain": "livestock",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-rice_blast",
+  "condition": "rice_blast",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-rice_brown_spot",
+  "condition": "rice_brown_spot",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-soybean_rust",
+  "condition": "soybean_rust",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-squash_powdery_mildew",
+  "condition": "squash_powdery_mildew",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-strawberry_leaf_scorch",
+  "condition": "strawberry_leaf_scorch",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-tomato_bacterial_spot",
+  "condition": "tomato_bacterial_spot",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-tomato_early_blight",
+  "condition": "tomato_early_blight",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-tomato_healthy",
+  "condition": "tomato_healthy",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-tomato_late_blight",
+  "condition": "tomato_late_blight",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ },
+ {
+  "doc_id": "KB-tomato_leaf_mold",
+  "condition": "tomato_leaf_mold",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-tomato_mosaic_virus",
+  "condition": "tomato_mosaic_virus",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-tomato_septoria_leaf_spot",
+  "condition": "tomato_septoria_leaf_spot",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-tomato_spider_mites",
+  "condition": "tomato_spider_mites",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-tomato_target_spot",
+  "condition": "tomato_target_spot",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-tomato_yellow_leaf_curl_virus",
+  "condition": "tomato_yellow_leaf_curl_virus",
+  "domain": "crop",
+  "source": "Agri-Vision KB gap-fill (general extension guidance)",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "draft_needs_expert_review"
+ },
+ {
+  "doc_id": "KB-wheat_rust",
+  "condition": "wheat_rust",
+  "domain": "crop",
+  "source": "Agri-Vision Local KB v2.0",
+  "region": "India (general)",
+  "last_updated": "2026-09-29",
+  "review_status": "legacy_unreviewed"
+ }
+]
