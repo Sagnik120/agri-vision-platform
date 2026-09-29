@@ -27,3 +27,7 @@ librosa>=0.10.2
 # --- Dev tooling ---
 python-dotenv>=1.0.0
 opencv-python-headless
+
+# --- Optional: MoE sub-expert inference (ONNX, torch-free). Only needed once
+# fine-tuned sub-experts exist in models_cache/moe/. Training deps: training/requirements-train.txt
+# onnxruntime>=1.17.0

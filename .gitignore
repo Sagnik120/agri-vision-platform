@@ -23,3 +23,10 @@ demo_data/crop/*.png
 demo_data/livestock/*.jpg
 demo_data/livestock/*.png
 !**/.gitkeep
+
+# AI-upgrade generated outputs (reports, synthetic data, trained weights live in models_cache/)
+results/zone1/eval/
+results/zone1/moe/
+results/zone2/rag_eval/
+results/zone2/llm_data/
+results/zone2/llm_compare/

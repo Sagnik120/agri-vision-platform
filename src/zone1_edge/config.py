@@ -19,8 +19,10 @@ ZONE1_ROOT = Path(__file__).resolve().parent                # src/zone1_edge
 DEMO_DATA_DIR = ZONE1_ROOT / "demo_data"
 KNOWLEDGE_DIR = ZONE1_ROOT / "knowledge"
 RESULTS_DIR = PROJECT_ROOT / "results" / "zone1"
+# Big files can live on another disk: AGRIVISION_MODEL_CACHE wins, else AGRIVISION_DATA_ROOT/models_cache.
+_DATA_ROOT = os.environ.get("AGRIVISION_DATA_ROOT")
 MODEL_CACHE_DIR = Path(
-    os.environ.get("AGRIVISION_MODEL_CACHE", PROJECT_ROOT / "models_cache")
+    os.environ.get("AGRIVISION_MODEL_CACHE", Path(_DATA_ROOT) / "models_cache" if _DATA_ROOT else PROJECT_ROOT / "models_cache")
 )
 
 for d in [RESULTS_DIR / "crop_model", RESULTS_DIR / "livestock_model",
@@ -58,6 +60,14 @@ LIVESTOCK_MODEL_LOCAL_DIR = MODEL_CACHE_DIR / "livestock_model"
 # "real"  -> force real model, raise if unavailable.
 # "mock"  -> force deterministic mock predictor (used by pytest).
 EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "auto")
+
+# ---------------------------------------------------------------------------
+# Intra-domain Mixture-of-Experts (moe_gate). NOT the confidence_gate.
+# "auto" -> use MoE only when trained gate + ONNX sub-experts exist in MOE_DIR,
+# otherwise the original single expert per domain runs (backwards compatible).
+# ---------------------------------------------------------------------------
+MOE_ENABLED = os.environ.get("AGRIVISION_MOE_ENABLED", "auto").lower()
+MOE_DIR = Path(os.environ.get("AGRIVISION_MOE_DIR", MODEL_CACHE_DIR / "moe"))
 
 # ---------------------------------------------------------------------------
 # Fusion rules (Section 3, hour 4:15-5:15 of the plan)
