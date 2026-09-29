@@ -18,7 +18,7 @@ Time / RAM / disk numbers are my estimates unless a measured result is quoted.
 |---|---|---|
 | A | Test everything that does not need fine-tuning (laptop) | ✅ you can run any time |
 | B | Fine-tune the 4 vision experts + MoE gate (GPU box) | ✅ **DONE.** Results and analysis: [docs/system/evaluation_results.md](docs/system/evaluation_results.md) |
-| B-fix | Two follow-ups from those results (re-run crop baseline; routing fix) | ⏳ see Part B |
+| B-fix | Follow-ups from those results: re-run crop baseline; measure the new `--routing both` | ⏳ you run these (Part B) |
 | C | RAG label review, synthetic data (Gemini), Qwen fine-tuning, comparison | ⏳ next |
 | D / E | Keys you need; checklist to confirm nothing is mock | reference |
 
@@ -56,7 +56,7 @@ WEATHER_ENABLED=false           # switch on only in step A6
 $env:AGRIVISION_EXPERT_MODE="mock"; $env:GEMINI_ENABLED="false"; $env:HF_HUB_OFFLINE="1"
 pytest tests/ -q
 ```
-Expect **120 passed, 13 skipped** (the 13 skips are known Windows/OpenCV skips). Delete any `test_*.db` files the tests leave in the repo root.
+Expect **123 passed, 13 skipped** (the 13 skips are known Windows/OpenCV skips). Delete any `test_*.db` files the tests leave in the repo root.
 
 ### A2. "What is real and what is mock?" 🟢 NO API (about 20 s)
 ```powershell
@@ -123,8 +123,18 @@ CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.evaluate_expert --root "$PV" 
 ```
 Then send me `results/zone1/eval/crop_baseline.md` and I will update the report.
 
-### B-fix-2. Routing fix ⏳ needs your decision
-Recommended in the report (section 5): run both sub-experts of a domain and keep the more confident answer. Tell me "go" and I will add a `--routing both` option to the runtime and the evaluator so you can measure it before adopting it. Nothing changes until then.
+### B-fix-2. Routing fix: `--routing both` ✅ code added, ⏳ you measure it (GPU box, 🟢 NO API, about 2-10 min each)
+**What it does.** Today the `moe_gate` picks ONE expert per image (`top1`). Because the gate is right only ~74% (crop) / ~82% (livestock) of the time, many images reach the wrong expert. `both` runs **every expert of the domain** (2 small ONNX models, tens of ms each on CPU) and combines the answers:
+- **crop:** the most confident expert wins (gate probability only breaks ties).
+- **livestock:** *disease first*. If either expert reports a disease, the most confident disease answer wins; otherwise "healthy". This targets the missed lumpy-skin cases. Expect **more false alarms** (healthy animals flagged); the evaluation shows how many.
+
+Nothing is switched on by default. Measure first (results go to separate `*_moe_both.*` files, so the top1 reports are kept):
+```bash
+CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root "$PV" --domain crop --target moe --routing both
+CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root "$CATTLE" --domain livestock --target moe --routing both --class-map $CM
+```
+Compare `results/zone1/eval/crop_moe.md` (top1) with `crop_moe_both.md`: accuracy, macro-F1, calibration (ECE), and for livestock the confusion matrix (lumpy → healthy count, healthy → disease count). `moe_gate_routing_accuracy` = the gate alone; `winning_expert_group_accuracy` = how often the winning expert belongs to the right group. Send me the `*_both.md` files and I will add them to the report and recommend whether to adopt it.
+To adopt it in the app afterwards, set `AGRIVISION_MOE_ROUTING=both` in `.env` (default is `top1`). The app caption then shows `MoE expert: <winner> (onnx)`.
 
 ### Copy the trained files to the laptop (to try them in the app) 🟢 NO API
 Copy from the GPU box `$AGRI/models_cache/moe/` (only `model.onnx` and `meta.json` in each expert folder, plus the two `*_moe_gate.json`; skip `best.pt`) to the laptop's `models_cache/moe/`. Then A2 should show `MoE crop: active`.

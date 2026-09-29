@@ -50,6 +50,7 @@ Fusion is rule-based, not a learned vector embedding space.
 Flow: domain router (unchanged) → `moe_gate` → 1 ONNX sub-expert (`models_cache/moe/<group>/model.onnx`) → fusion → confidence_gate.
 Groups (`moe/expert_groups.py`): `crop_row` (21 PlantVillage annual row/vine classes), `crop_perennial` (17 tree/bush/perennial classes), `livestock_lsd` (LSD vs healthy), `livestock_fmd` (FMD vs healthy — ships only if `training/dataset_audit.py` does not flag FMD as under-supported).
 Activation: `AGRIVISION_MOE_ENABLED=auto` (default) uses MoE only when a trained gate + all sub-expert ONNX files exist; otherwise the original single expert runs. Any MoE failure falls back to the single expert. Output = contract #1 + trailing `_moe` debug key.
+Routing modes (`AGRIVISION_MOE_ROUTING`): `top1` (default; gate picks one expert) or `both` (all experts of the domain run; crop = most confident wins, livestock = disease-first). `both` exists because the measured gate routing accuracy was low (see `docs/system/evaluation_results.md`); it costs one extra ONNX inference and may raise false alarms, so enable only after measuring with `training.evaluate_expert --routing both`.
 Runtime deps: numpy + optional `onnxruntime` (torch-free; serverless-friendly). Training: `training/` (user-run).
 
 ## 14. Label normalisation & region/season context — Phase 2

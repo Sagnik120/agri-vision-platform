@@ -95,3 +95,46 @@ def test_pipeline_threads_context_and_payload_is_additive(tmp_path):
     assert keys[:8] == ["domain", "image_prediction", "visual_confidence", "farmer_text", "text_evidence",
                         "sensor_data", "farm_history", "retrieved_knowledge"]
     assert keys[8:] == ["region", "season", "weather"] and payload["weather"] is None
+
+
+class _Stub:
+    def __init__(self, ans):
+        self.ans = ans
+
+    def predict(self, image_path):
+        return self.ans
+
+
+def _both(domain, answers, gate_probs, img):
+    m = moe_expert.MoEDomainExpert(domain, mock=True, routing="both")
+    m.gate.probs = lambda p: gate_probs
+    for g, a in answers.items():
+        m._experts[g] = _Stub(a)
+    return m.predict(img)
+
+
+def test_routing_both_crop_takes_most_confident_expert(img):
+    out = _both("crop", {"crop_row": [("Tomato___healthy", 0.55), ("x", 0.45)],
+                         "crop_perennial": [("Apple___Apple_scab", 0.97), ("y", 0.03)]},
+                {"crop_row": 0.9, "crop_perennial": 0.1}, img)  # gate wrong, experts right
+    assert out["prediction"] == "Apple___Apple_scab" and out["_moe"]["selected_expert"] == "crop_perennial"
+    assert out["_moe"]["gate_choice"] == "crop_row" and out["_moe"]["combine_rule"] == "max_confidence"
+    assert list(out)[:5] == CONTRACT1
+
+
+def test_routing_both_livestock_is_disease_first(img):
+    out = _both("livestock", {"livestock_lsd": [("lumpy_skin_disease", 0.60), ("healthy", 0.40)],
+                              "livestock_fmd": [("healthy", 0.99), ("foot_and_mouth_disease", 0.01)]},
+                {"livestock_lsd": 0.3, "livestock_fmd": 0.7}, img)
+    assert out["prediction"] == "lumpy_skin_disease" and out["_moe"]["combine_rule"] == "disease_first"
+    healthy = _both("livestock", {"livestock_lsd": [("healthy", 0.9), ("lumpy_skin_disease", 0.1)],
+                                  "livestock_fmd": [("healthy", 0.8), ("foot_and_mouth_disease", 0.2)]},
+                    {"livestock_lsd": 0.5, "livestock_fmd": 0.5}, img)
+    assert healthy["prediction"] == "healthy"
+
+
+def test_routing_top1_default_and_validation(img):
+    out = moe_expert.MoEDomainExpert("crop", mock=True).predict(img)
+    assert out["_moe"]["routing"] == "top1" and out["_moe"]["gate_choice"] == out["_moe"]["selected_expert"]
+    with pytest.raises(ValueError):
+        moe_expert.MoEDomainExpert("crop", mock=True, routing="all")

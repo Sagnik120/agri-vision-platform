@@ -67,6 +67,9 @@ EXPERT_MODE = os.environ.get("AGRIVISION_EXPERT_MODE", "auto")
 # otherwise the original single expert per domain runs (backwards compatible).
 # ---------------------------------------------------------------------------
 MOE_ENABLED = os.environ.get("AGRIVISION_MOE_ENABLED", "auto").lower()
+# Routing inside a domain: "top1" = moe_gate picks ONE sub-expert (default, cheapest);
+# "both" = run every sub-expert of the domain and combine (see moe_expert.MoEDomainExpert). Measure before adopting.
+MOE_ROUTING = os.environ.get("AGRIVISION_MOE_ROUTING", "top1").lower()
 MOE_DIR = Path(os.environ.get("AGRIVISION_MOE_DIR", MODEL_CACHE_DIR / "moe"))
 
 # ---------------------------------------------------------------------------

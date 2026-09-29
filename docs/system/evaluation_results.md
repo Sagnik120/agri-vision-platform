@@ -161,7 +161,9 @@ The gate is a logistic regression on 54 hand-made colour/texture statistics. Cro
 4. The crop baseline row is not comparable yet (section 3.1). The livestock baseline is fair.
 5. No independent field test set exists yet.
 
-## 5. Recommended next steps (not implemented yet; awaiting your decision)
+## 5. Recommended next steps
+> **Status 2026-09-30:** step 1 is now implemented as `--routing both` (runtime `AGRIVISION_MOE_ROUTING`, evaluator `--routing`). It is OFF by default and **not yet measured**; results will be added in a new section 7 after you run the two commands in `test_to_do.md` (B-fix-2).
+
 1. **Fix routing (highest impact).** Run *both* sub-experts of the domain (each ONNX MobileNet takes tens of milliseconds on CPU, about 35 MB each) and keep the more confident answer, using the gate probability only as a tie-breaker. The task plan allowed this "top-k" fallback if top-1 routing proved poor; the data above is that justification. For livestock, if either expert reports a disease with confidence above a threshold, report the disease. Expected effect: end-to-end accuracy should move toward the sub-expert level (~97% crop, ~93-95% livestock), but this **must be measured** with an evaluation run before it is claimed.
 2. Re-run the crop baseline on the same 5433-image test set.
 3. Optionally replace the colour-statistics gate with CNN embeddings (only needed if you keep top-1 routing).
@@ -187,3 +189,6 @@ Pending Part C. To fill in: number of approved training examples, QLoRA training
 
 ### 6.4 ⏳ App-level checks with real models
 Pending: confirm the `MoE expert: <group> (onnx)` caption in Streamlit, and that the app's predictions match `evaluate_expert` on a few images.
+
+## 7. ⏳ Routing fix measurement (`--routing both`)
+Pending your run of `evaluate_expert ... --target moe --routing both` for crop and livestock. To fill in: accuracy, macro-F1, ECE and (livestock) lumpy→healthy and healthy→disease counts versus the top1 rows above, then the decision on whether to enable `AGRIVISION_MOE_ROUTING=both`.

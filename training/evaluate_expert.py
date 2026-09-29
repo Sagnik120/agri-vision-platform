@@ -41,6 +41,8 @@ def main():
     ap.add_argument("--target", required=True, help="baseline | moe | sub:<group>")
     ap.add_argument("--class-map")
     ap.add_argument("--limit", type=int, default=0, help="evaluate first N test images (quick check)")
+    ap.add_argument("--routing", choices=["top1", "both"], default="top1",
+                    help="--target moe only: top1 = moe_gate picks one expert; both = run all experts of the domain and combine")
     a = ap.parse_args()
     cmap = load_class_map(a.class_map)
 
@@ -54,12 +56,13 @@ def main():
     elif a.target == "moe":
         from src.zone1_edge.moe.moe_expert import MoEDomainExpert
         items = domain_test_items(a.root, a.domain, cmap)
-        moe = MoEDomainExpert(a.domain)
-        routed = []
+        moe = MoEDomainExpert(a.domain, routing=a.routing)
+        routed, gate_choice = [], []
 
         def predict(p):
             out = moe.predict(p)
             routed.append(out["_moe"]["selected_expert"])
+            gate_choice.append(out["_moe"]["gate_choice"])
             return out["prediction"], out["confidence"]
     elif a.target == "baseline":
         items = domain_test_items(a.root, a.domain, cmap)
@@ -84,13 +87,17 @@ def main():
 
     if a.target == "moe":
         shared = {"healthy"} if a.domain == "livestock" else set()
-        pairs = [(group_of_class(a.domain, c), r) for (_, c), r in zip(items, routed) if c not in shared]
-        extra["moe_gate_routing_accuracy"] = round(sum(g == r for g, r in pairs) / max(len(pairs), 1), 4)
+        keep = [(group_of_class(a.domain, c), r, gc) for (_, c), r, gc in zip(items, routed, gate_choice) if c not in shared]
+        n_keep = max(len(keep), 1)
+        extra["routing"] = a.routing
+        extra["moe_gate_routing_accuracy"] = round(sum(g == gc for g, _, gc in keep) / n_keep, 4)  # gate alone
+        if a.routing == "both":
+            extra["winning_expert_group_accuracy"] = round(sum(g == r for g, r, _ in keep) / n_keep, 4)
         rep.update(extra)
 
     out = RESULTS / "zone1" / "eval"
     out.mkdir(parents=True, exist_ok=True)
-    name = f"{a.domain}_{a.target.replace(':', '_')}"
+    name = f"{a.domain}_{a.target.replace(':', '_')}" + ("_both" if a.target == "moe" and a.routing == "both" else "")
     (out / f"{name}.json").write_text(json.dumps(rep, indent=1), encoding="utf-8")
     md = to_markdown(f"{a.domain} / {a.target}", rep) + "".join(f"- {k}: {v}\n" for k, v in extra.items())
     (out / f"{name}.md").write_text(md, encoding="utf-8")
