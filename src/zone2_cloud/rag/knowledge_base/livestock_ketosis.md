@@ -1,3 +1,13 @@
+---
+doc_id: KB-livestock_ketosis
+condition: livestock_ketosis
+domain: livestock
+source: Agri-Vision Local KB v2.0
+region: India (general)
+last_updated: 2026-09-29
+review_status: legacy_unreviewed
+---
+
 # Livestock Ketosis
 
 **Description:** Metabolic disorder usually occurring in high-yielding dairy cows shortly after calving, causing sweet-smelling breath and weight loss.

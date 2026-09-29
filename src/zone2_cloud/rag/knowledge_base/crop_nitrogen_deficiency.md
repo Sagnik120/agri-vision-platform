@@ -1,3 +1,13 @@
+---
+doc_id: KB-crop_nitrogen_deficiency
+condition: crop_nitrogen_deficiency
+domain: crop
+source: Agri-Vision Local KB v2.0
+region: India (general)
+last_updated: 2026-09-29
+review_status: legacy_unreviewed
+---
+
 # Crop Nitrogen Deficiency
 
 **Description:** Nutrient deficiency causing overall yellowing of older leaves and stunted growth.

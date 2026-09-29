@@ -1,3 +1,13 @@
+---
+doc_id: KB-abnormal_temperature
+condition: abnormal_temperature
+domain: livestock
+source: Agri-Vision Local KB v2.0
+region: India (general)
+last_updated: 2026-09-29
+review_status: legacy_unreviewed
+---
+
 # Abnormal Temperature
 
 **Description:** Sensor detected temperature outside the normal range for cattle, combined with behavioural signs.

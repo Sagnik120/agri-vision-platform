@@ -1,3 +1,13 @@
+---
+doc_id: KB-banana_bunchy_top
+condition: banana_bunchy_top
+domain: crop
+source: Agri-Vision Local KB v2.0
+region: India (general)
+last_updated: 2026-09-29
+review_status: legacy_unreviewed
+---
+
 # Banana Bunchy Top
 
 **Description:** Devastating viral disease causing stunted growth and bunching of leaves at the top of the banana plant.

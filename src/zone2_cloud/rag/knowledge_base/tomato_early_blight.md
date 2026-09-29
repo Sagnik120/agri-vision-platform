@@ -1,3 +1,13 @@
+---
+doc_id: KB-tomato_early_blight
+condition: tomato_early_blight
+domain: crop
+source: Agri-Vision Local KB v2.0
+region: India (general)
+last_updated: 2026-09-29
+review_status: legacy_unreviewed
+---
+
 # Tomato Early Blight
 
 **Description:** Fungal disease causing concentric brown spots on lower leaves, spreading upward.
