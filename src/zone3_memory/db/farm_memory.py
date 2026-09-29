@@ -148,6 +148,54 @@ def get_farm_history(farm_id: str, limit: int = 5) -> str:
         return "\\n".join(history)
 
 
+def get_farm_history_records(farm_id: str, limit: int = 5) -> list[dict]:
+    """
+    Recent history rows, each with a stable citation reference `H<observation_id>`
+    so cloud advisories can state exactly which past observations they used
+    (and the validator can check those references were really provided).
+    """
+    import sqlite3
+    with sqlite3.connect(DEFAULT_DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute('''
+            SELECT o.observation_id, o.created_at, o.domain, d.condition, d.certainty, a.summary
+            FROM observations o
+            JOIN diagnoses d ON o.observation_id = d.observation_id
+            LEFT JOIN advisories a ON d.diagnosis_id = a.diagnosis_id
+            WHERE o.farm_id = ?
+            ORDER BY o.created_at DESC, o.observation_id DESC
+            LIMIT ?
+        ''', (farm_id, limit)).fetchall()
+    return [{**dict(r), "ref": f"H{r['observation_id']}"} for r in rows]
+
+
+def format_farm_history(records: list[dict]) -> str:
+    """Contract #6 `farm_history` string, one `[H<id>] ...` line per record."""
+    if not records:
+        return "No prior history for this farm."
+    lines = []
+    for r in records:
+        line = f"[{r['ref']}] {r['created_at']}: {r['condition']} ({r['certainty']})"
+        if r.get("summary"):
+            line += f", advised: {r['summary']}"
+        lines.append(line)
+    return "\n".join(lines)
+
+
+def update_farm_location(farm_id: str, location: str) -> None:
+    """Persist the farm's region (used as advisory context)."""
+    import sqlite3
+    with sqlite3.connect(DEFAULT_DB_PATH) as conn:
+        conn.execute("UPDATE farm SET location = ? WHERE farm_id = ?", (location, farm_id))
+
+
+def get_farm_location(farm_id: str) -> str | None:
+    import sqlite3
+    with sqlite3.connect(DEFAULT_DB_PATH) as conn:
+        row = conn.execute("SELECT location FROM farm WHERE farm_id = ?", (farm_id,)).fetchone()
+    return row[0] if row else None
+
+
 def get_all_history_records(farm_id: str) -> list[dict]:
     import sqlite3
     with sqlite3.connect(DEFAULT_DB_PATH) as conn:
