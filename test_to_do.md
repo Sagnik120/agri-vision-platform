@@ -1,296 +1,260 @@
-# AgriVision — Test To-Do Guide
+# AgriVision: Test & Run Guide
 
-Legend: 🟢 testable now (no fine-tuning) · 🟡 needs an API key · 🔴 only after fine-tuning.
-**All time / RAM / disk figures below are my estimates, not measurements** — I never ran GPU jobs.
-Treat them as planning numbers and note what you actually observe.
+## How to read this file
+Every command block carries one of these tags, so you always know what it costs:
+
+| Tag | Meaning |
+|---|---|
+| 🟢 **NO API** | Runs fully locally. Free. Safe to repeat. |
+| 🌐 **FREE DOWNLOAD** | Downloads files (models/packages) from the internet, but uses no quota and no key. |
+| 🔴 **USES GEMINI API** | Makes real Gemini requests. **Counts against your quota and may cost money.** The number of requests is stated next to the command. |
+| 🟡 **USES WEATHER API** | Calls Open-Meteo (free, no key, nothing you pay for). |
+
+Where things run: **Laptop** = your Windows machine (PowerShell). **GPU box** = the workstation (bash).
+Time / RAM / disk numbers are my estimates unless a measured result is quoted.
+
+## Status board
+| Part | What | Status |
+|---|---|---|
+| A | Test everything that does not need fine-tuning (laptop) | ✅ you can run any time |
+| B | Fine-tune the 4 vision experts + MoE gate (GPU box) | ✅ **DONE.** Results and analysis: [docs/system/evaluation_results.md](docs/system/evaluation_results.md) |
+| B-fix | Two follow-ups from those results (re-run crop baseline; routing fix) | ⏳ see Part B |
+| C | RAG label review, synthetic data (Gemini), Qwen fine-tuning, comparison | ⏳ next |
+| D / E | Keys you need; checklist to confirm nothing is mock | reference |
+
+## Everything that uses an API, in one place
+| Command | API | How many requests |
+|---|---|---|
+| `generate_synthetic_data --n N ... --i-understand-this-calls-gemini` | 🔴 Gemini | **exactly N at most** (one per scenario; failures count too; stops early after 3 failures in a row) |
+| `compare_backends --backend gemini ... --limit L` | 🔴 Gemini | **L** (or the whole test set, about 50, if you leave out `--limit`) |
+| Streamlit with `GEMINI_ENABLED=true`, when a result goes to the cloud route | 🔴 Gemini | **1 per "Auto-Detect" click** that ends on the cloud route |
+| Streamlit with `WEATHER_ENABLED=true`, cloud route | 🟡 Open-Meteo | 1 per click (cached 30 min per region) |
+| Qwen model download in `finetune_qlora` / vLLM | 🌐 Hugging Face (free, no key) | one ~3 GB download |
+| Everything else (tests, evaluation, RAG eval, training, dry-runs) | none | 0 |
+
+Gemini is only called when **both** hold: `GEMINI_ENABLED=true` is set **and** (for the two scripts) you pass `--i-understand-this-calls-gemini`. Otherwise the code refuses or uses a built-in mock.
 
 ---
-## PART A — What to test NOW (before any fine-tuning)
+# PART A: What you can test now on the laptop (no fine-tuning needed)
 
-### A0. One-time setup (your Windows laptop, PowerShell, repo root)
+### A0. One-time setup 🌐 FREE DOWNLOAD (pip packages)
 ```powershell
-python -m venv venv                      # skip if ./venv already exists
+python -m venv venv                     # skip if ./venv exists
 .\venv\Scripts\Activate.ps1
-pip install -r requirements.txt          # ~3-6 GB with torch; 10-20 min
-# optional (only to test ONNX sub-experts later):  pip install onnxruntime
+pip install -r requirements.txt         # 10-20 min, ~3-6 GB
+pip install onnxruntime                 # needed to run the fine-tuned ONNX experts
 ```
-Create `.env` from `.env.example` **yourself** (I never read it). For "no mock" testing set:
+Create `.env` yourself from `.env.example` (I never read it). For "no mock" testing:
 ```
-AGRIVISION_EXPERT_MODE=real     # 'auto' silently falls back to MOCK if a model fails to load; 'real' raises instead
-GEMINI_ENABLED=false            # switch to true only in step A6
-WEATHER_ENABLED=false           # switch to true only in step A7
-HF_HUB_OFFLINE=1                # optional: prevents any accidental download
+AGRIVISION_EXPERT_MODE=real     # 'auto' silently falls back to MOCK when a model fails to load; 'real' raises an error instead
+GEMINI_ENABLED=false            # switch on only in step A5
+WEATHER_ENABLED=false           # switch on only in step A6
 ```
 
-### A1. 🟢 Automated tests (≈2 min, offline, no API)
+### A1. Automated tests 🟢 NO API (about 1-2 min)
 ```powershell
 $env:AGRIVISION_EXPERT_MODE="mock"; $env:GEMINI_ENABLED="false"; $env:HF_HUB_OFFLINE="1"
 pytest tests/ -q
 ```
-Expect: **119 passed, 13 skipped** (13 skips are the Windows OpenCV/app-import skips, pre-existing).
-Then delete any `test_*.db` files the tests drop in the repo root.
+Expect **120 passed, 13 skipped** (the 13 skips are known Windows/OpenCV skips). Delete any `test_*.db` files the tests leave in the repo root.
 
-### A2. 🟢 "What is real vs mock right now?" (≈20 s, offline, no API calls)
+### A2. "What is real and what is mock?" 🟢 NO API (about 20 s)
 ```powershell
 $env:AGRIVISION_EXPERT_MODE="real"
 python setup/check_real_components.py
 ```
-Read the output:
-| Line | Meaning |
+| Output line | Meaning |
 |---|---|
-| `[OK ] crop expert REAL -> hf:...crop_model` | real HuggingFace crop model loaded |
-| `[OK ] livestock expert REAL -> hf:...livestock_model` | real CLIP zero-shot livestock model loaded (note: **not fine-tuned**) |
-| `[MOCK] ... cannot load` | model files missing → run `setup/download_*_model.py` (needs internet, free) |
-| `MoE ...: inactive` | expected until Part B is done |
-| `RAG backend = faiss` | real semantic search. `lexical` = BM25 fallback (fine, also real) |
-| `[MOCK] Gemini` | `GEMINI_ENABLED` is not true |
+| `[OK ] crop expert REAL -> hf:...crop_model` | the **old** 13-class crop checkpoint loaded (the fallback expert, not your fine-tuned ones) |
+| `[OK ] livestock expert REAL` | old CLIP zero-shot model loaded |
+| `MoE crop: active` | your fine-tuned gate + ONNX experts were found in `models_cache/moe/` |
+| `MoE ...: inactive` | files missing: copy `models_cache/moe/` from the GPU box and install `onnxruntime` |
+| `RAG backend = faiss` | semantic search (real). `lexical` = keyword search (also real, no torch) |
+| `[MOCK] Gemini` | `GEMINI_ENABLED` is not true (fine until step A5) |
 
-### A3. 🟢 Streamlit app, real vision + mock Gemini
+### A3. Run the app with real vision models 🟢 NO API
 ```powershell
 $env:AGRIVISION_EXPERT_MODE="real"
-streamlit run src/app/streamlit_app.py      # opens http://localhost:8501
+streamlit run src/app/streamlit_app.py     # http://localhost:8501
 ```
-1. Sign up (any phone/PIN) → log in.
-2. Sidebar: choose **Region** (e.g. Punjab) and **Season**.
-3. Upload a clear crop leaf photo (e.g. `demo_data/sharp.jpg` is only a sharpness test image; use a real leaf photo) → **Auto-Detect**.
-4. How to know it is real: under the result you see `🔧 Vision backend: hf:...\models_cache\crop_model`. If you see the yellow **"MOCK vision predictor in use"** warning, it is mock.
-5. If the route is **local**: check a blue 🗓️ season note and that the actions text is unchanged by season.
-6. If the route is **cloud** (with Gemini disabled): you get the canned "mock advisory". Caption reads `Advisory backend: gemini(MOCK-client)` — this is how you know it is *not* real Gemini.
-7. **Farm History** tab: your runs are stored; a second cloud run should show history refs like `H12` in the caption.
-8. Try `demo_data/blurry.jpg` → should be **rejected** with a retake message.
-9. Upload a non-plant/non-animal picture → "doesn't appear to be a crop or livestock photo".
+Try these, in order:
+1. **Sign up / log in** with any phone and PIN.
+2. **Sidebar:** pick a Region (e.g. Punjab) and a Season.
+3. **Upload a real leaf photo, click Auto-Detect.** Under the result you should see `🔧 Vision backend: hf:...` (old model) or, once the Part B files are copied here, `MoE expert: crop_row (onnx)`. A yellow **MOCK** warning means a fake predictor is running.
+4. **Local route:** a blue 🗓️ season note appears; the diagnosis and action list do not change with season.
+5. **Cloud route with Gemini off:** you get a canned "mock advisory" and the caption `Advisory backend: gemini(MOCK-client)`. That label is how you know it is not real Gemini.
+6. Upload `demo_data/blurry.jpg`: rejected with a "retake photo" message. Upload a non-plant, non-animal picture: "doesn't appear to be a crop or livestock photo".
+7. **Farm History** tab shows the saved runs.
+8. Livestock: open **Livestock Sensors**, set temperature 40.5 / activity low / feed low, add text "गाय को बुखार है" with a cow photo. Fusion should raise concern (usually a cloud route).
 
-Known limit today: the current crop checkpoint knows only 13 classes (Corn/Wheat/Potato/Rice) and the livestock model is zero-shot CLIP, so accuracy will be mediocre — that is what Part B improves.
-
-### A4. 🟢 RAG / knowledge base (offline)
+### A4. Knowledge base / RAG 🟢 NO API
 ```powershell
-python eval/kb_coverage_audit.py                     # 0 RAG gaps expected; ~21 offline-advisory gaps are intentional
-python -m src.zone2_cloud.rag.retriever "cow with lumps on skin and fever"    # top hit should be KB-lumpy_skin_disease
-python -m src.zone2_cloud.rag.build_knowledge_base   # rebuild FAISS after any KB edit (~30 s, uses cached MiniLM)
+python eval/kb_coverage_audit.py                                   # expect 0 RAG gaps (about 21 offline-advisory gaps are intentional)
+python -m src.zone2_cloud.rag.retriever "cow with lumps on skin and fever"     # top hit should be KB-lumpy_skin_disease
+python -m src.zone2_cloud.rag.build_knowledge_base                 # rebuild the search index after any KB edit (~30 s)
 python eval/rag_eval.py --backend lexical
 python eval/rag_eval.py --backend faiss
 ```
-**Your manual task:** open `eval/rag_queries.json`, correct the relevance labels using your domain knowledge, set `"reviewed": true`, re-run. Only then treat precision/recall/MRR as real. Also skim the 22 draft docs (`review_status: draft_needs_expert_review` in `src/zone2_cloud/rag/knowledge_base/`) and the notes in `src/zone1_edge/knowledge/seasonal_guidance.json`.
+**Your task (needed before the numbers mean anything):** open `eval/rag_queries.json`. The relevance labels were written by me, not a domain expert. Correct them, set `"reviewed": true`, re-run. Also skim the 22 draft docs (`review_status: draft_needs_expert_review`) in `src/zone2_cloud/rag/knowledge_base/` and `src/zone1_edge/knowledge/seasonal_guidance.json`.
 
-Optional reranker comparison (needs the cached model, ~2 GB RAM):
-```powershell
-$env:RAG_RERANK_MODEL="BAAI/bge-reranker-v2-m3"; python eval/rag_eval.py --backend faiss --rerank
-```
-
-### A5. 🟢 Livestock sensors + Hindi text
-In the app expand **Livestock Sensors**, set temp 40.5 / activity low / feed low and add text "गाय को बुखार है" with a cow photo. Expect fusion to raise concern → usually a cloud route. (Voice input is intentionally disabled.)
-
-### A6. 🟡 Real Gemini (costs API quota — do a few runs only)
-Get the key: <https://aistudio.google.com/apikey> → sign in → **Create API key**. Free tier has rate limits; do **not** enable billing unless you want to pay. Put it in `.env`:
+### A5. Real Gemini in the app 🔴 USES GEMINI API (1 request per cloud-route click)
+Get a key at <https://aistudio.google.com/apikey> (sign in, **Create API key**). Do not enable billing unless you want to pay. In `.env`:
 ```
 GEMINI_ENABLED=true
 GEMINI_API_KEY=<your key>
 GEMINI_MODEL=gemini-2.5-flash-lite
 ```
-Restart Streamlit, upload a **low-confidence or safety-critical** case (forces cloud route). How to verify it is real:
-- Caption shows `Advisory backend: gemini` **without** `(MOCK-client)`.
-- Summary is case-specific, not "This is a mock advisory from MockGeminiClient."
-- Caption `Cited docs: KB-...` lists IDs that really appear in the retrieved set; `Citations verified ✅`.
-- If it says "Error generating advisory" the key/quota is wrong (check the terminal for the error text).
-Quota is spent per cloud-route click; keep tests few.
+Restart Streamlit and trigger a cloud-route case (low confidence or a safety-critical disease). Do only **2-3 clicks**. It is real if: the caption says `Advisory backend: gemini` with no `(MOCK-client)`; the text is specific to your case (not "This is a mock advisory..."); `Cited docs: KB-...` shows IDs that exist. If you see "Error generating advisory", the key or quota is the problem (details in the terminal). Set `GEMINI_ENABLED=false` again afterwards.
 
-### A7. 🟡 Real weather (free, no key)
-`.env`: `WEATHER_ENABLED=true`, restart, set a Region in the sidebar, trigger a cloud case → caption `Weather context (open-meteo): ...`. Disconnect Wi-Fi and repeat → advisory must still appear, just without the weather caption. States are approximated by centroid coordinates.
-
-### A8. 🟢 Dry-runs of Phase 4 tooling (no API)
-```powershell
-python -m training.llm.generate_synthetic_data --audit-db      # how many real records exist (expect: very few → synthetic needed)
-python -m training.llm.generate_synthetic_data --dry-run --n 10
-python -m training.llm.compare_backends --backend mock --limit 3   # needs sft_test.jsonl first, so skip until Part C
-```
+### A6. Real weather 🟡 USES WEATHER API (free, no key)
+`.env`: `WEATHER_ENABLED=true`, restart, set a Region, trigger a cloud case: caption `Weather context (open-meteo): ...`. Turn Wi-Fi off and repeat: the advisory must still appear, just without weather.
 
 ---
-## PART B — Fine-tuning the vision experts (on the GPU workstation)
+# PART B: Vision experts and MoE gate: DONE ✅
 
-### B0. GPU workstation setup (Linux, bash)
-**Code** lives in `/home/m25cse030/agri-vision-platform` (the git clone). **Everything big** (venv, datasets, checkpoints, outputs, downloads, logs) lives on the HDD under `/DATA1/shrusti/agri-vision-platform`, so your home disk stays small.
-```
-/home/m25cse030/agri-vision-platform/      <- CODE ONLY (git clone; you cd here and run every command from here)
+**What was done:** the four sub-experts (`crop_row`, `crop_perennial`, `livestock_lsd`, `livestock_fmd`) and both `moe_gate` files were trained on the GPU box, and baseline and after-training evaluations were produced.
+**Results, tables and analysis:** [docs/system/evaluation_results.md](docs/system/evaluation_results.md).
+**Short verdict:** the experts are excellent (about 97-98% crop, 94-95% livestock on their own). The gate routes only about 74% (crop) and 82% (livestock) of images correctly, which drags the end-to-end numbers to 77% and 84%. That is still far better than before for livestock (53% → 84%), but a routing fix is recommended.
 
-/DATA1/shrusti/agri-vision-platform/         <- HDD: everything else
-├── venv/           python environment (~7-9 GB)
-├── data/           plantvillage/  cattle/            (datasets)
-├── models_cache/   moe/<group>/ (ONNX+checkpoints), moe/*_moe_gate.json, llm/ (LoRA adapters)
-├── results/        eval reports, gate reports, llm_data/, llm_compare/, rag_eval/
-├── logs/           nohup logs
-├── hf_cache/       Hugging Face + torch downloads (Qwen base model ~3 GB, timm backbones)
-├── pip_cache/      pip download cache
-└── tmp/            temp files
+### B-fix-1. Re-run the crop baseline on the same test images 🟢 NO API (GPU box, about 5-20 min)
+Why: the earlier crop baseline used 6517 images, every other report uses 5433, so they cannot be compared. This re-scores the original checkpoint on the exact same test set. (Use your normal GPU-box session setup, shown below.)
+```bash
+CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.evaluate_expert --root "$PV" --domain crop --target baseline > $AGRI/logs/base_crop2.log 2>&1 &
 ```
-One-time setup (run these exact lines; `AGRI` = HDD, `CODE` = code dir):
+Then send me `results/zone1/eval/crop_baseline.md` and I will update the report.
+
+### B-fix-2. Routing fix ⏳ needs your decision
+Recommended in the report (section 5): run both sub-experts of a domain and keep the more confident answer. Tell me "go" and I will add a `--routing both` option to the runtime and the evaluator so you can measure it before adopting it. Nothing changes until then.
+
+### Copy the trained files to the laptop (to try them in the app) 🟢 NO API
+Copy from the GPU box `$AGRI/models_cache/moe/` (only `model.onnx` and `meta.json` in each expert folder, plus the two `*_moe_gate.json`; skip `best.pt`) to the laptop's `models_cache/moe/`. Then A2 should show `MoE crop: active`.
+
+### GPU box session setup (already done; kept for reference)
+Code: `/home/m25cse030/agri-vision-platform`. Everything big: `/DATA1/shrusti/agri-vision-platform` (`venv/ data/ models_cache/ results/ logs/ hf_cache/ pip_cache/ tmp/`).
 ```bash
 export AGRI=/DATA1/shrusti/agri-vision-platform
 export CODE=/home/m25cse030/agri-vision-platform
-mkdir -p $AGRI/{data,models_cache,results,logs,hf_cache,pip_cache,tmp}
-git clone <your-repo-url> $CODE && cd $CODE
-python3 -m venv $AGRI/venv && source $AGRI/venv/bin/activate
+export AGRIVISION_DATA_ROOT=$AGRI        # training scripts write models_cache/ and results/ here, not into the code dir
+export HF_HOME=$AGRI/hf_cache TORCH_HOME=$AGRI/hf_cache/torch
 export PIP_CACHE_DIR=$AGRI/pip_cache TMPDIR=$AGRI/tmp
-pip install --upgrade pip
-# torch build must match the CUDA version shown by nvidia-smi (example: CUDA 12.1):
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-pip install -r training/requirements-train.txt onnxruntime
-python -c "import torch;print(torch.cuda.is_available(), torch.cuda.device_count())"
-```
-**Put these in `~/.bashrc` (or a file `$AGRI/env.sh` you `source` every session)** — they redirect all outputs and downloads to the HDD:
-```bash
-export AGRI=/DATA1/shrusti/agri-vision-platform
-export CODE=/home/m25cse030/agri-vision-platform
-export AGRIVISION_DATA_ROOT=$AGRI            # models_cache/, results/ (training scripts write models_cache/ + results/ here, NOT into the code dir)
-export HF_HOME=$AGRI/hf_cache                # Hugging Face downloads (Qwen etc.)
-export TORCH_HOME=$AGRI/hf_cache/torch       # timm/torch pretrained weights
-export PIP_CACHE_DIR=$AGRI/pip_cache TMPDIR=$AGRI/tmp
-export CUDA_DEVICE_ORDER=PCI_BUS_ID          # CUDA_VISIBLE_DEVICES numbering == nvidia-smi numbering
-source $AGRI/venv/bin/activate
-export PV="$AGRI/data/plantvillage/PlantVillage"; export CATTLE="$AGRI/data/cattle/Cows datasets"; export CM=training/configs/cattle_class_map.json
-cd $CODE                                     # always run commands from the code dir (python -m training... needs it)
-```
-Check GPUs with `nvidia-smi -L`, then put `CUDA_VISIBLE_DEVICES=<idx of a 24 GB card>` before each command (the 48 GB card is never needed).
-Verify the redirect worked: `python -c "from training.paths import MODELS,RESULTS,DATA;print(MODELS,RESULTS)"` must print `/DATA1/...`.
-Always use `python -u` so `nohup` logs are not buffered; follow with `tail -f $AGRI/logs/<name>.log`, GPU with `watch -n2 nvidia-smi`, disk with `du -sh $AGRI/*`.
-
-**Disk (estimates):** venv 7–9 GB · PlantVillage 1–3 GB · cattle dataset 0.2–2 GB · hf_cache ~3.5 GB (with Qwen) · models/results <1 GB. **≈15–20 GB on the HDD; keep 30 GB free.** Check: `df -h /DATA1`.
-**HDD speed note:** training reads ~50k small images; the first epoch is slow on a spinning disk (random reads) and later epochs are faster (OS file cache; keep ≥16 GB free RAM). If a run looks I/O-bound (GPU utilisation low, `iostat -x 2` shows the HDD ~100% busy), copy the dataset to a local SSD/`/dev/shm` once and pass that path as `--root`. Checkpoints/logs/results are small and fine on the HDD.
-**CPU:** vision training is data-loader bound — give it 8+ cores (`--workers 8`), RAM ≈ 8–16 GB.
-
-### B1. Dataset locations (already downloaded)
-```
-$AGRI/data/plantvillage/PlantVillage/{train,val}/<38 class folders>     # pre-split by the dataset
-$AGRI/data/cattle/"Cows datasets"/{foot-and-mouth,healthy,lumpy}
-```
-Define these once (add to `~/.bashrc` block; **note the quotes — the cattle path has a space**):
-```bash
+export CUDA_DEVICE_ORDER=PCI_BUS_ID      # CUDA_VISIBLE_DEVICES numbers match nvidia-smi
 export PV="$AGRI/data/plantvillage/PlantVillage"
 export CATTLE="$AGRI/data/cattle/Cows datasets"
-export CM=training/configs/cattle_class_map.json      # maps foot-and-mouth/lumpy/healthy -> canonical class names (already set for your folders)
+export CM=training/configs/cattle_class_map.json
+source $AGRI/venv/bin/activate
+cd $CODE
 ```
-How the code uses them (`training/data.py`):
-- **PlantVillage:** your `train/` is used for training. Your `val/` is split **50/50 per class** into a validation set (used to pick the best epoch) and a **test set** (used only for final numbers), because the dataset has no separate test folder. Test never influences training or model selection.
-- **Cattle:** no split shipped → stratified 70/15/15 (seed 42, the same split every time).
-- Pass `--root "$PV"` for crop and `--root "$CATTLE" --class-map $CM` for livestock in every command below.
+Use `python -u` with `nohup` so logs are not buffered. Use one 24 GB card (`CUDA_VISIBLE_DEVICES=<idx>`), never the 48 GB one.
 
-### B2. Step 1 — dataset audit (CPU, <1 min)
+<details><summary>Part B commands (for re-running; all 🟢 NO API)</summary>
+
 ```bash
 python -m training.dataset_audit --root "$PV" --domain crop
 python -m training.dataset_audit --root "$CATTLE" --domain livestock --class-map $CM
-```
-Expect `crop_row ... OK` and `crop_perennial ... OK` (min 200 images/class; PlantVillage classes are all large). Look for: `crop_row ... OK`, `crop_perennial ... OK`, and `unmapped_folders` (fix names/class-map if not empty).
-If `livestock_fmd` says **UNDER-SUPPORTED**, skip the FMD expert (see B6) — FMD stays on zero-shot + cloud.
-
-### B3. Step 2 — BASELINE ("before" numbers), current unmodified experts
-```bash
-CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.evaluate_expert --root "$PV" --domain crop --target baseline > $AGRI/logs/base_crop.log 2>&1 &
-CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.evaluate_expert --root "$CATTLE" --domain livestock --target baseline --class-map $CM > $AGRI/logs/base_live.log 2>&1 &
-```
-Time ≈ 5–20 min each (the runtime experts run on CPU). Output: `$AGRI/results/zone1/eval/<domain>_baseline.{md,json}`. Expect low crop scores because the current checkpoint has no Tomato/Apple/etc. classes — that is a true statement about "before", not a bug.
-
-### B4. Step 3 — fine-tune the 4 sub-experts (one at a time on one 24 GB GPU)
-Defaults: `mobilenetv3_large_100`, 224 px, 3+5+5 epochs (A head-only, B top-2 blocks, C full net with layerwise-lower LRs), class-weighted loss, best checkpoint by **val macro-F1**.
-```bash
-export CUDA_DEVICE_ORDER=PCI_BUS_ID
 CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root "$PV" --group crop_row --batch 64 --workers 8 > $AGRI/logs/ft_crop_row.log 2>&1 &
-# when finished:
 CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root "$PV" --group crop_perennial --batch 64 --workers 8 > $AGRI/logs/ft_crop_perennial.log 2>&1 &
 CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root "$CATTLE" --group livestock_lsd --class-map $CM --batch 32 --workers 8 > $AGRI/logs/ft_lsd.log 2>&1 &
-CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root "$CATTLE" --group livestock_fmd --class-map $CM --batch 32 --workers 8 > $AGRI/logs/ft_fmd.log 2>&1 &   # only if audit OK
-```
-Per-run estimates on one 24 GB card (AMP on):
-| Expert | Images (approx) | Time | GPU mem | CPU RAM |
-|---|---|---|---|---|
-| crop_row (21 cls) | ~30 k | 10–30 min | 3–5 GB | 6–10 GB |
-| crop_perennial (17 cls) | ~20 k | 8–20 min | 3–5 GB | 6–10 GB |
-| livestock_lsd / fmd | 1–5 k | 3–10 min | 2–4 GB | 4–8 GB |
-Because they use ~4 GB each, you **can** run 2–3 concurrently on the same 24 GB GPU, but the CPU loaders will then compete; sequential is safer. Never needs the 48 GB card.
-The log prints one line per epoch (`stage`, `train_loss`, `val_acc`, `val_macro_f1`). Healthy signs: val macro-F1 rises in stage A then improves again in B/C; if it drops in C, lower `--lr-head` (e.g. `5e-4`) or `--top-blocks`. Exact N and LRs are meant to be tuned on val.
-Outputs in `$AGRI/models_cache/moe/<group>/`: `model.onnx`, `meta.json`, `best.pt`, `training_log.csv`, `test_report.md/json`, `split_manifest.json`.
-If it crashes with CUDA OOM: `--batch 32`. If dataloader errors about shared memory: `--workers 4`.
-
-### B5. Step 4 — train the learned moe_gate (CPU, ~2–5 min)
-```bash
+CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root "$CATTLE" --group livestock_fmd --class-map $CM --batch 32 --workers 8 > $AGRI/logs/ft_fmd.log 2>&1 &
 python -u -m training.train_moe_gate --root "$PV" --domain crop
 python -u -m training.train_moe_gate --root "$CATTLE" --domain livestock --class-map $CM
-```
-Prints `moe_gate test routing accuracy`. Writes `$AGRI/models_cache/moe/<domain>_moe_gate.json` (<100 KB). If routing accuracy is poor, **report it honestly** — gate features are simple colour/texture statistics and may confuse the two crop groups; the documented fallback is a gate on backbone embeddings (future change, ask me).
-
-### B6. Step 5 — evaluate ("after") and compare with baseline
-```bash
-CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root "$PV" --domain crop --target sub:crop_row
-CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root "$PV" --domain crop --target sub:crop_perennial
-CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root "$PV" --domain crop --target moe        # end-to-end + gate routing accuracy
+CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root "$PV" --domain crop --target sub:crop_row      # also sub:crop_perennial and moe
 CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root "$CATTLE" --domain livestock --target moe --class-map $CM
 ```
-(needs `onnxruntime` installed on the GPU box: `pip install onnxruntime`). Time 2–10 min each. Compare `$AGRI/results/zone1/eval/*_baseline.md` vs `*_moe.md`: accuracy, macro-F1, per-class recall, confusion matrix, ECE (calibration). Note accuracy on train data ≠ test; only the `test` split numbers count.
-**If FMD is under-supported:** don't ship `livestock_fmd`; MoE for livestock stays inactive (all four ONNX files must exist), so livestock keeps the CLIP path. Say so in your report.
-
-### B7. Step 6 — use the trained models in the app
-Copy `$AGRI/models_cache/moe/` from the GPU box to the app machine's `models_cache/moe/` (`scp -r`; ~50 MB ONNX+gate — leave `best.pt` files behind), or point the app at it with `AGRIVISION_DATA_ROOT` / `AGRIVISION_MODEL_CACHE`, `pip install onnxruntime`, keep `AGRIVISION_MOE_ENABLED=auto`. Re-run `python setup/check_real_components.py` → `MoE crop: active`. In the app the caption shows `MoE expert: crop_row (onnx)`. Ensure fine-tuned outputs still route correctly (e.g. Tomato early blight should now hit the offline advisory).
+Data split rules: PlantVillage `train/` trains; its `val/` is split 50/50 per class into validation (picks the best epoch) and test (final numbers only). Cattle has no shipped split, so it gets a fixed 70/15/15.
+</details>
 
 ---
-## PART C — LLM fine-tuning (Phase 4)
+# PART C: RAG review, Qwen fine-tuning, comparison
 
-### C1. 🟡 Generate synthetic data (**calls Gemini, uses quota; run from any machine with the key**)
-```bash
-python -m training.llm.generate_synthetic_data --audit-db
-python -m training.llm.generate_synthetic_data --dry-run --n 20                      # free: inspect scenarios
-GEMINI_ENABLED=true python -m training.llm.generate_synthetic_data --n 40 --i-understand-this-calls-gemini    # pilot: 40 calls
-```
-**Human review is mandatory:** open `$AGRI/results/zone2/llm_data/review_sample.csv`, read each row for agronomic/veterinary correctness, write `approved` or `rejected` in the `review_status(approved/rejected)` column. Fix prompts if many rejected. Then scale up (e.g. `--n 600`; ~ 600 Gemini calls — watch your quota).
-```bash
-python -m training.llm.prepare_sft_dataset --reviewed $AGRI/results/zone2/llm_data/review_sample.csv   # keeps only approved+valid+citation-clean, splits train/val/test
-```
-⚠️ Only rows that appear in the reviewed CSV are used, so for the scaled run review the **full** CSV, not just the pilot.
-Aim for ≥300–500 approved examples; fewer than ~150 will underfit/hurt quality.
+**What Part C achieves:** the cloud advisory currently comes from Gemini. Part C teaches a small open model (Qwen2.5-1.5B) to write the same kind of structured, source-cited advisory, so you can run it yourself instead of (or next to) Gemini. To teach it we need examples. We have almost no real advisories, so we ask Gemini to write some (synthetic data), **you check them by hand**, then Qwen trains on the approved ones.
 
-### C2. QLoRA training (GPU; one 24 GB card is enough)
+## C1. Review the RAG labels 🟢 NO API (laptop, your time)
+Same task as A4. Do it first: the citation checks in the later steps rely on the knowledge base being right.
+
+## C2. Generate synthetic training data 🔴 USES GEMINI API
+**What happens:** the script builds "scenarios" (a disease from the knowledge base + region + season + weather + optional farm history + the retrieved knowledge documents). For each scenario it sends the same prompt the app would send and asks Gemini for the advisory JSON. **Each scenario is one request.** Answers are auto-checked (format, citations, no drug doses) and saved with `synthetic=true` and `review_status=pending`.
+
+**How you stay under your limit:**
+- `--n N` is the **maximum number of new requests in this run**, so you control the exact spend.
+- It **resumes**: scenarios already stored are skipped. Running `--n 15` on three different days makes 45 different scenarios, never repeats.
+- It **stops itself after 3 failures in a row** (e.g. quota reached) instead of burning more requests.
+- Check your remaining quota first at <https://aistudio.google.com/> (your project's usage / rate limits). Limits differ by model and account and change over time, so I do not quote numbers.
+
+**Step 1: preview the scenarios 🟢 NO API**
+```bash
+python -m training.llm.generate_synthetic_data --audit-db          # how many real records exist (expect very few)
+python -m training.llm.generate_synthetic_data --dry-run --n 10    # writes scenarios_dry_run.jsonl, 0 requests
+```
+Open `$AGRI/results/zone2/llm_data/scenarios_dry_run.jsonl` and check that the scenarios look sensible. (The dry run never touches your real data or review sheet.)
+
+**Step 2: pilot 🔴 USES GEMINI API (15 requests)**
+```bash
+GEMINI_ENABLED=true python -m training.llm.generate_synthetic_data --n 15 --i-understand-this-calls-gemini
+```
+The key is read from `.env` in the code directory. Output: `synthetic_advisories.jsonl` and the review sheet `review_sample.csv` in `$AGRI/results/zone2/llm_data/`.
+
+**Step 3: review by hand 🟢 NO API.** Open `review_sample.csv`. For each row read the summary and actions for agronomic or veterinary correctness and type `approved` or `rejected` in the column `review_status(approved/rejected)`. If most are rejected, tell me and we fix the prompt before spending more.
+
+**Step 4: scale up in batches 🔴 USES GEMINI API (your choice, e.g. 50 requests per run)**
+Target: **300-500 approved examples** (fewer than about 150 will not teach the model reliably). With roughly 80% approved that is about 400-600 requests in total; spread them over days if your quota is small.
+```bash
+GEMINI_ENABLED=true python -m training.llm.generate_synthetic_data --n 50 --i-understand-this-calls-gemini    # repeat as often as you like
+```
+Each run appends new rows to the same sheet; review the new rows only.
+
+## C3. Build the training files 🟢 NO API
+```bash
+python -m training.llm.prepare_sft_dataset --reviewed $AGRI/results/zone2/llm_data/review_sample.csv
+```
+Keeps only rows you marked `approved` **and** that pass the validator and the citation check, then splits them per disease into train / val / **test** (about 80/10/10). The test part is never used for training and is what the final comparison uses. Only rows present in the reviewed sheet are used, so make sure the whole sheet is filled in.
+
+## C4. Fine-tune Qwen (QLoRA) 🌐 FREE DOWNLOAD (base model ~3 GB from Hugging Face, no key) (GPU box)
 ```bash
 CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.llm.finetune_qlora --base Qwen/Qwen2.5-1.5B-Instruct --out $AGRI/models_cache/llm/agrivision-qwen-lora > $AGRI/logs/qlora.log 2>&1 &
+tail -f $AGRI/logs/qlora.log
 ```
-Estimates: VRAM 8–12 GB (4-bit + gradient checkpointing, batch 4 × accum 4) · CPU RAM ~8 GB · disk ~3 GB base download (into `$AGRI/hf_cache`) + ~0.2 GB adapters (into `$AGRI/models_cache/llm`) · time 20–60 min for ~500 examples × 3 epochs. HF token is optional (Qwen 2.5 is open): only if you hit rate limits, <https://huggingface.co/settings/tokens> → new **read** token → `huggingface-cli login`.
-Healthy signs: `eval_loss` decreases across epochs; best epoch is kept automatically. If OOM: `--batch 2 --grad-accum 8` or `--max-len 1536`.
+**What happens:** the 1.5 B model is loaded in 4-bit (small memory) and only tiny "LoRA adapter" layers (~70 MB) are trained on your approved examples, in the model's own chat format. Gemini is not involved.
+Estimates: GPU 8-12 GB · RAM ~8 GB · disk ~3 GB base model (in `$AGRI/hf_cache`) + ~0.2 GB adapters · **20-60 min** for ~500 examples × 3 epochs.
+**Healthy signs:** `eval_loss` goes down over the epochs; the best epoch is kept automatically. **If out of memory:** add `--batch 2 --grad-accum 8` or `--max-len 1536`. A Hugging Face token is only needed if downloads get rate-limited (huggingface.co/settings/tokens, new *read* token, then `huggingface-cli login`).
 
-### C3. Serve and connect
+## C5. Serve the model 🟢 NO API (GPU box)
 ```bash
-pip install vllm          # on the GPU box (large install)
+pip install vllm       # large install
 CUDA_VISIBLE_DEVICES=0 nohup python -u -m vllm.entrypoints.openai.api_server --model Qwen/Qwen2.5-1.5B-Instruct --enable-lora --lora-modules agrivision-advisor=$AGRI/models_cache/llm/agrivision-qwen-lora --port 8000 > $AGRI/logs/vllm.log 2>&1 &
 ```
-(Or any OpenAI-compatible server.) In the app's `.env`: `ADVISORY_BACKEND=local_llm`, `LOCAL_LLM_URL=http://<gpu-host>:8000/v1`, `LOCAL_LLM_MODEL=agrivision-advisor` (use an SSH tunnel; don't expose port 8000 publicly). Verify in the UI: `Advisory backend: local_llm`. If the server is down it falls back and shows `gemini_fallback...`.
+This starts a local web server that speaks the OpenAI chat format (no OpenAI account or key involved). To use it from the app add to `.env`: `ADVISORY_BACKEND=local_llm`, `LOCAL_LLM_URL=http://<gpu-host>:8000/v1`, `LOCAL_LLM_MODEL=agrivision-advisor`. Reach it through an SSH tunnel (`ssh -L 8000:localhost:8000 user@gpu-host`); do not expose port 8000 publicly. In the UI the caption should read `Advisory backend: local_llm`; if the server is down you will see `gemini_fallback...`.
 
-### C4. Compare vs Gemini (same held-out test set)
+## C6. Compare Qwen with Gemini on the held-out test set
 ```bash
+# Qwen (only talks to your own server)                                                     🟢 NO API
 ADVISORY_BACKEND=local_llm LOCAL_LLM_URL=http://localhost:8000/v1 python -m training.llm.compare_backends --backend local_llm
-GEMINI_ENABLED=true python -m training.llm.compare_backends --backend gemini --i-understand-this-calls-gemini   # spends quota = test-set size
+
+# Gemini                                                                                   🔴 USES GEMINI API
+# --limit 20 = 20 requests; without --limit = the whole test set (about 50 requests)
+GEMINI_ENABLED=true python -m training.llm.compare_backends --backend gemini --limit 20 --i-understand-this-calls-gemini
+
+# citation score on the saved Qwen answers                                                 🟢 NO API
 python eval/rag_eval.py --citations $AGRI/results/zone2/llm_compare/local_llm.jsonl
 ```
-Reports in `$AGRI/results/zone2/llm_compare/*_report.json`: schema-validity, validator pass, citation correctness, farm-history citation correctness. Also read a sample of the JSONL outputs by hand — these metrics don't measure medical/agronomic quality.
+For a fair comparison use the same `--limit` for both (add `--limit 20` to the Qwen command too). Reports: `$AGRI/results/zone2/llm_compare/*_report.json` (schema validity, validator pass, citation correctness, farm-history citation correctness). Also read a few answers by hand: these numbers do not tell you whether the advice is agronomically or medically right. Send me the reports and I will add them to [docs/system/evaluation_results.md](docs/system/evaluation_results.md).
 
 ---
-## PART D — Which extra keys/tokens do I need?
+# PART D: Keys and tokens
 | Token | Needed for | How to get | Cost |
 |---|---|---|---|
-| `GEMINI_API_KEY` | real cloud advisory (A6), synthetic data (C1), Gemini comparison (C4) | <https://aistudio.google.com/apikey> | free tier rate-limited; billing optional — leave billing off to cap spend |
-| Kaggle `kaggle.json` | downloading datasets from Kaggle only | kaggle.com/settings → Create New Token | free |
-| HF token (optional) | avoiding rate limits / gated models | huggingface.co/settings/tokens (read) | free |
-| Weather | none (Open-Meteo) | — | free, non-commercial |
-| Local LLM key | only if your server requires one (`LOCAL_LLM_API_KEY`) | your server | — |
+| `GEMINI_API_KEY` | A5, C2, C6 (the Gemini steps) | <https://aistudio.google.com/apikey> | free tier with rate limits; billing optional (leave it off to cap spend) |
+| Hugging Face token | only if downloads are rate-limited | huggingface.co/settings/tokens (read) | free |
+| Kaggle token | only if you download more Kaggle datasets | kaggle.com/settings → Create New Token | free |
+| Weather | none (Open-Meteo) | n/a | free, non-commercial |
+| `LOCAL_LLM_API_KEY` | only if your Qwen server requires one | your server | n/a |
 
-## PART E — Checklist: how to confirm "not mock"
-- [ ] `python setup/check_real_components.py` shows `[OK ]` for both experts and `[OK ] Gemini` (after A6).
-- [ ] UI caption `Vision backend: hf:<path>` (never `mock`), no yellow MOCK warning.
-- [ ] UI caption `Advisory backend: gemini` (no `(MOCK-client)`), or `local_llm`.
-- [ ] After Part B: caption `MoE expert: <group> (onnx)`.
-- [ ] Set `AGRIVISION_EXPERT_MODE=real` so a missing model raises an error instead of silently mocking.
+# PART E: Confirm nothing is mock
+- [ ] `python setup/check_real_components.py` shows `[OK ]` for both experts, `MoE ...: active` after copying the Part B files, and `[OK ] Gemini` after A5.
+- [ ] Result caption: `Vision backend: hf:<path>` (never `mock`) or `MoE expert: <group> (onnx)`; no yellow MOCK warning.
+- [ ] Advisory caption: `gemini` with no `(MOCK-client)`, or `local_llm`.
+- [ ] `AGRIVISION_EXPERT_MODE=real` so a missing model raises an error instead of silently mocking.
 
-## PART F — Is the fine-tuning code optimised?
-I reviewed it and it was **not** fully optimised, so I fixed it (`training/finetune_expert.py`):
-- Mixed precision (AMP + GradScaler) → ~2× faster, ~half activation memory · `channels_last` + `cudnn.benchmark` · pinned memory, non-blocking transfers, persistent workers, prefetch 4 · JPEG `draft` decoding (big CPU saving on large camera photos) · workers default = min(8, CPU cores) · `set_to_none` grads · AMP during validation.
-- Already efficient: frozen-backbone stage A (only head gets gradients), small edge backbone, per-group LRs, QLoRA (4-bit, gradient checkpointing, bf16/fp16 auto) for the LLM.
-- Verified only by a tiny CPU smoke test (AMP paths are inactive on CPU) — first GPU run is the real test; if you see `nan` loss, tell me and I'll switch to bf16/disable the scaler.
-- Storage: all outputs honour `AGRIVISION_DATA_ROOT` (`training/paths.py`); `src/` reads trained models from `$AGRIVISION_DATA_ROOT/models_cache` automatically (or `AGRIVISION_MODEL_CACHE`). The small FAISS index and farm DB stay in the repo.
-- Not optimised on purpose: gate feature extraction is single-process CPU (~1–3 min); no multi-GPU (unneeded).
-
-## PART G — Report back
-Send me the tails of `$AGRI/logs/*.log` and `$AGRI/results/zone1/eval/*.md` and I'll write the before/after comparison and adjust hyperparameters.
+# PART F: Notes
+- **Storage:** all training outputs follow `AGRIVISION_DATA_ROOT`; the app reads trained models from `$AGRIVISION_DATA_ROOT/models_cache` (or `AGRIVISION_MODEL_CACHE`). The small FAISS index and the farm database stay in the repo.
+- **Training code is optimised** (mixed precision, channels-last, pinned memory, persistent workers, fast JPEG decoding). If you ever see `nan` loss, tell me.
+- **Vercel:** the Streamlit UI cannot run on Vercel serverless, and the old HF/torch models exceed its limits; the new ONNX experts, numpy gate and keyword RAG are light enough. Options are in `docs/system/ai_upgrade_walkthrough.md`.

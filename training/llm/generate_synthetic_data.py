@@ -10,8 +10,8 @@ rendered with the SAME format the runtime uses (advisory_format.py), with
 retrieved docs tagged [KB-..] and history lines tagged [H..].
 
 Step 1 (no API calls):   --dry-run  -> writes scenarios/prompts only
-Step 2 (CALLS GEMINI, costs quota; user only):
-    GEMINI_ENABLED=true python -m training.llm.generate_synthetic_data --n 40 --i-understand-this-calls-gemini
+Step 2 (CALLS GEMINI, one call per scenario; user only) — safe to run in small daily batches, it resumes:
+    GEMINI_ENABLED=true python -m training.llm.generate_synthetic_data --n 15 --i-understand-this-calls-gemini
     -> review the sample (review_sample.csv), then scale up --n.
 Every record is tagged synthetic=true, review_status=pending. prepare_sft_dataset.py
 only uses records a human marked `approved`.
@@ -89,11 +89,16 @@ def call_gemini_raw(payload: dict) -> dict:
 
 
 def main():
+    from dotenv import load_dotenv
+
+    load_dotenv()  # reads GEMINI_* / LOCAL_LLM_* from .env in the current directory (never printed)
     ap = argparse.ArgumentParser()
-    ap.add_argument("--n", type=int, default=40)
+    ap.add_argument("--n", type=int, default=15, help="MAX number of NEW Gemini calls this run (= one call per scenario)")
     ap.add_argument("--seed", type=int, default=7)
-    ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--dry-run", action="store_true", help="build scenarios only; NO Gemini call, writes scenarios_dry_run.jsonl")
     ap.add_argument("--audit-db", action="store_true")
+    ap.add_argument("--max-consecutive-failures", type=int, default=3,
+                    help="stop early (quota/key problem) instead of burning more calls")
     ap.add_argument("--i-understand-this-calls-gemini", action="store_true")
     a = ap.parse_args()
     if a.audit_db:
@@ -101,31 +106,58 @@ def main():
     if not a.dry_run and not a.i_understand_this_calls_gemini:
         raise SystemExit("Refusing to call Gemini without --i-understand-this-calls-gemini (or use --dry-run).")
 
-    rng = random.Random(a.seed)
     docs = load_kb(KB_DIR)
     OUT.mkdir(parents=True, exist_ok=True)
-    out_path = OUT / ("scenarios_dry_run.jsonl" if a.dry_run else "synthetic_advisories.jsonl")
-    with open(out_path, "w", encoding="utf-8") as f, open(OUT / "review_sample.csv", "w", newline="", encoding="utf-8") as rf:
+
+    if a.dry_run:  # never touches the real data / review files
+        with open(OUT / "scenarios_dry_run.jsonl", "w", encoding="utf-8") as f:
+            for i in range(a.n):
+                rec = make_scenario(docs[i % len(docs)], random.Random(f"{a.seed}:{i}"), i)
+                f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        print(f"[dry-run] wrote {a.n} scenarios to {OUT / 'scenarios_dry_run.jsonl'} (0 Gemini calls).")
+        return
+
+    out_path, csv_path = OUT / "synthetic_advisories.jsonl", OUT / "review_sample.csv"
+    done = set()  # resume: scenarios already generated in earlier runs are skipped (no repeat API cost)
+    if out_path.exists():
+        done = {json.loads(l)["scenario_id"] for l in out_path.read_text(encoding="utf-8").splitlines() if l.strip()}
+    new_csv = not csv_path.exists() or csv_path.stat().st_size == 0
+    calls = fails_in_row = 0
+    with open(out_path, "a", encoding="utf-8") as f, open(csv_path, "a", newline="", encoding="utf-8") as rf:
         rw = csv.writer(rf)
-        rw.writerow(["scenario_id", "condition", "region", "season", "summary", "actions", "cited_doc_ids",
-                     "auto_valid", "review_status(approved/rejected)", "reviewer_notes"])
-        for i in range(a.n):
-            rec = make_scenario(docs[i % len(docs)], rng, i)
-            if not a.dry_run:
-                try:
-                    resp = call_gemini_raw(rec["payload"])
-                except Exception as e:  # noqa: BLE001
-                    print(f"{rec['scenario_id']}: generation failed ({type(e).__name__})")
-                    continue
-                ok, reasons = validate_advisory(resp, [rec["payload"]["retrieved_knowledge"]], rec["payload"])
-                rec.update({"response": resp, "auto_valid": ok, "auto_reasons": reasons,
-                            "citation_check": verify_citations(resp, rec["payload"])})
-                adv = resp.get("advisory", {})
-                rw.writerow([rec["scenario_id"], rec["condition"], rec["payload"]["region"], rec["payload"]["season"],
-                             adv.get("summary", ""), " | ".join(adv.get("actions", [])),
-                             ",".join(resp.get("cited_doc_ids", [])), ok, "", ""])
+        if new_csv:
+            rw.writerow(["scenario_id", "condition", "region", "season", "summary", "actions", "cited_doc_ids",
+                         "auto_valid", "review_status(approved/rejected)", "reviewer_notes"])
+        i = 0
+        while calls < a.n:
+            sid = f"syn-{i:05d}"
+            rec = make_scenario(docs[i % len(docs)], random.Random(f"{a.seed}:{i}"), i)
+            i += 1
+            if sid in done:
+                continue
+            calls += 1  # counts every attempt, successful or not
+            try:
+                resp = call_gemini_raw(rec["payload"])
+                fails_in_row = 0
+            except Exception as e:  # noqa: BLE001
+                fails_in_row += 1
+                print(f"{sid}: generation failed ({type(e).__name__})")
+                if fails_in_row >= a.max_consecutive_failures:
+                    print("Too many consecutive failures (quota, key or network?). Stopping to avoid wasting calls.")
+                    break
+                continue
+            ok, reasons = validate_advisory(resp, [rec["payload"]["retrieved_knowledge"]], rec["payload"])
+            rec.update({"response": resp, "auto_valid": ok, "auto_reasons": reasons,
+                        "citation_check": verify_citations(resp, rec["payload"])})
+            adv = resp.get("advisory", {})
+            rw.writerow([rec["scenario_id"], rec["condition"], rec["payload"]["region"], rec["payload"]["season"],
+                         adv.get("summary", ""), " | ".join(adv.get("actions", [])),
+                         ",".join(resp.get("cited_doc_ids", [])), ok, "", ""])
             f.write(json.dumps(rec, ensure_ascii=False) + "\n")
-    print(f"Wrote {out_path}. Review {OUT / 'review_sample.csv'} before any training.")
+            f.flush()
+            rf.flush()
+    print(f"Gemini calls made this run: {calls}. "
+          f"Review {csv_path} before any training.")
 
 
 if __name__ == "__main__":

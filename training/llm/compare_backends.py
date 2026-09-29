@@ -40,6 +40,9 @@ def run_backend(name: str, payload: dict) -> dict:
 
 
 def main():
+    from dotenv import load_dotenv
+
+    load_dotenv()  # reads GEMINI_* / LOCAL_LLM_* from .env in the current directory (never printed)
     ap = argparse.ArgumentParser()
     ap.add_argument("--backend", choices=["gemini", "local_llm", "mock"], required=True)
     ap.add_argument("--test", default=str(DATA / "sft_test.jsonl"))
