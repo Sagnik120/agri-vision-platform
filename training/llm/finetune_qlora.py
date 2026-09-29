@@ -71,7 +71,7 @@ def main():
     dtype = torch.bfloat16 if bf16 else torch.float16
     quant = None if a.no_4bit else BitsAndBytesConfig(
         load_in_4bit=True, bnb_4bit_quant_type="nf4", bnb_4bit_use_double_quant=True, bnb_4bit_compute_dtype=dtype)
-    model = AutoModelForCausalLM.from_pretrained(a.base, quantization_config=quant, torch_dtype=dtype, device_map="auto")
+    model = AutoModelForCausalLM.from_pretrained(a.base, quantization_config=quant, torch_dtype=dtype, device_map={"": 0})
     if quant:
         model = prepare_model_for_kbit_training(model)
     model = get_peft_model(model, LoraConfig(
