@@ -18,7 +18,7 @@ from pathlib import Path
 
 from src.zone1_edge.moe.expert_groups import DOMAIN_GROUPS
 from training.paths import RESULTS
-from training.data import list_images, load_class_map
+from training.data import list_images, load_class_map, presplit_dirs
 
 
 def audit(root: str, domain: str, class_map: dict | None, min_per_class: int) -> dict:

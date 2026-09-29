@@ -29,7 +29,7 @@ from pathlib import Path
 
 from src.zone1_edge.moe.expert_groups import DOMAIN_GROUPS
 from training.paths import MODELS
-from training.data import list_images, load_class_map, save_manifest, stratified_split
+from training.data import load_class_map, load_split, save_manifest
 from training.metrics import classification_report, to_markdown
 
 
@@ -136,16 +136,16 @@ def main():
     import torch
 
     labels = DOMAIN_GROUPS[group_domain(a.group)][a.group]
-    items = [it for it in list_images(a.root, load_class_map(a.class_map)) if it[1] in labels]
+    split = load_split(a.root, load_class_map(a.class_map), allowed=set(labels))
     if a.max_per_class:
-        cnt = Counter()
-        items = [it for it in items if (cnt.update([it[1]]) or cnt[it[1]] <= a.max_per_class)]
-    present = sorted({c for _, c in items})
+        for k in split:
+            cnt = Counter()
+            split[k] = [it for it in split[k] if (cnt.update([it[1]]) or cnt[it[1]] <= a.max_per_class)]
+    present = sorted({c for k in split for _, c in split[k]})
     missing = [l for l in labels if l not in present]
     if missing:
         print(f"WARNING: no images for {missing}; training on present classes only.")
         labels = [l for l in labels if l in present]
-    split = stratified_split(items)
     out = Path(a.out) if a.out else MODELS / "moe" / a.group
     out.mkdir(parents=True, exist_ok=True)
     save_manifest(split, str(out / "split_manifest.json"))

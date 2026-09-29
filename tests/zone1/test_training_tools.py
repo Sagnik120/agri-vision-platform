@@ -35,3 +35,20 @@ def test_gate_trainer_learns_separable_data():
     y = np.array([0] * 50 + [1] * 50)
     W, b = fit_softmax(X, y, 2)
     assert (softmax(X @ W.T + b).argmax(1) == y).mean() > 0.95
+
+
+def test_presplit_dataset_layout(tmp_path):
+    from training.data import list_images, load_split, presplit_dirs
+    for split, n in (("train", 6), ("val", 8)):
+        for cls in ("A___x", "B___y"):
+            d = tmp_path / split / cls
+            d.mkdir(parents=True)
+            for i in range(n):
+                Image.new("RGB", (8, 8)).save(d / f"{i}.png")
+    assert set(presplit_dirs(str(tmp_path))) == {"train", "val"}
+    assert {c for _, c in list_images(str(tmp_path))} == {"A___x", "B___y"}  # train/val are NOT classes
+    s = load_split(str(tmp_path))
+    assert len(s["train"]) == 12 and len(s["val"]) == 8 and len(s["test"]) == 8
+    assert not {p for p, _ in s["val"]} & {p for p, _ in s["test"]}
+    assert all("/train/" in p.replace("\\", "/") for p, _ in s["train"])
+    assert all("/val/" in p.replace("\\", "/") for p, _ in s["test"] + s["val"])

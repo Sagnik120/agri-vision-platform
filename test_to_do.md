@@ -146,6 +146,7 @@ export TORCH_HOME=$AGRI/hf_cache/torch       # timm/torch pretrained weights
 export PIP_CACHE_DIR=$AGRI/pip_cache TMPDIR=$AGRI/tmp
 export CUDA_DEVICE_ORDER=PCI_BUS_ID          # CUDA_VISIBLE_DEVICES numbering == nvidia-smi numbering
 source $AGRI/venv/bin/activate
+export PV="$AGRI/data/plantvillage/PlantVillage"; export CATTLE="$AGRI/data/cattle/Cows datasets"; export CM=training/configs/cattle_class_map.json
 cd $CODE                                     # always run commands from the code dir (python -m training... needs it)
 ```
 Check GPUs with `nvidia-smi -L`, then put `CUDA_VISIBLE_DEVICES=<idx of a 24 GB card>` before each command (the 48 GB card is never needed).
@@ -156,23 +157,34 @@ Always use `python -u` so `nohup` logs are not buffered; follow with `tail -f $A
 **HDD speed note:** training reads ~50k small images; the first epoch is slow on a spinning disk (random reads) and later epochs are faster (OS file cache; keep ≥16 GB free RAM). If a run looks I/O-bound (GPU utilisation low, `iostat -x 2` shows the HDD ~100% busy), copy the dataset to a local SSD/`/dev/shm` once and pass that path as `--root`. Checkpoints/logs/results are small and fine on the HDD.
 **CPU:** vision training is data-loader bound — give it 8+ cores (`--workers 8`), RAM ≈ 8–16 GB.
 
-### B1. Get the datasets (verify names/licences on their pages yourself)
-- PlantVillage (38 classes, ImageFolder): e.g. Kaggle "plantvillage dataset" (use the **color** folder) or a Hugging Face copy. For Kaggle: <https://www.kaggle.com/settings> → **Create New Token** → save `~/.kaggle/kaggle.json` (`chmod 600`), `pip install kaggle`, `kaggle datasets download -d <owner/slug> --unzip -p $AGRI/data/plantvillage`.
-- Cattle disease dataset (LSD / FMD / healthy) — the one you chose. Put it in `$AGRI/data/cattle/<class_folder>/*.jpg`, then edit `training/configs/cattle_class_map.json` so the keys match your **actual folder names**.
-The class folder names for PlantVillage must match `src/zone1_edge/moe/expert_groups.py` (e.g. `Corn_(maize)___Common_rust_`). The audit tells you which folders didn't match.
+### B1. Dataset locations (already downloaded)
+```
+$AGRI/data/plantvillage/PlantVillage/{train,val}/<38 class folders>     # pre-split by the dataset
+$AGRI/data/cattle/"Cows datasets"/{foot-and-mouth,healthy,lumpy}
+```
+Define these once (add to `~/.bashrc` block; **note the quotes — the cattle path has a space**):
+```bash
+export PV="$AGRI/data/plantvillage/PlantVillage"
+export CATTLE="$AGRI/data/cattle/Cows datasets"
+export CM=training/configs/cattle_class_map.json      # maps foot-and-mouth/lumpy/healthy -> canonical class names (already set for your folders)
+```
+How the code uses them (`training/data.py`):
+- **PlantVillage:** your `train/` is used for training. Your `val/` is split **50/50 per class** into a validation set (used to pick the best epoch) and a **test set** (used only for final numbers), because the dataset has no separate test folder. Test never influences training or model selection.
+- **Cattle:** no split shipped → stratified 70/15/15 (seed 42, the same split every time).
+- Pass `--root "$PV"` for crop and `--root "$CATTLE" --class-map $CM` for livestock in every command below.
 
 ### B2. Step 1 — dataset audit (CPU, <1 min)
 ```bash
-python -m training.dataset_audit --root $AGRI/data/plantvillage --domain crop
-python -m training.dataset_audit --root $AGRI/data/cattle --domain livestock --class-map training/configs/cattle_class_map.json
+python -m training.dataset_audit --root "$PV" --domain crop
+python -m training.dataset_audit --root "$CATTLE" --domain livestock --class-map $CM
 ```
-Look for: `crop_row ... OK`, `crop_perennial ... OK`, and `unmapped_folders` (fix names/class-map if not empty).
+Expect `crop_row ... OK` and `crop_perennial ... OK` (min 200 images/class; PlantVillage classes are all large). Look for: `crop_row ... OK`, `crop_perennial ... OK`, and `unmapped_folders` (fix names/class-map if not empty).
 If `livestock_fmd` says **UNDER-SUPPORTED**, skip the FMD expert (see B6) — FMD stays on zero-shot + cloud.
 
 ### B3. Step 2 — BASELINE ("before" numbers), current unmodified experts
 ```bash
-CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.evaluate_expert --root $AGRI/data/plantvillage --domain crop --target baseline > $AGRI/logs/base_crop.log 2>&1 &
-CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.evaluate_expert --root $AGRI/data/cattle --domain livestock --target baseline --class-map training/configs/cattle_class_map.json > $AGRI/logs/base_live.log 2>&1 &
+CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.evaluate_expert --root "$PV" --domain crop --target baseline > $AGRI/logs/base_crop.log 2>&1 &
+CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.evaluate_expert --root "$CATTLE" --domain livestock --target baseline --class-map $CM > $AGRI/logs/base_live.log 2>&1 &
 ```
 Time ≈ 5–20 min each (the runtime experts run on CPU). Output: `$AGRI/results/zone1/eval/<domain>_baseline.{md,json}`. Expect low crop scores because the current checkpoint has no Tomato/Apple/etc. classes — that is a true statement about "before", not a bug.
 
@@ -180,11 +192,11 @@ Time ≈ 5–20 min each (the runtime experts run on CPU). Output: `$AGRI/result
 Defaults: `mobilenetv3_large_100`, 224 px, 3+5+5 epochs (A head-only, B top-2 blocks, C full net with layerwise-lower LRs), class-weighted loss, best checkpoint by **val macro-F1**.
 ```bash
 export CUDA_DEVICE_ORDER=PCI_BUS_ID
-CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root $AGRI/data/plantvillage --group crop_row --batch 64 --workers 8 > $AGRI/logs/ft_crop_row.log 2>&1 &
+CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root "$PV" --group crop_row --batch 64 --workers 8 > $AGRI/logs/ft_crop_row.log 2>&1 &
 # when finished:
-CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root $AGRI/data/plantvillage --group crop_perennial --batch 64 --workers 8 > $AGRI/logs/ft_crop_perennial.log 2>&1 &
-CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root $AGRI/data/cattle --group livestock_lsd --class-map training/configs/cattle_class_map.json --batch 32 --workers 8 > $AGRI/logs/ft_lsd.log 2>&1 &
-CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root $AGRI/data/cattle --group livestock_fmd --class-map training/configs/cattle_class_map.json --batch 32 --workers 8 > $AGRI/logs/ft_fmd.log 2>&1 &   # only if audit OK
+CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root "$PV" --group crop_perennial --batch 64 --workers 8 > $AGRI/logs/ft_crop_perennial.log 2>&1 &
+CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root "$CATTLE" --group livestock_lsd --class-map $CM --batch 32 --workers 8 > $AGRI/logs/ft_lsd.log 2>&1 &
+CUDA_VISIBLE_DEVICES=0 nohup python -u -m training.finetune_expert --root "$CATTLE" --group livestock_fmd --class-map $CM --batch 32 --workers 8 > $AGRI/logs/ft_fmd.log 2>&1 &   # only if audit OK
 ```
 Per-run estimates on one 24 GB card (AMP on):
 | Expert | Images (approx) | Time | GPU mem | CPU RAM |
@@ -199,17 +211,17 @@ If it crashes with CUDA OOM: `--batch 32`. If dataloader errors about shared mem
 
 ### B5. Step 4 — train the learned moe_gate (CPU, ~2–5 min)
 ```bash
-python -u -m training.train_moe_gate --root $AGRI/data/plantvillage --domain crop
-python -u -m training.train_moe_gate --root $AGRI/data/cattle --domain livestock --class-map training/configs/cattle_class_map.json
+python -u -m training.train_moe_gate --root "$PV" --domain crop
+python -u -m training.train_moe_gate --root "$CATTLE" --domain livestock --class-map $CM
 ```
 Prints `moe_gate test routing accuracy`. Writes `$AGRI/models_cache/moe/<domain>_moe_gate.json` (<100 KB). If routing accuracy is poor, **report it honestly** — gate features are simple colour/texture statistics and may confuse the two crop groups; the documented fallback is a gate on backbone embeddings (future change, ask me).
 
 ### B6. Step 5 — evaluate ("after") and compare with baseline
 ```bash
-CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root $AGRI/data/plantvillage --domain crop --target sub:crop_row
-CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root $AGRI/data/plantvillage --domain crop --target sub:crop_perennial
-CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root $AGRI/data/plantvillage --domain crop --target moe        # end-to-end + gate routing accuracy
-CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root $AGRI/data/cattle --domain livestock --target moe --class-map training/configs/cattle_class_map.json
+CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root "$PV" --domain crop --target sub:crop_row
+CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root "$PV" --domain crop --target sub:crop_perennial
+CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root "$PV" --domain crop --target moe        # end-to-end + gate routing accuracy
+CUDA_VISIBLE_DEVICES=0 python -u -m training.evaluate_expert --root "$CATTLE" --domain livestock --target moe --class-map $CM
 ```
 (needs `onnxruntime` installed on the GPU box: `pip install onnxruntime`). Time 2–10 min each. Compare `$AGRI/results/zone1/eval/*_baseline.md` vs `*_moe.md`: accuracy, macro-F1, per-class recall, confusion matrix, ECE (calibration). Note accuracy on train data ≠ test; only the `test` split numbers count.
 **If FMD is under-supported:** don't ship `livestock_fmd`; MoE for livestock stays inactive (all four ONNX files must exist), so livestock keeps the CLIP path. Say so in your report.

@@ -25,14 +25,13 @@ from pathlib import Path
 from src.zone1_edge.knowledge.label_aliases import normalize_condition
 from src.zone1_edge.moe.expert_groups import DOMAIN_GROUPS, group_of_class
 from training.paths import RESULTS
-from training.data import list_images, load_class_map, stratified_split
+from training.data import load_class_map, load_split
 from training.metrics import classification_report, to_markdown
 
 
 def domain_test_items(root, domain, class_map, groups=None):
     allowed = {c for g, cl in DOMAIN_GROUPS[domain].items() if groups is None or g in groups for c in cl}
-    items = [it for it in list_images(root, class_map) if it[1] in allowed]
-    return stratified_split(items)["test"]
+    return load_split(root, class_map, allowed=allowed)["test"]
 
 
 def main():

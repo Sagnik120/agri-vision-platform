@@ -24,7 +24,7 @@ from src.zone1_edge.moe.expert_groups import DOMAIN_GROUPS, group_of_class
 from src.zone1_edge.moe.image_features import FEATURE_DIM, extract_features
 from src.zone1_edge.moe.moe_gate import softmax
 from training.paths import MODELS, RESULTS
-from training.data import list_images, load_class_map, stratified_split
+from training.data import load_class_map, load_split
 from training.metrics import classification_report
 
 SHARED_CLASSES = {"livestock": {"healthy"}}
@@ -59,15 +59,16 @@ def main():
 
     groups = list(DOMAIN_GROUPS[a.domain])
     shared = SHARED_CLASSES.get(a.domain, set())
-    items, per = [], {}
-    for p, c in list_images(a.root, load_class_map(a.class_map)):
-        g = group_of_class(a.domain, c)
-        if g is None or c in shared:
-            continue
-        per[c] = per.get(c, 0) + 1
-        if per[c] <= a.max_per_class:
-            items.append((p, c))
-    split = stratified_split(items)
+    allowed = {c for cl in DOMAIN_GROUPS[a.domain].values() for c in cl} - shared
+    split = load_split(a.root, load_class_map(a.class_map), allowed=allowed)
+    for k in split:  # cap per class to bound feature-extraction time
+        per = {}
+        capped = []
+        for p, c in split[k]:
+            per[c] = per.get(c, 0) + 1
+            if per[c] <= a.max_per_class:
+                capped.append((p, c))
+        split[k] = capped
     to_group = lambda lst: [(p, group_of_class(a.domain, c)) for p, c in lst]  # noqa: E731
 
     Xtr, ytr = featurize(to_group(split["train"]), groups)
