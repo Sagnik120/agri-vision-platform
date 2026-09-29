@@ -1,0 +1,9 @@
+{
+  "_comment": "Map your dataset's folder names to canonical class names. Edit keys to match the downloaded dataset.",
+  "Lumpy Skin": "lumpy_skin_disease",
+  "lumpy": "lumpy_skin_disease",
+  "Normal Skin": "healthy",
+  "healthy": "healthy",
+  "FMD": "foot_and_mouth_disease",
+  "foot_and_mouth": "foot_and_mouth_disease"
+}

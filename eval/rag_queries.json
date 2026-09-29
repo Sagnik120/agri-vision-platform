@@ -1,0 +1,28 @@
+{
+  "_about": "DRAFT relevance labels written by the coding agent from KB content. The user/domain expert MUST review and correct them before reported numbers are trusted. Set reviewed=true after review.",
+  "reviewed": false,
+  "queries": [
+    {"q": "tomato leaves with brown concentric ring spots on lower leaves", "relevant": ["KB-tomato_early_blight"]},
+    {"q": "dark water soaked lesions spreading fast on tomato in humid weather", "relevant": ["KB-tomato_late_blight"]},
+    {"q": "potato leaves black lesions white mould underneath after rain", "relevant": ["KB-potato_late_blight"]},
+    {"q": "potato target like brown spots older leaves", "relevant": ["KB-potato_early_blight"]},
+    {"q": "orange brown powdery pustules on maize leaves", "relevant": ["KB-maize_common_rust"]},
+    {"q": "long cigar shaped grey lesions on corn leaves", "relevant": ["KB-maize_northern_leaf_blight"]},
+    {"q": "rectangular grey lesions between veins of maize leaf", "relevant": ["KB-maize_gray_leaf_spot"]},
+    {"q": "tomato leaves curling upward and yellow edges with whiteflies", "relevant": ["KB-tomato_yellow_leaf_curl_virus"]},
+    {"q": "mottled light and dark green tomato leaves distorted", "relevant": ["KB-tomato_mosaic_virus"]},
+    {"q": "fine webbing and yellow stippling under tomato leaves in hot dry weather", "relevant": ["KB-tomato_spider_mites"]},
+    {"q": "cow with firm round nodules lumps all over skin and fever", "relevant": ["KB-lumpy_skin_disease"]},
+    {"q": "cattle blisters in mouth and hooves drooling lameness", "relevant": ["KB-foot_and_mouth_disease"]},
+    {"q": "swollen hot udder and clots in milk", "relevant": ["KB-mastitis_suspected"]},
+    {"q": "cow panting heavily in hot weather reduced feeding", "relevant": ["KB-livestock_heat_stress", "KB-abnormal_temperature"]},
+    {"q": "rice leaves diamond shaped lesions with grey centre", "relevant": ["KB-rice_blast"]},
+    {"q": "wheat leaves with rust coloured pustules", "relevant": ["KB-wheat_rust"]},
+    {"q": "citrus leaves blotchy yellow mottling small lopsided bitter fruit", "relevant": ["KB-citrus_greening"]},
+    {"q": "olive green velvety spots on apple leaves and scabby fruit", "relevant": ["KB-apple_scab"]},
+    {"q": "grape berries shrivel into hard black mummies", "relevant": ["KB-grape_black_rot"]},
+    {"q": "white powdery coating on squash leaves", "relevant": ["KB-squash_powdery_mildew"]},
+    {"q": "chickens with twisted necks breathing difficulty sudden deaths", "relevant": ["KB-poultry_newcastle_disease", "KB-poultry_avian_influenza"]},
+    {"q": "goats with fever nasal discharge mouth sores and diarrhoea", "relevant": ["KB-goat_peste_des_petits_ruminants"]}
+  ]
+}
