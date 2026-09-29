@@ -38,3 +38,7 @@ DB is lightweight and suitable for local device storage.
 
 ## 12. Known limitations
 Not currently synced to a central cloud dashboard.
+
+## AI upgrade additions
+- `get_farm_history_records(farm_id, limit)` → rows with stable `ref` = `H<observation_id>`; `format_farm_history(records)` renders `[H..]` lines for the contract #6 `farm_history` string so cloud advisories can cite history and the validator can verify the refs.
+- `update_farm_location` / `get_farm_location` persist the farm region (existing `farm.location` column; no schema change).

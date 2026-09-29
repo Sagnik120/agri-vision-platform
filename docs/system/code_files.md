@@ -110,3 +110,16 @@
 **Component:** Testing.
 **Status:** IMPLEMENTED
 **Responsibilities:** Covers all critical zones. Tests components in isolation and end-to-end pipelines. Uses `pytest`.
+
+## AI upgrade files (see `docs/system/ai_upgrade_plan.md`)
+| Path | Role |
+|---|---|
+| `src/zone1_edge/moe/` | Intra-domain MoE: `expert_groups`, `image_features`, `moe_gate` (learned, top-1), `moe_expert` (ONNX sub-experts) |
+| `src/zone1_edge/context/farm_context.py` | Region/season context (offline) |
+| `src/zone1_edge/knowledge/label_aliases.py`, `seasonal_guidance.json` | Label→KB normalisation; season-aware advisory notes |
+| `src/zone2_cloud/context/weather_client.py` | Open-Meteo weather, cloud-only, off by default |
+| `src/zone2_cloud/rag/kb_metadata.py` | KB frontmatter + stable doc IDs |
+| `src/zone2_cloud/llm/` | Shared advisory format, `LocalLLMClient` |
+| `src/zone2_cloud/advisory_service.py` | Backend selector + weather + citation verification |
+| `training/` | User-run: dataset audit, 3-stage fine-tuning, moe_gate training, evaluation, LLM data/QLoRA/comparison |
+| `eval/rag_eval.py`, `eval/rag_queries.json`, `eval/kb_coverage_audit.py` | RAG retrieval + citation evaluation, KB coverage audit |

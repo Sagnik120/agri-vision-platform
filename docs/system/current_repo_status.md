@@ -139,6 +139,19 @@ A rich pytest suite exists under `tests/` covering Zone 1 (gate, experts, fusion
 - **Future Scope E**: Farm Memory Image Storage (blob storage).
 - True multi-modal representation learning (learned fusion).
 
+## 23b. AI Upgrade Status (2026-09-29)
+| Item | Status |
+|---|---|
+| Intra-domain MoE (`moe_gate` + 4 sub-expert slots) | 🟡 Code + training scripts done; inactive until user trains gate/sub-experts (auto-fallback to single expert) |
+| Expert fine-tuning (3-stage unfreezing, differential LR) | 🟡 Scripts done; baseline + fine-tune runs pending (user, GPU) |
+| Region/season context → local advisory + cloud payload | ✅ Implemented |
+| Weather (Open-Meteo, cloud-only) | 🟡 Implemented, disabled by default (`WEATHER_ENABLED`) |
+| RAG metadata, doc IDs, lexical fallback, KB gap fill (49 docs) | ✅ Implemented (22 draft docs need expert review) |
+| Citation + farm-history hallucination checks | ✅ Implemented |
+| LocalLLMClient + backend selector | ✅ Implemented (needs a served fine-tuned model) |
+| LLM synthetic data / QLoRA / comparison | 🟡 Scripts done; runs pending (user, Gemini + GPU) |
+Details: `docs/system/ai_upgrade_plan.md`.
+
 ## 24. Overall Implementation Maturity
 High for a prototype. All three roadmap phases (Phase 1: Verification, Phase 2: RAG/Calibration, Phase 3: Cleanup & Voice Detachment) are complete. The separation of concerns via data contracts between zones is excellently executed and robust.
 

@@ -41,3 +41,19 @@ Assumes local models are downloaded in `setup/`.
 
 ## 12. Known limitations
 Fusion is rule-based, not a learned vector embedding space.
+
+## 13. Intra-domain Mixture-of-Experts (`moe/`) — AI upgrade Phase 0/1
+**Terminology (do not confuse):**
+- `moe_gate` (`moe/moe_gate.py`) — runs BEFORE any sub-expert, inside an already-chosen domain, and picks exactly ONE sub-expert (top-1 hard routing). Learned multinomial logistic regression over a 54-dim numpy image descriptor (`moe/image_features.py`). Weights: `models_cache/moe/<domain>_moe_gate.json`.
+- `confidence_gate` (`multimodal/confidence_gate.py`) — runs AFTER fusion and decides local vs cloud. Unchanged mechanism.
+
+Flow: domain router (unchanged) → `moe_gate` → 1 ONNX sub-expert (`models_cache/moe/<group>/model.onnx`) → fusion → confidence_gate.
+Groups (`moe/expert_groups.py`): `crop_row` (21 PlantVillage annual row/vine classes), `crop_perennial` (17 tree/bush/perennial classes), `livestock_lsd` (LSD vs healthy), `livestock_fmd` (FMD vs healthy — ships only if `training/dataset_audit.py` does not flag FMD as under-supported).
+Activation: `AGRIVISION_MOE_ENABLED=auto` (default) uses MoE only when a trained gate + all sub-expert ONNX files exist; otherwise the original single expert runs. Any MoE failure falls back to the single expert. Output = contract #1 + trailing `_moe` debug key.
+Runtime deps: numpy + optional `onnxruntime` (torch-free; serverless-friendly). Training: `training/` (user-run).
+
+## 14. Label normalisation & region/season context — Phase 2
+- `knowledge/label_aliases.py::normalize_condition()` maps checkpoint labels to KB keys (e.g. `Corn___Common_Rust` → `maize_common_rust`; healthy classes of crops without their own entry → `crop_healthy`). Used by `local_advisory` and `confidence_gate`. Before this, corn predictions never matched the KB and always escalated.
+- `context/farm_context.py`: `build_context(region, season)`; season inferred from date if not given (kharif Jun–Oct, rabi Nov–Mar, zaid Apr–May).
+- `run_zone1_pipeline(..., region=None, season=None)` returns `context`; the local advisory gains `context_note` (from `knowledge/seasonal_guidance.json`, draft guidance by disease-driver category). Context NEVER affects the visual prediction, the moe_gate or the confidence_gate.
+- Zone 1 never calls weather (offline-first); `build_cloud_payload_stub` appends `region`, `season`, `weather: null` at the end.
