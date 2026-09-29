@@ -4,7 +4,7 @@ Living document. **Every number here was produced by a run you executed on the G
 `results/zone1/` and `models_cache/moe/`), except where a row is marked *(local draft)*. Sections marked ⏳ are filled in
 after the corresponding run. Commands to reproduce: [`test_to_do.md`](../../test_to_do.md).
 
-Last updated: 2026-09-30 · Status: **Part B (vision experts + MoE) evaluated. RAG label review and Qwen LLM (Part C) pending.**
+Last updated: 2026-09-30 · Status: **Part B (vision experts + MoE, top1 and `both` routing) evaluated. RAG label review and Qwen LLM (Part C) pending.**
 
 ## 1. Summary (read this first)
 
@@ -15,12 +15,14 @@ Last updated: 2026-09-30 · Status: **Part B (vision experts + MoE) evaluated. R
 | **moe_gate** (picks the sub-expert) | - | crop routing **0.7447**, livestock **0.8191** | ⚠️ **Weak: this is the bottleneck** |
 | Crop end-to-end (gate → expert) | 0.1135 (not comparable yet, see 3.1) | **0.7731** (macro-F1 0.7512) | 🟡 Big gain vs baseline, but ~20 points below what the experts alone reach |
 | Livestock end-to-end | 0.5298 (CLIP zero-shot) | **0.8357** (macro-F1 0.8341) | 🟡 Large gain, but see the safety note in 3.2 |
+| **Crop end-to-end, `routing=both`** (all experts run) | 0.7731 (top1) | **0.9452** (macro-F1 0.928, ECE 0.0372) | ✅ Fixes most of the routing loss (section 7) |
+| **Livestock end-to-end, `routing=both`** (disease-first) | 0.8357 (top1) | **0.8953** (macro-F1 0.8923, ECE 0.0912) | ✅ Lumpy→healthy misses 34 → 6; more false alarms |
 | RAG retrieval (draft labels, local) | - | recall@3 1.0, MRR 0.92 (FAISS) *(local draft)* | ⏳ needs your reviewed labels |
 | Qwen LoRA advisory model | - | - | ⏳ Part C |
 
 **Main conclusion.** The fine-tuned experts themselves are excellent. Overall accuracy is held back almost entirely by the
 `moe_gate`, which sends only ~74% (crop) and ~82% (livestock) of images to the correct expert. An image sent to the wrong
-expert is forced into that expert's label set, and the expert is usually *confident* (over-confident). Recommended fix: section 5.
+expert is forced into that expert's label set, and the expert is usually *confident* (over-confident). **The `routing=both` fix (run all experts of the domain) was then measured and recovers most of the loss: crop 0.7731 → 0.9452, livestock 0.8357 → 0.8953 (section 7). Recommendation: enable it.**
 
 ## 2. Setup used
 - Hardware: 1 × 24 GB GPU; backbone `mobilenetv3_large_100`, 224 px, mixed precision; 3-stage gradual unfreezing (A head-only, B top-2 blocks, C full network) with differential learning rates; best epoch chosen by validation macro-F1.
@@ -161,9 +163,7 @@ The gate is a logistic regression on 54 hand-made colour/texture statistics. Cro
 4. The crop baseline row is not comparable yet (section 3.1). The livestock baseline is fair.
 5. No independent field test set exists yet.
 
-## 5. Recommended next steps
-> **Status 2026-09-30:** step 1 is now implemented as `--routing both` (runtime `AGRIVISION_MOE_ROUTING`, evaluator `--routing`). It is OFF by default and **not yet measured**; results will be added in a new section 7 after you run the two commands in `test_to_do.md` (B-fix-2).
-
+## 5. Recommended next steps (step 1 was implemented and measured: see section 7)
 1. **Fix routing (highest impact).** Run *both* sub-experts of the domain (each ONNX MobileNet takes tens of milliseconds on CPU, about 35 MB each) and keep the more confident answer, using the gate probability only as a tie-breaker. The task plan allowed this "top-k" fallback if top-1 routing proved poor; the data above is that justification. For livestock, if either expert reports a disease with confidence above a threshold, report the disease. Expected effect: end-to-end accuracy should move toward the sub-expert level (~97% crop, ~93-95% livestock), but this **must be measured** with an evaluation run before it is claimed.
 2. Re-run the crop baseline on the same 5433-image test set.
 3. Optionally replace the colour-statistics gate with CNN embeddings (only needed if you keep top-1 routing).
@@ -190,5 +190,71 @@ Pending Part C. To fill in: number of approved training examples, QLoRA training
 ### 6.4 ⏳ App-level checks with real models
 Pending: confirm the `MoE expert: <group> (onnx)` caption in Streamlit, and that the app's predictions match `evaluate_expert` on a few images.
 
-## 7. ⏳ Routing fix measurement (`--routing both`)
-Pending your run of `evaluate_expert ... --target moe --routing both` for crop and livestock. To fill in: accuracy, macro-F1, ECE and (livestock) lumpy→healthy and healthy→disease counts versus the top1 rows above, then the decision on whether to enable `AGRIVISION_MOE_ROUTING=both`.
+## 7. Routing fix measured: `routing=both`
+`routing=both` runs every sub-expert of the domain and combines them (crop: most confident wins, gate probability breaks ties; livestock: *disease first*). Same test images as top1 (crop 5433, livestock 487). Reports: `results/zone1/eval/*_moe_both.*`.
+
+| | routing | accuracy | macro-F1 | ECE |
+|---|---|---|---|---|
+| Crop | top1 (gate picks one) | 0.7731 | 0.7512 | 0.1359 |
+| Crop | **both** | **0.9452** | **0.928** | **0.0372** |
+| Crop (reference) | experts alone on their own images | 0.975 / 0.9846 | 0.9643 / 0.9788 | 0.005 / 0.004 |
+| Livestock | top1 | 0.8357 | 0.8341 | 0.1452 |
+| Livestock | **both (disease-first)** | **0.8953** | **0.8923** | **0.0912** |
+
+**Crop.** The winning expert belongs to the right group for 0.9468 of images (the gate alone: 0.7447). Largest per-class F1 gains: cherry_powdery_mildew +0.6, pepper_bacterial_spot +0.49, apple_black_rot +0.38, strawberry_leaf_scorch +0.34. Remaining gap to the experts-alone level (~0.975) is concentrated in a few visually similar classes:
+
+| class | precision | recall | F1 | support |
+|---|---|---|---|---|
+| strawberry_leaf_scorch | 0.6605 | 0.964 | 0.7839 | 111 |
+| maize_gray_leaf_spot | 0.973 | 0.6923 | 0.809 | 52 |
+| peach_bacterial_spot | 0.832 | 0.9043 | 0.8667 | 230 |
+| tomato_septoria_leaf_spot | 0.9295 | 0.8192 | 0.8709 | 177 |
+| apple_scab | 0.8194 | 0.9365 | 0.8741 | 63 |
+| tomato_early_blight | 0.9053 | 0.86 | 0.8821 | 100 |
+| apple_black_rot | 0.8657 | 0.9355 | 0.8992 | 62 |
+| maize_northern_leaf_blight | 0.9765 | 0.8469 | 0.9071 | 98 |
+| potato_early_blight | 0.9362 | 0.88 | 0.9072 | 100 |
+| grape_esca | 0.9457 | 0.8841 | 0.9139 | 138 |
+| pepper_bacterial_spot | 0.8609 | 0.99 | 0.9209 | 100 |
+| grape_leaf_blight | 0.8889 | 0.963 | 0.9244 | 108 |
+| tomato_spider_mites | 0.9866 | 0.875 | 0.9274 | 168 |
+| tomato_late_blight | 0.9714 | 0.8901 | 0.929 | 191 |
+| tomato_target_spot | 0.9549 | 0.9071 | 0.9304 | 140 |
+| grape_black_rot | 0.964 | 0.9068 | 0.9345 | 118 |
+| cherry_powdery_mildew | 0.9123 | 0.9905 | 0.9498 | 105 |
+| tomato_healthy | 0.9739 | 0.9371 | 0.9551 | 159 |
+| squash_powdery_mildew | 0.9828 | 0.9293 | 0.9553 | 184 |
+| tomato_mosaic_virus | 1.0 | 0.9189 | 0.9577 | 37 |
+| tomato_bacterial_spot | 0.9756 | 0.9434 | 0.9592 | 212 |
+| crop_healthy | 0.9492 | 0.9854 | 0.967 | 1233 |
+| tomato_leaf_mold | 0.9789 | 0.9688 | 0.9738 | 96 |
+| maize_common_rust | 0.9914 | 0.9583 | 0.9746 | 120 |
+| potato_late_blight | 0.98 | 0.98 | 0.98 | 100 |
+| apple_cedar_rust | 0.9655 | 1.0 | 0.9825 | 28 |
+| tomato_yellow_leaf_curl_virus | 1.0 | 0.9701 | 0.9848 | 536 |
+| citrus_greening | 0.9927 | 0.9909 | 0.9918 | 551 |
+| maize_healthy | 1.0 | 1.0 | 1.0 | 116 |
+
+Calibration is much better (ECE 0.1359 → 0.0372); the ≥0.9 bucket now holds 5127 images at accuracy 0.9665 (was 0.924).
+
+**Livestock** confusion matrix with `both` (rows = truth):
+
+| true / predicted | foot_and_mouth_disease | healthy | lumpy_skin_disease |
+|---|---|---|---|
+| **foot_and_mouth_disease** | 108 | 1 | 3 |
+| **healthy** | 13 | 169 | 12 |
+| **lumpy_skin_disease** | 16 | 6 | 159 |
+
+| Metric | top1 | both |
+|---|---|---|
+| Lumpy skin disease recall | 0.7238 | **0.8785** |
+| Lumpy predicted **healthy** (missed) | 34 of 181 | **6** of 181 |
+| FMD recall | 0.8839 | **0.9643** |
+| Healthy recall | 0.9124 | 0.8711 |
+| Healthy flagged as a disease (false alarm) | 17 of 194 (8.8%) | 25 of 194 (12.9%) |
+
+As predicted, disease-first trades a few more false alarms on healthy animals for far fewer missed diseases, which is the safer direction for notifiable diseases. Lumpy images predicted as FMD (16) are unchanged: still flagged as a disease, but the wrong one.
+
+**Cost:** two ONNX inferences per image instead of one (each ≈ 35 MB, tens of ms on CPU); the memory footprint is still small.
+
+**Decision / recommendation:** enable `AGRIVISION_MOE_ROUTING=both` for both domains. It is the default-safe choice for the app; `top1` remains available for very constrained devices. Remaining caveats from section 4 (lab dataset, possible near-duplicates, single split, small cattle test set) still apply. Optional further work: improve the gate (only relevant if `top1` is kept) and check field photos.

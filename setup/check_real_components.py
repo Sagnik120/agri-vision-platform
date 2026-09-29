@@ -32,7 +32,7 @@ for name, mod in (("crop", "crop_expert"), ("livestock", "livestock_expert")):
 from src.zone1_edge.moe import moe_expert  # noqa: E402
 
 for d in ("crop", "livestock"):
-    print(f"[{'OK  ' if moe_expert.moe_enabled(d, 'auto') else 'off '}] MoE {d}: {'active' if moe_expert.moe_enabled(d, 'auto') else 'inactive (no trained gate/ONNX in models_cache/moe)'}")
+    print(f"[{'OK  ' if moe_expert.moe_enabled(d, 'auto') else 'off '}] MoE (routing={config.MOE_ROUTING}) {d}: {'active' if moe_expert.moe_enabled(d, 'auto') else 'inactive (no trained gate/ONNX in models_cache/moe)'}")
 from src.zone2_cloud.rag.retriever import retrieve_docs  # noqa: E402
 
 d = retrieve_docs("tomato brown spots", k=1)

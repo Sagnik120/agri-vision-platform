@@ -195,7 +195,10 @@ def process_pipeline_result(result, farmer_text):
 
     _be = (result.get("image_output") or {}).get("_backend", "unknown")
     _moe = (result.get("image_output") or {}).get("_moe")
-    st.caption(f"🔧 Vision backend: {_be}" + (f" · MoE expert: {_moe['selected_expert']} ({_moe['sub_expert_backend']})" if _moe else ""))
+    st.caption(f"🔧 Vision backend: {_be}" + (f" · MoE expert: {_moe['selected_expert']} ({_moe['sub_expert_backend']}) · routing={_moe.get('routing', 'top1')}" if _moe else ""))
+    if _moe and _moe.get("per_expert"):
+        st.caption("🔬 Each expert's answer: " + " | ".join(f"{g}: {lab} ({conf:.0%})" for g, (lab, conf) in _moe["per_expert"].items())
+                   + f" · gate preferred: {_moe.get('gate_choice')}")
     if str(_be).startswith("mock"):
         st.warning("⚠️ MOCK vision predictor in use — results are not from a real model.")
 

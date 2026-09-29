@@ -17,6 +17,7 @@ from __future__ import annotations
 from training.paths import MODELS, RESULTS  # noqa: F401
 
 import argparse
+import time
 import json
 import os
 from pathlib import Path
@@ -47,6 +48,8 @@ def main():
     ap.add_argument("--backend", choices=["gemini", "local_llm", "mock"], required=True)
     ap.add_argument("--test", default=str(DATA / "sft_test.jsonl"))
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--min-interval", type=float, default=4.5,
+                    help="gemini backend only: minimum seconds between requests (free tier: 15 requests/minute)")
     ap.add_argument("--i-understand-this-calls-gemini", action="store_true")
     a = ap.parse_args()
     if a.backend == "gemini" and not a.i_understand_this_calls_gemini:
@@ -58,9 +61,15 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     log_path = OUT / f"{a.backend}.jsonl"
     n = schema_ok = valid = 0
+    last_call = 0.0
     with open(log_path, "w", encoding="utf-8") as f:
         for r in recs:
             n += 1
+            if a.backend == "gemini":
+                wait = a.min_interval - (time.time() - last_call)
+                if wait > 0:
+                    time.sleep(wait)
+                last_call = time.time()
             try:
                 resp = run_backend(a.backend, r["payload"])
             except Exception as e:  # noqa: BLE001

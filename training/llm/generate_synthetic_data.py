@@ -22,6 +22,7 @@ from __future__ import annotations
 from training.paths import MODELS, RESULTS  # noqa: F401
 
 import argparse
+import time
 import csv
 import json
 import os
@@ -97,6 +98,8 @@ def main():
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--dry-run", action="store_true", help="build scenarios only; NO Gemini call, writes scenarios_dry_run.jsonl")
     ap.add_argument("--audit-db", action="store_true")
+    ap.add_argument("--min-interval", type=float, default=4.5,
+                    help="minimum seconds between Gemini requests (free tier allows 15 requests/minute -> 4.0 s minimum)")
     ap.add_argument("--max-consecutive-failures", type=int, default=3,
                     help="stop early (quota/key problem) instead of burning more calls")
     ap.add_argument("--i-understand-this-calls-gemini", action="store_true")
@@ -123,6 +126,7 @@ def main():
         done = {json.loads(l)["scenario_id"] for l in out_path.read_text(encoding="utf-8").splitlines() if l.strip()}
     new_csv = not csv_path.exists() or csv_path.stat().st_size == 0
     calls = fails_in_row = 0
+    last_call = 0.0
     with open(out_path, "a", encoding="utf-8") as f, open(csv_path, "a", newline="", encoding="utf-8") as rf:
         rw = csv.writer(rf)
         if new_csv:
@@ -136,6 +140,10 @@ def main():
             if sid in done:
                 continue
             calls += 1  # counts every attempt, successful or not
+            wait = a.min_interval - (time.time() - last_call)
+            if wait > 0:
+                time.sleep(wait)  # stay under the requests-per-minute limit
+            last_call = time.time()
             try:
                 resp = call_gemini_raw(rec["payload"])
                 fails_in_row = 0
