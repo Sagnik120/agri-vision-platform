@@ -1,0 +1,67 @@
+{
+  "_about": "Season-aware preventive timing notes by disease-driver category. Generic, conservative guidance only; it never changes the diagnosis. review_status: draft_needs_expert_review",
+  "category_rules": [
+    ["bacterial", "bacterial"],
+    ["virus|curl|mosaic|bunchy|greening|haunglongbing", "vector_borne_crop"],
+    ["lumpy_skin", "vector_borne_livestock"],
+    ["foot_and_mouth|peste|newcastle|avian_influenza", "contagious_livestock"],
+    ["heat_stress|abnormal_temperature", "heat"],
+    ["deficiency", "nutrient"],
+    ["bollworm|spider_mite|mites", "pest"],
+    ["mastitis|ketosis", "livestock_management"],
+    ["healthy", "healthy"],
+    ["blight|rust|blast|spot|mildew|mold|scab|rot|anthracnose|esca|scorch|canker", "fungal_humid"]
+  ],
+  "notes": {
+    "fungal_humid": {
+      "kharif": "Monsoon humidity and leaf wetness favour rapid fungal spread: scout fields within 1-2 days after rain, keep drainage clear and avoid overhead irrigation.",
+      "rabi": "Cool nights with dew or fog can still trigger infection: inspect lower leaves on foggy mornings and irrigate in the morning so foliage dries by evening.",
+      "zaid": "Hot dry weather usually slows spread, but irrigated plots stay at risk: keep foliage dry and remove infected leaves promptly."
+    },
+    "bacterial": {
+      "kharif": "Rain splash spreads bacteria: avoid working in wet fields and disinfect tools between plots.",
+      "rabi": "Spread slows in cooler, drier weather; still avoid handling wet plants and use clean seed/transplants.",
+      "zaid": "Limit sprinkler irrigation, which splashes bacteria between plants."
+    },
+    "vector_borne_crop": {
+      "kharif": "Insect vector populations rise with warmth and humidity: monitor whiteflies/aphids closely and remove infected plants early.",
+      "rabi": "Vector activity is usually lower; remove infected plants before the next warm season to cut the source of spread.",
+      "zaid": "Warm dry spells favour whiteflies and aphids: use yellow sticky traps and remove weed hosts around the field."
+    },
+    "vector_borne_livestock": {
+      "kharif": "Biting flies and mosquitoes peak in the monsoon: remove standing water, control vectors around sheds and isolate affected animals.",
+      "rabi": "Vector pressure is lower, but keep affected animals isolated and report cases to the veterinary officer.",
+      "zaid": "Keep sheds clean and dry to reduce flies; isolate affected animals."
+    },
+    "contagious_livestock": {
+      "kharif": "Wet, crowded conditions aid spread: restrict animal movement, disinfect sheds and report to the local veterinary officer.",
+      "rabi": "Cold stress can lower immunity: keep animals sheltered, restrict movement and report suspected cases.",
+      "zaid": "Avoid shared water points and markets during outbreaks; report suspected cases."
+    },
+    "heat": {
+      "kharif": "Humid heat reduces cooling: ensure shade, ventilation and constant clean drinking water.",
+      "rabi": "Heat stress is uncommon now; re-check the temperature and look for fever or infection instead.",
+      "zaid": "Peak heat season: provide shade, cool water several times a day and avoid work in midday heat."
+    },
+    "nutrient": {
+      "kharif": "Heavy rain can leach nutrients: apply fertiliser in split doses after a soil test.",
+      "rabi": "Plan fertiliser at sowing based on a soil test; cold soils can slow nutrient uptake.",
+      "zaid": "Irrigate before top-dressing so nutrients reach the roots."
+    },
+    "pest": {
+      "kharif": "Pest populations build quickly in warm humid weather: scout weekly and use pheromone/sticky traps.",
+      "rabi": "Pest pressure is often lower; keep scouting and destroy crop residues.",
+      "zaid": "Hot dry weather favours mites: scout leaf undersides and maintain adequate irrigation."
+    },
+    "livestock_management": {
+      "kharif": "Keep bedding and udders clean and dry during the wet season.",
+      "rabi": "Maintain balanced feeding through the cold season and monitor intake.",
+      "zaid": "Ensure enough water and shade; heat can reduce feed intake."
+    },
+    "healthy": {
+      "kharif": "No disease detected. The monsoon is high-risk for most diseases, so keep checking every few days.",
+      "rabi": "No disease detected. Continue routine weekly checks.",
+      "zaid": "No disease detected. Watch for heat and water stress."
+    }
+  }
+}

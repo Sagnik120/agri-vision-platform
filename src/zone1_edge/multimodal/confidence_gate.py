@@ -19,6 +19,7 @@ from typing import Optional
 
 from src.zone1_edge import config
 from src.zone1_edge.knowledge.kb_loader import get_safety_critical_conditions
+from src.zone1_edge.knowledge.label_aliases import normalize_condition
 
 
 def decide_route(fusion_output: dict, input_quality_ok: bool = True) -> dict:
@@ -30,7 +31,7 @@ def decide_route(fusion_output: dict, input_quality_ok: bool = True) -> dict:
     base_confidence = fusion_output.get("final_confidence", 0.0)
     
     safety_critical = get_safety_critical_conditions()
-    norm_pred = prediction.lower().replace("___", "_").replace("__", "_")
+    norm_pred = normalize_condition(prediction)
     is_critical = norm_pred in safety_critical
     
     tier = config.get_device_tier()

@@ -179,6 +179,7 @@ class BaseImageExpert:
             "prediction": prediction,
             "confidence": round(float(confidence), 4),
             "top_k": top_k,
+            "_backend": self.backend_info,  # trailing debug key: "mock" or "hf:<model>"
         }
 
     @property

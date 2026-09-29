@@ -349,5 +349,18 @@
     "safety_note": "High priority disease.",
     "reference": "Agri-Vision Local KB v2.0",
     "is_safety_critical": true
+  },
+  "crop_healthy": {
+    "condition_name": "Healthy Crop",
+    "description": "No disease symptoms detected on the photographed leaf.",
+    "common_symptoms": [
+      "No visible symptoms"
+    ],
+    "immediate_action": "No treatment needed.",
+    "preventive_action": "Continue routine weekly scouting, crop rotation and balanced fertilisation.",
+    "escalation_trigger": "None \u2014 recheck if new symptoms appear.",
+    "safety_note": "Standard agricultural safety applies.",
+    "reference": "Agri-Vision Local KB v2.0",
+    "is_safety_critical": false
   }
 }

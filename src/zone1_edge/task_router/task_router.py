@@ -9,8 +9,29 @@ line the demo script (Section 8) expects.
 
 from __future__ import annotations
 
-from src.zone1_edge.experts.crop_expert import run as run_crop_expert
-from src.zone1_edge.experts.livestock_expert import run as run_livestock_expert
+from src.zone1_edge.experts.crop_expert import run as _run_crop_single
+from src.zone1_edge.experts.livestock_expert import run as _run_livestock_single
+
+
+def _run_domain_expert(domain: str, image_path: str, mode: str = None) -> dict:
+    """Intra-domain MoE (moe_gate -> 1 sub-expert) when enabled, else the single expert."""
+    from src.zone1_edge.moe import moe_expert  # lazy: keeps router import light
+
+    if moe_expert.moe_enabled(domain, mode):
+        try:
+            return moe_expert.run(domain, image_path, mode=mode)
+        except Exception as e:  # noqa: BLE001 - never break the pipeline on MoE failure
+            print(f"Warning: MoE path failed for {domain} ({e}); using single expert.")
+    single = _run_crop_single if domain == "crop" else _run_livestock_single
+    return single(image_path, mode=mode)
+
+
+def run_crop_expert(image_path: str, mode: str = None) -> dict:
+    return _run_domain_expert("crop", image_path, mode)
+
+
+def run_livestock_expert(image_path: str, mode: str = None) -> dict:
+    return _run_domain_expert("livestock", image_path, mode)
 
 VALID_DOMAINS = ("crop", "livestock")
 import math

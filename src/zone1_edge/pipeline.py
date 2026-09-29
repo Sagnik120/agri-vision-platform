@@ -36,9 +36,13 @@ def run_zone1_pipeline(
     sensor_reading: Optional[dict] = None,
     input_quality_ok: bool = True,
     mode: str = None,
+    region: Optional[str] = None,
+    season: Optional[str] = None,
 ) -> dict:
     """
     domain: "crop" | "livestock" | "auto"
+    region/season: optional farm context. Used ONLY for advisory text and the
+    cloud payload — never for the visual prediction or the moe_gate.
     """
     import cv2
     from src.zone1_edge.quality import quality_check
@@ -100,9 +104,12 @@ def run_zone1_pipeline(
         "reason_string": explain_reason
     }
 
+    from src.zone1_edge.context.farm_context import build_context
+    context = build_context(region, season)
+
     local_adv = None
     if gate_out["route"] == "local":
-        local_adv = local_advisory.get_advisory(gate_out["prediction"])
+        local_adv = local_advisory.get_advisory(gate_out["prediction"], context=context)
 
     return {
         "image_output": image_output,
@@ -112,6 +119,7 @@ def run_zone1_pipeline(
         "gate": gate_out,
         "explainability": explain_out,
         "local_advisory": local_adv,
+        "context": context,
     }
 
 
@@ -136,6 +144,11 @@ def build_cloud_payload_stub(pipeline_result: dict, farm_history: str = "",
         "sensor_data": sensor_out,
         "farm_history": farm_history,
         "retrieved_knowledge": retrieved_knowledge,
+        # Additive keys appended at the END (contract.md allows trailing extras).
+        # Zone 2 fills `weather` cloud-side; Zone 1 never calls the network.
+        "region": (pipeline_result.get("context") or {}).get("region"),
+        "season": (pipeline_result.get("context") or {}).get("season"),
+        "weather": None,
     }
 
 
