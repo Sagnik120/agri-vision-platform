@@ -24,6 +24,8 @@ import streamlit as st
 from src.zone1_edge.pipeline import run_zone1_pipeline, build_cloud_payload_stub
 from src.zone1_edge.speech import hindi_asr, hindi_tts
 from src.zone2_cloud.gemini import gemini_client
+from src.zone2_cloud import advisory_service
+from src.zone1_edge.context.farm_context import INDIAN_REGIONS, SEASONS, infer_season
 from src.zone2_cloud.rag import retriever
 from src.zone3_memory.db import farm_memory
 from src.zone3_memory.db import auth
@@ -152,6 +154,20 @@ with st.sidebar:
     st.write(f"👨‍🌾 **Logged in as:** {FARMER_NAME}")
     st.caption(f"ID: {FARM_ID}")
     st.caption(f"Mode: {EXPERT_MODE}")
+    st.markdown("**Farm context / खेत का संदर्भ**")
+    _saved_region = farm_memory.get_farm_location(FARM_ID)
+    _region_opts = ["(not set)"] + INDIAN_REGIONS
+    FARM_REGION = st.selectbox(
+        "Region (State) / क्षेत्र", _region_opts,
+        index=_region_opts.index(_saved_region) if _saved_region in _region_opts else 0,
+    )
+    FARM_REGION = None if FARM_REGION == "(not set)" else FARM_REGION
+    if isinstance(FARM_REGION, str) and FARM_REGION != _saved_region:
+        farm_memory.update_farm_location(FARM_ID, FARM_REGION)
+    _season_choice = st.selectbox(
+        "Season / मौसम", [f"auto ({infer_season()})"] + list(SEASONS),
+    )
+    FARM_SEASON = None if _season_choice.startswith("auto") else _season_choice
     if st.button("Logout / लॉग आउट"):
         st.session_state.farmer_id = None
         st.rerun()
@@ -176,6 +192,12 @@ def process_pipeline_result(result, farmer_text):
         sensor_json=json.dumps(result.get("sensor_output") or {}),
         route=gate.get("route", "local")
     )
+
+    _be = (result.get("image_output") or {}).get("_backend", "unknown")
+    _moe = (result.get("image_output") or {}).get("_moe")
+    st.caption(f"🔧 Vision backend: {_be}" + (f" · MoE expert: {_moe['selected_expert']} ({_moe['sub_expert_backend']})" if _moe else ""))
+    if str(_be).startswith("mock"):
+        st.warning("⚠️ MOCK vision predictor in use — results are not from a real model.")
 
     quality_flag = result.get("quality", {}).get("quality_flag", "ok")
     if quality_flag == "warn":
@@ -215,6 +237,10 @@ def process_pipeline_result(result, farmer_text):
             
         if adv.get("warning") and adv.get("warning") != "None — recheck if new symptoms appear.":
             st.warning(adv.get("warning"))
+
+        if adv.get("context_note"):
+            ctx = adv.get("context", {})
+            st.info(f"🗓️ **{ctx.get('season', '').title()}{' · ' + ctx['region'] if ctx.get('region') else ''}:** {adv['context_note']}")
             
         if "explainability" in result:
             st.markdown("### 🔍 AI Reasoning & Confidence Details / एआई तर्क और विश्वास विवरण")
@@ -245,7 +271,7 @@ def process_pipeline_result(result, farmer_text):
                 rag_knowledge = retriever.retrieve(query)
             
                 st.write("2. Fetching historical farm health records...")
-                farm_hist = farm_memory.get_farm_history(FARM_ID)
+                farm_hist = farm_memory.format_farm_history(farm_memory.get_farm_history_records(FARM_ID))
             
                 st.write("3. Packaging sensor data and visual embeddings...")
                 payload = build_cloud_payload_stub(result)
@@ -254,8 +280,8 @@ def process_pipeline_result(result, farmer_text):
                 payload["retrieved_knowledge"] = rag_knowledge
                 payload["image_path"] = tmp_path
             
-                st.write("4. Consulting Gemini Agronomy Expert...")
-                cloud_result = gemini_client.call_gemini(payload)
+                st.write("4. Consulting cloud advisory model...")
+                cloud_result = advisory_service.generate_advisory(payload)
             st.success("Cloud Diagnostic Complete! / क्लाउड डायग्नोस्टिक पूरा हुआ!")
             
             diag = cloud_result.get("diagnosis", {})
@@ -297,6 +323,18 @@ def process_pipeline_result(result, farmer_text):
                 st.markdown("### 📚 RAG Citations (Knowledge Base) / ज्ञानकोष संदर्भ")
                 for k in cloud_result.get("cited_knowledge", []):
                     st.write(f"- {k}")
+
+            st.caption(f"🔧 Advisory backend: {cloud_result.get('_backend')}")
+            check = cloud_result.get("_citation_check") or {}
+            if check.get("cited_doc_ids") or check.get("farm_history_refs"):
+                st.caption(
+                    f"Cited docs: {', '.join(check.get('cited_doc_ids', [])) or '—'} · "
+                    f"History refs: {', '.join(check.get('farm_history_refs', [])) or '—'} · "
+                    f"Citations verified: {'✅' if check.get('citations_valid') else '⚠️ unverified IDs cited'}"
+                )
+            if cloud_result.get("_weather_used"):
+                w = cloud_result["_weather_used"]
+                st.caption(f"Weather context ({w.get('source')}): {w.get('temperature_c')}°C, RH {w.get('relative_humidity_pct')}%, rain 7d {w.get('precipitation_last_7d_mm')} mm")
                         
         return adv.get("summary", "")
 
@@ -337,7 +375,7 @@ with tab_auto:
             f.write(uploaded_auto.getbuffer())
             
         with st.spinner("Auto-routing and analyzing..."):
-            result = run_zone1_pipeline("auto", tmp_path, farmer_text=farmer_text_auto or None, sensor_reading=sensor_data_auto, mode=EXPERT_MODE)
+            result = run_zone1_pipeline("auto", tmp_path, farmer_text=farmer_text_auto or None, sensor_reading=sensor_data_auto, mode=EXPERT_MODE, region=FARM_REGION, season=FARM_SEASON)
             
         process_pipeline_result(result, farmer_text_auto)
 
