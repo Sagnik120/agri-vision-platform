@@ -10,7 +10,7 @@
 **Role:** Formal data contract specification.
 **Component:** Architecture/Contracts.
 **Status:** IMPLEMENTED
-**Responsibilities:** Defines strictly frozen JSON schemas for payload exchange between Zone 1, Zone 2, and the UI. It governs the shapes of Image output, ASR, Text evidence, Sensor data, Fusion output, and Cloud payloads.
+**Responsibilities:** Defines strictly frozen JSON schemas for payload exchange between Zone 1, Zone 2, and the UI. It governs the shapes of Image output, farmer text, Text evidence, Sensor data, Fusion output, and Cloud payloads.
 
 ## `src/app/streamlit_app.py`
 **Role:** Main farmer-facing Streamlit application.
@@ -19,7 +19,7 @@
 **Responsibilities:** 
 - Renders bilingual UI (English/Hindi).
 - Handles user authentication (Login/Signup).
-- Collects inputs: Image, Audio, Text, Simulated Sensor data.
+- Collects inputs: Image, Text, Simulated Sensor data.
 - Invokes `run_zone1_pipeline`.
 - Branches UI logic based on `route` (local vs cloud).
 - Calls Gemini client and DB logging.

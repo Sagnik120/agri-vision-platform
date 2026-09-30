@@ -42,7 +42,6 @@ The architecture is divided into three primary zones: **Zone 1 (Edge Computing)*
 - **How implemented**:
   - Built using **Streamlit** (`streamlit_app.py`) for rapid, data-centric UI development.
   - Currently supports Image upload, Text input, and Sensor data input.
-  - *Note*: Voice (ASR/TTS) functionality has been temporarily disabled behind a `VOICE_INPUT_ENABLED` feature flag as part of the Phase 3 stabilization.
 
 ### 2.5 Testing Suite (`tests/`)
 - **Why used**: Ensures pipeline reliability, contract adherence between zones, and prevents regressions during active development.

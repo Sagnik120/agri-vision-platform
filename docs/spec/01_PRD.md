@@ -6,7 +6,7 @@ Rural farmers lack a unified platform for crop and livestock management. High ne
 ## Goals
 - **Unified App:** One app for crop diseases and livestock health.
 - **Offline-First:** High-confidence inferences run entirely on-device (Edge AI).
-- **Voice-Native:** Supports Hindi audio input for symptom reporting.
+- **Bilingual & Accessible:** English/Hindi interface with a simple photo-first flow and typed symptom description.
 - **Cloud Escalation:** Low-confidence inferences escalate to Gemini and localized RAG.
 
 ## Non-Goals

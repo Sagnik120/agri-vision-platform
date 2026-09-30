@@ -1,24 +1,23 @@
 # Current Repository Status
 
 ## 1. Audit Summary
-The Unified AI Agri-Vision Platform is currently a functional, integrated prototype. It successfully wires together an offline-first Edge AI pipeline (Zone 1) with Cloud-based Gemini LLM and RAG fallback capabilities (Zone 2) and local SQLite-based farm history persistence (Zone 3). While the architectural foundation and core data contracts are strictly enforced, several advanced AI components (like ASR and MoE semantic routing) rely on mock/fallback mechanisms for constrained environments or offline demonstrations.
+The Unified AI Agri-Vision Platform is currently a functional, integrated prototype. It successfully wires together an offline-first Edge AI pipeline (Zone 1) with Cloud-based Gemini LLM and RAG fallback capabilities (Zone 2) and local SQLite-based farm history persistence (Zone 3). While the architectural foundation and core data contracts are strictly enforced, several advanced AI components (like the semantic domain router) rely on mock/fallback mechanisms for constrained environments or offline demonstrations.
 
 ## 2. Repository Snapshot
 - **Core App**: Streamlit bilingual UI (Hindi/English).
 - **Architecture Zones**: Zone 1 (Edge), Zone 2 (Cloud/RAG), Zone 3 (Memory).
 - **Data Contracts**: Explicit JSON contracts enforced across boundaries (defined in `contract.md`).
-- **Models**: Integration with Hugging Face transformers (ViT/EfficientNet), AI4Bharat (ASR/TTS), and Google Gemini.
+- **Models**: Integration with Hugging Face transformers (ViT/EfficientNet), and Google Gemini.
 - **Tests**: Comprehensive pytest suite across all zones.
 
 ## 3. Technology Stack Actually Used
 - **Frontend**: Streamlit
 - **Edge AI / Vision**: PyTorch, Hugging Face `transformers`, `timm`
-- **Speech**: `soundfile`, `librosa`, AI4Bharat (referenced in docs/code)
 - **Cloud / RAG**: `google-genai`, `sentence-transformers`, `faiss-cpu`
 - **Database**: SQLite (standard library)
 
 ## 4. High-Level Architecture — Actual vs Intended
-- **Intended**: Photo/Voice/Sensor → MoE routing → Specialist Analysis → Multimodal Fusion → Confidence/Safety Gate → Offline Advisory OR Cloud Escalation → Persistent Private History.
+- **Intended**: Photo/Text/Sensor → MoE routing → Specialist Analysis → Multimodal Fusion → Confidence/Safety Gate → Offline Advisory OR Cloud Escalation → Persistent Private History.
 - **Actual**: Implemented accurately, but with practical compromises. Routing uses a zero-shot semantic classifier with a fallback to raw confidence scores. Multimodal Fusion is a deterministic weighted rule-based late fusion.
 
 ## 5. Actual Runtime Pipeline
@@ -45,7 +44,7 @@ Final Streamlit Output
 ## 6. Data Flow
 Strictly follows `contract.md`:
 1. `{"domain", "input_type", "prediction", "confidence", "top_k"}`
-2. ASR Text: `{"text", "language", "confidence"}`
+2. Farmer Text: `{"text", "language", "confidence"}` (typed description)
 3. Text Evidence: `{"symptoms", "crop", "severity_hint"}`
 4. Sensor Data: `{"domain", "temperature", "activity", "feed_intake", "anomaly"}`
 5. Fusion Output: `{"prediction", "visual_confidence", "text_support", "sensor_support", "evidence_agreement", "final_confidence", "route"}`
@@ -71,9 +70,9 @@ Code references HF checkpoints (`CROP_MODEL_LOCAL_DIR`, `LIVESTOCK_MODEL_LOCAL_D
 ✅ IMPLEMENTED.
 Uses `faiss-cpu` and `sentence-transformers` for local vector indexing and retrieval. `retriever.py` fetches the top-K relevant documents.
 
-## 12. Voice / Multimodal Status
-🟠 DISABLED (Feature Flagged).
-UI previously accepted audio files and called `hindi_asr.transcribe`. This is now hidden behind `VOICE_INPUT_ENABLED=False` to ensure demo stability. The underlying ASR implementation is fully preserved for future reactivation.
+## 12. Multimodal Input Status
+✅ IMPLEMENTED.
+The farmer's photo, typed symptom description and (for livestock) simulated sensor readings are fused before the confidence gate.
 
 ## 13. Offline Capability Status
 ✅ IMPLEMENTED.
@@ -85,7 +84,7 @@ A strong offline-first architecture is present. `MockGeminiClient`, local HF mod
 
 ## 15. UI / Prototype Status
 ✅ IMPLEMENTED.
-Streamlit app is highly polished, bilingual (English/Hindi), featuring distinct flows for Auto-Detect vs Farm History, and integrating authentication, image upload, voice upload, and sensor sliders.
+Streamlit app is highly polished, bilingual (English/Hindi), featuring distinct flows for Auto-Detect vs Farm History, and integrating authentication, image upload, symptom text, and sensor sliders.
 
 ## 16. Database / Farm History Status
 ✅ IMPLEMENTED.
@@ -97,7 +96,7 @@ A rich pytest suite exists under `tests/` covering Zone 1 (gate, experts, fusion
 
 ## 18. Dependencies & Environment
 - Requires `pillow`, `pytest`, `numpy`, `huggingface_hub`, `transformers`, `torch`, `streamlit`.
-- Cloud/Voice require `google-genai`, `sentence-transformers`, `faiss-cpu`, `soundfile`, `librosa`.
+- Cloud features require `google-genai`, `sentence-transformers`, `faiss-cpu`.
 - Well-documented `requirements.txt`.
 
 ## 19. Mock / Fallback / Placeholder Components
@@ -118,8 +117,6 @@ A rich pytest suite exists under `tests/` covering Zone 1 (gate, experts, fusion
 | Cloud Gateway | Escalation | `src/zone2_cloud/gemini/gemini_client.py` | ✅ IMPLEMENTED | Validated schema outputs, integrates Google GenAI. |
 | RAG | Knowledge grounding | `src/zone2_cloud/rag/retriever.py` | ✅ IMPLEMENTED | Uses `faiss` and `sentence-transformers`. |
 | Farm Memory | Persistent history | `src/zone3_memory/db/farm_memory.py` | ✅ IMPLEMENTED | Uses SQLite, schema logic is active. |
-| Voice | Hindi ASR/TTS | `src/zone1_edge/speech/hindi_asr.py` | 🟠 DISABLED | UI access disabled via feature flag. Code preserved for future scope. |
-| Model Improvement| Secure aggregation | N/A | ⚪ DOC_ONLY | Mentioned as architectural concept, no code exists. |
 
 ## 21. End-to-End Demo Flows Currently Possible
 1. **Flow A (Local Advisory)**: Image Upload -> Routing -> Crop/Livestock Expert -> High Confidence/High Agreement Fusion -> Local Advisory -> Memory Persist.
@@ -127,11 +124,9 @@ A rich pytest suite exists under `tests/` covering Zone 1 (gate, experts, fusion
 3. **Flow C (Mock Mode)**: Hardware constrained offline execution bypassing real model loading for rapid prototyping.
 
 ## 22. Known Technical Issues / Risks
-- Voice input models (ASR) are heavy and complex to run locally on low-end devices.
 - Fusion logic is naive (rule-based score addition/subtraction) rather than an actual trained multi-modal representation.
 
-## 23. Consolidated Future Scope (A-E & Voice)
-- **Voice/ASR Re-enablement**: Reintegrate `hindi_asr.py` once models are optimized for edge hardware.
+## 23. Consolidated Future Scope (A-E)
 - **Future Scope A**: Multi-Agent Cloud Redesign.
 - **Future Scope B**: Secure Aggregation/Federated Learning.
 - **Future Scope C**: Real IoT Hardware Integration.
@@ -153,7 +148,7 @@ A rich pytest suite exists under `tests/` covering Zone 1 (gate, experts, fusion
 Details: `docs/system/ai_upgrade_plan.md`.
 
 ## 24. Overall Implementation Maturity
-High for a prototype. All three roadmap phases (Phase 1: Verification, Phase 2: RAG/Calibration, Phase 3: Cleanup & Voice Detachment) are complete. The separation of concerns via data contracts between zones is excellently executed and robust.
+High for a prototype. All three roadmap phases (Phase 1: Verification, Phase 2: RAG/Calibration, Phase 3: Cleanup) are complete. The separation of concerns via data contracts between zones is excellently executed and robust.
 
 ## 25. Audit Notes / Evidence
 - **Pipeline trace**: Fully traced via `src/zone1_edge/pipeline.py::run_zone1_pipeline()`.

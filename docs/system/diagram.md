@@ -1,184 +1,210 @@
-# Architecture Diagram Specification (v3)
+# Architecture Diagram Specification (v5)
 
-**Goal of the diagram:** a reader (judge, farmer-facing partner, new developer) should understand the whole system in **under 30 seconds**: *photo goes in → quality check → expert models on the farmer's device → either instant offline advice, or (if unsure or risky) a cloud advisor that uses trusted knowledge and the farm's own history → advice comes back and is saved.* If the picture is crowded or needs reading paragraphs, it has failed. **Icons and layout carry the meaning; text is only a short label.**
+**Goal of the diagram:** a reader (judge, partner, new developer) should understand the whole system in **under 30 seconds**, and a technical reader should still see *what technology* each step uses. Rule of thumb: **every box = one icon + a short bold title + (where useful) one small technical tag underneath.** Icons and layout carry the flow; the tag carries the technical term (MoE, RAG, LoRA, ONNX, SQLite…). Not less information, just organised information.
 
-How to use this file: attach the previous diagram (`architecture_diagram.png`) to Gemini as a layout reference only, then paste **Prompt A** (Part 8). If the result has problems, use **Prompt D** (Part 11) to fix them, or try **Prompt B** (SVG, exact text) or **Prompt C** (one zone at a time). Everything else in this file is the detailed spec behind the prompts.
+How to use: attach the previous diagram to Gemini as a *style/layout reference only*, paste **Prompt A** (Part 8). If the result has problems use **Prompt D** (Part 11), **Prompt B** (SVG, exact text) or **Prompt C** (one zone at a time).
 
-Status of what is depicted: everything is implemented in the repo except the Qwen advisor's training run (pending). The diagram shows the target architecture; the Gemini fallback path already works today.
+Status of what is depicted: everything is implemented in the repo except the Qwen advisor's training run (pending). The diagram shows the target architecture; the Gemini fallback already works today.
 
 ---
-## Part 1: Review of the generated image `updated_architecture_diagram.png` (v2 output)
+## Part 1: Review history
 
-**Kept (good):** three stacked zones with numbered badges; consistent teal for models fine-tuned in this project; grey dashed Gemini fallback; red reject boxes; yellow decision gates; phone icon for inputs; legend concept; left-to-right reading in Zone 1.
+### 1a. First generated image (v2 output) → problems fixed in v3
+Spec text printed on the image (font sizes, "14 pt"), internal IDs like [QC], "49 documents", far too much text with typos, duplicate boxes, "Record case" not reaching Zone 3, weak arrows, cut-off footer, 4:3 low resolution, few icons.
 
-**Problems found, and the fix in this v3 spec**
-| # | Problem seen in the image | Why it hurts | Fix in v3 |
+### 1b. Second generated image (v3 output) `updated_architecture_diagram.png`
+**Good, keep:** clean and uncluttered; icon on every box; correct colour coding (teal = ours, grey dashed = backup, yellow = decision, red = reject, navy = result); Save case / Past cases now connect Zone 3; only one arrow drops into Zone 2; Qwen is the visual focus; no leaked spec text.
+
+**Problems found → fixed in v4**
+| # | Problem in the v3 image | Fix in v4 |
+|---|---|---|
+| 1 | **Technical identity lost:** "Expert Team", "Learned Gate", "Trusted Knowledge" say nothing about MoE, RAG, LoRA, MobileNetV3/ONNX, FAISS/embeddings, fusion, SQLite, PII removal | Each box gets a **title + small technical tag** (Part 4), e.g. "Trusted Knowledge" + tag "RAG · embeddings + FAISS". Names like MoE, RAG, LoRA, ONNX are now required in the image |
+| 2 | **Privacy Filter is orphaned:** it has no incoming or outgoing arrow; the escalation arrow ends on the "Region & season" chip instead | Privacy Filter is the **first box of Zone 2**; the escalation arrow ends on it; arrow Privacy Filter → Trusted Knowledge |
+| 3 | The Context chips (region, weather, history) feed *Trusted Knowledge*, so the diagram implies they only affect retrieval, and there is no clear route into the advisor | Context stack joins the **Qwen Advisor** directly with one merged arrow |
+| 4 | "Best answer" is tiny and unexplained; it hides the combine logic that fixed routing | Renamed **Combiner**, tag "most confident wins" (livestock: "disease-first" only as tiny tag if space) |
+| 5 | Sensors, Quality-check criteria, router type, fusion, gate criteria are not stated | Tags added: "blur · exposure · contrast", "zero-shot vision-language", "image + text + sensors", "confidence · safety-critical · evidence" |
+| 6 | "Advice to Farmer" gives no hint of language | Tag "English / Hindi" |
+| 7 | Farm Records/My Farm History do not say what storage is used | Tag "SQLite (local)" |
+| 8 | Image is again 1200×896 (4:3); the Zone 3 band and Legend are cut by the bottom edge and the legend overlaps the green band | Ask again for wide 16:9 with 6% margin; legend placed in its own free corner **outside every zone band**, or shrunk to a single row under the title |
+| 9 | Vertical labels "Crop" / "Livestock" on the left of Expert Team are small and rotated | Use horizontal row labels (small pills) "Crop" and "Livestock" |
+| 10 | Yellow hexagon (Quality Check) and yellow diamond (gate) share the decision colour but Quality Check is also a process | Keep both yellow (both accept/reject decisions) but give Quality Check a hexagon and the gate a diamond so they stay distinguishable |
+| 11 | "Confident and Safe?" text is small inside the diamond | Diamond made larger; title on two lines |
+| 12 | Gemini Backup arrows: dashed from Qwen and dashed to Verify are fine, but the caption "if unavailable" is small | Keep, enlarge caption slightly |
+
+### 1c. Third generated image (v4 output): what is good, what must be fixed
+**Good: DO NOT CHANGE these (they are correct now):** title and subtitle; Farmer's Device band layout; phone with Photo / Symptom text / Sensors / Region & season; Retake photo and Not a farm photo boxes; the Mixture-of-Experts container with MoE Gate + Row crops / Tree crops / Lumpy skin / Foot-and-mouth and Combiner; Multimodal Fusion; Offline Advice; Zone 2 main row (Privacy Filter → Trusted Knowledge → Qwen2.5 Advisor → Verify & Cite → Advice with Sources); Context box joining Qwen; Zone 3 band; colours, icons and technical tags; the escalation arrow now correctly ends on Privacy Filter.
+
+**Must be fixed**
+| # | Where | Problem seen | Correction |
 |---|---|---|---|
-| 1 | Spec text leaked into the picture: subtitle ends with "(30 px regular)"; top-right says "Minimum text equivalent 14 pt, Inter font" | Looks unprofessional; wrong | Sizes are given only as relative proportions inside a section marked **"instructions, never print"**; Prompt says: never print sizes, fonts, hex codes, IDs |
-| 2 | Internal IDs printed everywhere: [IN], [QC], [DR], [MOE], [E1]…[E4], [CB], [FU], [CG], [LA], [OUT], [GW], [CTX], [RAG], [KB], [QW], [GM], [VAL], [CADV], [FR], [TL] | Clutter, meaningless to readers | Nodes are referred to by **name only**; IDs removed from this spec; Prompt forbids brackets |
-| 3 | "49 documents" printed in the knowledge-base box | You asked to remove it; also goes stale | Removed everywhere |
-| 4 | Far too much text: sub-labels with class lists ("21 classes: tomato, potato, maize…"), sentences inside boxes (e.g. "Schema · grounded in inputs · no drug doses · cited IDs must exist") | Unreadable at normal size; crowded | **Max 4 words per label, no sub-sentences.** Detail moved to icons (tomato, apple, cow…) and to the docs |
-| 5 | AI-rendered text is garbled/misspelt: "srope: 21 olasses", "sopaeh", "Ali experts", "sero-shot", "reasoning doown te the farmer", "Farm proffile", "fille path", "citations" typos, "cotident expert" | Wrong words in a formal diagram | Fewer, shorter words (fewer chances to garble); **Prompt B** generates SVG so text is exact; Part 10 lists the labels for a final check |
-| 6 | Duplicate boxes: "Capture and Quality Check" title AND a hexagon labelled "[QC]"; same for "Confidence and Safety Gate" AND a diamond "[CG]" | Reader thinks there are two steps | **One node per step**: the shape *is* the node, the name is inside it |
-| 7 | "Record case" arrow does **not** reach Zone 3; it ends at the Structured Advisory box, and a double-headed arrow links Farmer-Facing Result and Structured Advisory | The memory step is not visible; arrows misleading | Explicit arrows: Result → Farm Records ("Save case") and Farm Records → Context ("Past cases") only |
-| 8 | Region arrow goes from a "Farm profile" chip up to the *Cloud Gateway* | Region should travel with the case, not from memory to the gateway | Region & season is a chip in Inputs and a chip in the Context strip; no arrow needed |
-| 9 | The "Retake" return arrow and the "Escalate to cloud" line share one long path along the bottom of Zone 1 and cross the Zone 1 border | Hard to trace | Reject arrows are short and local; a **reserved empty corridor** between Zone 1 and Zone 2 is used by the escalation arrow only |
-| 10 | Main flow Qwen → Validator drawn as a dashed grey arrow (same style as fallback) | Looks like Qwen is optional | Qwen → Verify is a **solid** arrow; only Gemini paths are dashed |
-| 11 | Tiny notes next to the gate ("Low confidence · conflicting symptoms · poor image · safety-critical disease (eg…") squeezed into a narrow column | Illegible | Replaced by one short label "Unsure or risky" plus a warning icon |
-| 12 | Legend repeats "Data store / knowledge base" twice; zone swatches duplicate the zone titles; legend is large | Wasted space, noise | 7 unique entries, compact |
-| 13 | Image is 1200×896 (4:3) and low resolution; footer sentence is cut off at the bottom edge | Text is small, footer clipped | Ask for **wide 16:9**, highest resolution available, 6% safe margin all round, footer removed |
-| 14 | Zone 3 is small and squeezed; the green box is cut by the Legend; farm history arrow crosses the Context list | Memory looks like an afterthought | Zone 3 gets a full-width band with two large boxes; Legend moves to a dedicated corner that overlaps nothing |
-| 15 | Almost no pictograms; only a phone, a cloud and cylinders | Reader must read everything | Every node gets a **specific icon** (Part 4) |
-| 16 | The Combiner and "gate probability (tie-break)" dashed lines add clutter inside the expert block | Detail nobody needs at this level | Combiner kept as one small node; tie-break line removed |
+| G1 | **Confidence & Safety Gate** | Oversized yellow diamond that bulges to the bottom edge of the Zone 1 band; its title floats ABOVE the diamond, the diamond itself holds only a small shield; the "Yes" and "Unsure or risky" exits are unclear (label sits beside a stray line) | Redesign (Part 2A): a normal-size yellow hexagon (same family as Quality Check), title and tag INSIDE it, two clearly coloured, clearly labelled exits, fully inside the Zone 1 band |
+| G2 | Quality Check | Title split across the shape ("Quality" above, "Check" inside) and the tag sits above the hexagon | Title inside the hexagon on two lines, tag directly below the hexagon, nothing above it |
+| G3 | Save case arrow | Starts under "Advice with Sources" and ends at "My Farm History" | Must start at the navy "Advice to Farmer" pill and end on the **Farm Records** cylinder |
+| G4 | Past cases arrow | Arrowhead points DOWN into Farm Records (direction reversed) | Arrow starts at Farm Records and its arrowhead points UP into the "Farm history" chip |
+| G5 | Gemini Fallback | Two dashed arrows between Qwen and Gemini (one going up, suggesting Gemini answers back to Qwen); stray label "Verify" on the arrow to Verify & Cite | Exactly one dashed arrow Qwen → Gemini labelled "if unavailable", one dashed arrow Gemini → Verify & Cite with no label |
+| G6 | My Farm History | Stray word: `"private to each farm" useful` | Tag reads exactly: private to each farm (no quotes, no extra word) |
+| G7 | Context chip | "Region & season" has a stray asterisk next to the map-pin icon | Remove the asterisk |
+| G8 | Domain Router → MoE | The router output enters the container as one arrow, so the Crop / Livestock split is not visible | Two short arrows from the router into the two rows, labelled **Crop** and **Livestock** |
+| G9 | Legend | Straddles the Zone 2 / Zone 3 borders and touches the right edge | Single-row legend strip along the very bottom of the image, below all bands, or a box completely inside the empty right part of the Zone 3 band |
+| G10 | Advice to Farmer pill | Small, sits half on the Zone 1 border; the tag is cramped | Taller pill fully inside the right margin, spanning the gap between Zone 1 and Zone 2, tag "English / Hindi" on its own line |
+| G11 | Escalation arrow route | Runs along the bottom border line of the Zone 1 band | Route it through the middle of the empty corridor between the bands |
+| G12 | Aspect ratio | Still 4:3 (about 1200×896), bottom margin very tight | Select **16:9** in the image tool's aspect-ratio option (a request in the prompt alone is often ignored); keep ≥ 6% margin |
 
 ---
-## Part 2: Design principles (follow these when choosing between options)
-1. **Icons first, words second.** A box = one icon + a label of at most 4 words.
-2. **One idea per box.** No duplicate boxes, no boxes that only hold an ID.
-3. **Generous white space.** Roughly 40% of each zone band should be empty. If it does not fit, delete detail, do not shrink text.
-4. **Read left → right, top → bottom.** Zone 1 left→right; escalation drops down; Zone 2 left→right; Zone 3 underneath.
-5. **Few arrows, orthogonal, never crossing text or each other.** Solid = normal path. Dashed = backup only. Red = rejected.
-6. **Colour means something:** teal = model we trained; grey dashed = external backup; yellow = decision; red = stop; white = ordinary step; navy = final result shown to the farmer.
-7. **Formal look:** flat vector, thin outlines, no gradients, no 3D, no shadows heavier than a faint hairline, no decorative photos, no brand logos.
+## Part 2: Design principles
+1. **Icon + title + technical tag.** Title ≤ 3 words (bold). Tag ≤ 5 words (small, muted grey-blue, one line). No paragraphs, no bullet lists inside boxes.
+2. **Technical terms are required, not optional:** Mixture-of-Experts (MoE), RAG, LoRA, ONNX, MobileNetV3, embeddings + FAISS, zero-shot, multimodal fusion, SQLite, PII removal must appear (once each, in the tags listed in Part 4).
+3. **One idea per box; no duplicate boxes; no IDs.**
+4. **White space:** about 35-40% of each zone band empty.
+5. **Reading order:** Zone 1 left→right; one arrow drops through an empty corridor; Zone 2 left→right; Zone 3 underneath.
+6. **Few arrows,** orthogonal, never crossing text or each other. Solid = normal, dashed = backup only, red = reject.
+7. **Colour means something:** teal = model we trained; grey dashed = external backup; yellow = decision; red = stop; white = ordinary step; navy = final result.
+8. **Formal:** flat vector, thin outlines, no gradients/3D/photos/brand logos.
+
+### 2A. Confidence & Safety Gate: required design
+- **Shape:** yellow hexagon, about 1.3× the size of the Quality Check hexagon (do not make it huge), fully inside the Zone 1 band with clear space above and below.
+- **Inside the hexagon (all inside, nothing floating outside):** shield icon on top, bold title on two lines **Confidence & Safety Gate**.
+- **Directly under the hexagon** (small tag): *confidence · evidence · safety-critical*.
+- **Exit 1, to the right:** green solid arrow labelled **Yes** with a small green tick → Offline Advice.
+- **Exit 2, downward:** orange-red solid arrow labelled **Unsure or risky** with a small warning-triangle icon next to the label → goes down through the middle of the corridor → Privacy Filter. The label sits beside its own arrow, not near any other line.
+- No other lines touch the hexagon except the incoming arrow from Multimodal Fusion.
 
 ---
-## Part 3: Visual design (INSTRUCTIONS FOR THE GENERATOR, NEVER PRINT ANY OF THIS ON THE IMAGE)
+## Part 3: Visual design (INSTRUCTIONS FOR THE GENERATOR: NEVER PRINT ANY OF THIS)
+**Canvas.** Wide landscape 16:9, highest resolution available, white background, 6% empty margin on all sides, nothing may touch or cross the image border. Title area ~8% of height; Zone 1 ~34%; Zone 2 ~34%; Zone 3 ~16%; ~4% gap between zones (escalation corridor). Legend sits in the free bottom-right corner **outside** the green band (or as a slim single row directly under the subtitle).
 
-**Canvas.** Wide landscape 16:9, highest resolution available, white background, 6% empty margin on every side. Title area about 8% of image height. Zone 1 about 34%, Zone 2 about 38%, Zone 3 about 16% of the height; a clear gap of about 4% between zones (the escalation corridor).
+**Text (relative sizes).** Title largest; zone titles second; box titles ≈ 60% of zone-title size, semi-bold, dark; **technical tags ≈ 70% of box-title size, regular, muted slate-blue, one line, always under the title**; arrow labels ≈ 60% of box-title size, italic. All text horizontal, sans-serif, sharp and correctly spelled. Text on teal/navy fills is white.
 
-**Text sizes (relative).** Title = largest text on the image. Zone titles = second largest. Box labels = about 60% of zone-title size, semi-bold. Arrow labels = about 45% of zone-title size, italic. Nothing smaller than arrow labels. All text horizontal, dark slate colour on light fills, white on dark fills, sans-serif typeface (Inter/Roboto style).
-
-**Palette (colour names for you; do not print codes).**
+**Palette (do not print codes).**
 | Use | Fill | Outline |
 |---|---|---|
-| Zone 1 band (edge, farmer's device) | very light blue `#EAF1FB` | blue `#2F5D9E` |
-| Zone 2 band (cloud advisory) | very light amber `#FFF4E5` | amber `#C77800` |
-| Zone 3 band (farm memory) | very light green `#EAF5EC` | green `#2E7D4F` |
-| Ordinary step | white | same colour as its zone outline |
+| Zone 1 band | very light blue `#EAF1FB` | blue `#2F5D9E` |
+| Zone 2 band | very light amber `#FFF4E5` | amber `#C77800` |
+| Zone 3 band | very light green `#EAF5EC` | green `#2E7D4F` |
+| Ordinary step | white | zone outline colour |
 | **Fine-tuned model (ours)** | teal `#0F766E`, white icon and text | dark teal `#0B5A54` |
 | External backup model | light grey `#F1F5F9` | grey `#64748B`, dashed |
-| Decision gate | soft yellow `#FDE68A` | brown `#B45309` |
+| Decision | soft yellow `#FDE68A` | brown `#B45309` |
 | Reject / stop | light red `#FEE2E2` | red `#B42318` |
-| Final result shown to farmer | navy `#1E293B`, white text | none |
-| Main arrow | dark slate `#1E293B`, medium thickness, solid | |
-| Backup arrow | grey `#64748B`, medium, dashed | |
-| Reject arrow | red `#B42318`, medium, solid | |
+| Final result | navy `#1E293B`, white text | none |
+| Technical tag text | slate-blue `#475569` (white on dark fills) | |
+| Arrows | main: dark slate solid · backup: grey dashed · reject: red solid | |
 
-**Shapes.** Rounded rectangles for steps; diamond for decisions; cylinder for data stores; pill for inputs/outputs. Same size for sibling boxes, aligned on a grid, equal spacing.
-
-**Icons.** One consistent set: flat, single-colour line icons with rounded ends, drawn inside or above each label. Icon size about the height of the label text × 2.5. White icons on teal/navy fills, dark icons elsewhere. No logos of real companies (Gemini and Qwen are shown by their names as text).
+**Shapes.** Rounded rectangles = steps; hexagon = quality check; diamond = safety gate; cylinder = stores; pill = inputs/outputs. Same size for siblings, grid-aligned, equal spacing.
+**Icons.** One consistent flat single-colour line-icon set, about 2.5× label height, placed above or left of the title. No company logos (Gemini and Qwen appear as text).
 
 ---
-## Part 4: Content (this is exactly what may be printed; "Icon" is a drawing, not text)
+## Part 4: Content: exactly what may be printed
+Format: **Title** (bold) / *tag* (small) / Icon (drawing, not text).
 
-### Title block (print)
-- Title: **Unified AI Agri-Vision Platform**
-- Subtitle: **Crop and livestock advisory · Edge-first · Grounded in trusted knowledge**
+### Title block
+- **Unified AI Agri-Vision Platform**
+- Subtitle: Crop and livestock advisory · Edge-first AI · Retrieval-grounded (RAG) cloud advisory
 
-### Zone 1: badge "1", print title: **Farmer's Device** with small italic **works offline**
-| Step (left → right) | Printed label (exact) | Icon | Notes |
+### Zone 1: badge "1", title **Farmer's Device** + small italic *works offline*
+| Step | Title | Tag | Icon |
 |---|---|---|---|
-| Inputs (3 stacked pills on a phone outline) | **Photo** · **Symptom text** · **Sensors** and a small chip **Region & season** | camera · text-lines · thermometer · map pin + calendar | Sensors are simulated: no extra text |
-| Quality check (hexagon) | **Quality Check** | magnifying glass over a photo | Two small exits: green tick "OK" continues; red box **Retake photo** with a short arrow back to the phone |
-| Domain router (rounded box) | **Crop or Livestock?** | fork/split arrow with a leaf and a cow | Third exit, red box **Not a farm photo** |
-| Expert team (large white container) | container title **Expert Team** and a tiny caption **fine-tuned AI models** | none on container | Contains the boxes below |
-| ·· gate (crop) | **Learned Gate** | traffic-switch / router symbol | small teal box |
-| ·· expert 1 | **Row crops** | tomato + corn | teal box |
-| ·· expert 2 | **Tree crops** | apple + grapes | teal box |
-| ·· gate (livestock) | **Learned Gate** | traffic-switch | small teal box |
-| ·· expert 3 | **Lumpy skin** | cow with spots | teal box |
-| ·· expert 4 | **Foot-and-mouth** | cow head | teal box |
-| ·· merge | **Best answer** | two arrows merging into one | small white box after the four experts |
-| Fusion | **Add Evidence** | stacked layers / plus | white box: combines symptom text and sensors with the photo result |
-| Confidence & safety (diamond) | **Confident and Safe?** | shield | Two exits: **Yes** (solid, to Offline Advice) and **Unsure or risky** (solid, down to the cloud, with a small warning-triangle icon) |
-| Offline advice | **Offline Advice** | open book | white box; then arrow to the Result pill |
+| Inputs (3 stacked pills on a phone outline) | **Photo** · **Symptom text** · **Sensors** | *simulated* (under Sensors only) | camera · text lines · thermometer |
+| Profile chip | **Region & season** | | map pin + calendar (no asterisk) |
+| Quality check (hexagon; title inside, tag directly under the hexagon) | **Quality Check** | *blur · exposure · contrast* | magnifier over photo; green tick = OK; short red arrow → red box **Retake photo** (camera icon) → back to phone |
+| Router | **Domain Router** | *crop vs livestock · zero-shot* | split arrow with leaf and cow; red exit → red box **Not a farm photo** |
+| Expert container (large white) | **Mixture-of-Experts (MoE)** | *fine-tuned MobileNetV3 · ONNX* | none |
+| ·· crop row pill | **Crop** (horizontal pill) | | |
+| ·· gate | **MoE Gate** | *learned* | switch/router symbol (small teal box) |
+| ·· expert 1 | **Row crops** | | tomato + corn (teal) |
+| ·· expert 2 | **Tree crops** | | apple + grapes (teal) |
+| ·· livestock row pill | **Livestock** (horizontal pill) | | |
+| ·· gate | **MoE Gate** | *learned* | switch/router symbol (small teal box) |
+| ·· expert 3 | **Lumpy skin** | | spotted cow (teal) |
+| ·· expert 4 | **Foot-and-mouth** | | cow head (teal) |
+| Merge | **Combiner** | *most confident wins* | two arrows merging |
+| Fusion | **Multimodal Fusion** | *image + text + sensors* | stacked layers / plus |
+| Gate (yellow hexagon, see Part 2A; title inside) | **Confidence & Safety Gate** (two lines) | *confidence · evidence · safety-critical* (under the hexagon) | shield; green exit **Yes** (tick); orange-red exit **Unsure or risky** (warning triangle) |
+| Offline path | **Offline Advice** | *local knowledge base · season tips* | open book |
 
-### Zone 2: badge "2", print title: **Cloud Advisory** with small italic **only when needed**
-| Step (left → right) | Printed label (exact) | Icon | Notes |
+### Zone 2: badge "2", title **Cloud Advisory** + small italic *only when needed*
+Left to right main row; the Context stack sits in the bottom-left of the zone.
+| Step | Title | Tag | Icon |
 |---|---|---|---|
-| Entry | **Privacy Filter** | padlock | white box; the escalation arrow ends here; caption none |
-| Context strip (3 small chips stacked, feeding the advisor) | **Region & season** · **Weather** · **Farm history** | map pin + sun · cloud with rain · clock with notebook | **Weather** chip has a dashed outline (optional) |
-| Knowledge search | **Trusted Knowledge** | stack of books + magnifying glass (or cylinder with a book) | one box; no numbers; no sub-lines |
-| Primary advisor (largest, teal, thick outline) | **Qwen Advisor** and a small tag **fine-tuned** | brain / chip | The visual focus of Zone 2 |
-| Backup advisor (below Qwen, grey dashed) | **Gemini Backup** | sparkle or cloud (generic, no logo) | small caption **if Qwen unavailable** |
-| Verification (diamond or hexagon) | **Verify and Cite** | shield with check mark | |
-| Structured advice | **Advice with Sources** | document with quote marks | white box; arrow goes up to the Result pill |
+| Entry (first box; the escalation arrow ends on its top) | **Privacy Filter** | *personal data removed* | padlock |
+| Knowledge | **Trusted Knowledge** | *RAG · embeddings + FAISS* | books + magnifier |
+| Context stack (3 chips, bottom-left; one merged arrow into Qwen) | **Region & season** · **Weather** (dashed, optional) · **Farm history** | *tag under stack title "Context"* | map pin + sun · cloud-rain · clock + notebook |
+| Primary advisor (largest, teal, thick outline) | **Qwen2.5 Advisor** | *LoRA fine-tuned · cites sources* | brain / chip |
+| Backup (grey dashed, placed below the gap between Qwen and Verify) | **Gemini Fallback** | *if Qwen unavailable* | sparkle |
+| Verification (hexagon) | **Verify & Cite** | *schema · sources · safety* | shield + check |
+| Output | **Advice with Sources** | *structured answer* | document with quote marks |
 
-### Result pill (navy), at the far right, tall enough to touch both Zone 1 and Zone 2
-Print: **Advice to Farmer**, icon: phone with a speech bubble. Two arrows enter it: from **Offline Advice** (Zone 1) and from **Advice with Sources** (Zone 2).
+### Result pill (navy, far right, spanning Zone 1 and Zone 2)
+**Advice to Farmer** / *English / Hindi* / phone with speech bubble. Arrows in from Offline Advice and from Advice with Sources.
 
-### Zone 3: badge "3", print title: **Private Farm Memory**
-| Item | Printed label (exact) | Icon |
-|---|---|---|
-| Store (cylinder) | **Farm Records** | database cylinder with a small leaf and cow |
-| Timeline (white box, phone outline) | **My Farm History** | timeline / clock with notebook |
-A small italic line under the timeline: **private to each farm**.
+### Zone 3: badge "3", title **Private Farm Memory**
+| Item | Title | Tag | Icon |
+|---|---|---|---|
+| Store (cylinder) | **Farm Records** | *SQLite (local)* | database + leaf + cow |
+| Timeline (white, phone outline) | **My Farm History** | *private to each farm* (exact text, no quotes, no extra words) | timeline / clock + notebook |
+Nothing else in Zone 3.
 
-**Nothing else in Zone 3** (no model-improvement, aggregation or update boxes).
+### Arrows (complete list; no others)
+1. Inputs → Quality Check. Quality Check → Domain Router (green tick). Quality Check → Retake photo (red) → back to Inputs.
+2. Domain Router → two short arrows into the two MoE rows: **Crop** (to the Crop row) and **Livestock** (to the Livestock row); → Not a farm photo (red).
+3. Each gate → its two experts. All four experts → Combiner → Multimodal Fusion → Confidence & Safety Gate.
+4. Gate → Offline Advice (**Yes**) → Advice to Farmer.
+5. Gate → down through the MIDDLE of the empty corridor (not along a band border) → **Privacy Filter** (**Unsure or risky**). The only arrow crossing from Zone 1 to Zone 2.
+6. Privacy Filter → Trusted Knowledge → Qwen2.5 Advisor. Context stack → Qwen2.5 Advisor (one merged arrow).
+7. Qwen → Verify & Cite (**solid**). Qwen → Gemini Fallback: exactly ONE dashed arrow (label **if unavailable**), no return arrow. Gemini Fallback → Verify & Cite: one dashed arrow, no label.
+8. Verify & Cite → Advice with Sources → Advice to Farmer.
+9. Advice to Farmer (the navy pill) → **Farm Records** cylinder (**Save case**; it must not end on My Farm History). Farm Records → My Farm History. Farm Records → Farm history chip in Zone 2 (**Past cases**; arrowhead points UP into the chip; one vertical arrow crossing nothing).
 
-### Arrows (complete list; every other connection is forbidden)
-Solid unless stated. Labels only where quoted.
-1. Inputs → Quality Check.
-2. Quality Check → Crop or Livestock? (label none; green tick icon).
-3. Quality Check → **Retake photo** (red) → short arrow back to Inputs.
-4. Crop or Livestock? → crop Learned Gate (label **Crop**); → livestock Learned Gate (label **Livestock**); → **Not a farm photo** (red).
-5. Each Learned Gate → its two experts. All four experts → **Best answer**.
-6. **Best answer** → **Add Evidence** → **Confident and Safe?**.
-7. **Confident and Safe?** → **Offline Advice** (label **Yes**) → **Advice to Farmer**.
-8. **Confident and Safe?** → down through the empty corridor → **Privacy Filter** (label **Unsure or risky**). This is the only arrow that crosses the Zone 1/Zone 2 border going down.
-9. **Privacy Filter** → **Trusted Knowledge**; Context chips → **Qwen Advisor** (one merged arrow); **Trusted Knowledge** → **Qwen Advisor**.
-10. **Qwen Advisor** → **Verify and Cite** (solid). **Qwen Advisor** → **Gemini Backup** (dashed, label **if unavailable**). **Gemini Backup** → **Verify and Cite** (dashed).
-11. **Verify and Cite** → **Advice with Sources** → **Advice to Farmer**.
-12. **Advice to Farmer** → **Farm Records** (label **Save case**).
-13. **Farm Records** → **Farm history** chip in Zone 2 (label **Past cases**), one vertical arrow that does not cross any other arrow.
+### Legend (a single-row strip along the very bottom of the image below all bands, or a box fully inside the empty right part of the Zone 3 band; never straddling a band border; title **Legend**)
+7 entries: teal box **Fine-tuned AI model** · grey dashed box **External fallback** · yellow **Decision** · cylinder **Data store** · red box **Rejected** · solid arrow **Main path** · dashed arrow **Fallback path**.
 
-### Legend (compact box in the bottom-right corner, overlapping nothing; print title **Legend**)
-7 entries only: teal box **Fine-tuned AI model** · grey dashed box **External backup** · yellow diamond **Decision** · cylinder **Data store** · red box **Rejected** · solid arrow **Main path** · dashed arrow **Backup path**.
-
-Do **not** print: any footer sentence, image sizes, fonts, colour codes, step IDs, square brackets, counts of documents/classes/images, percentages, model file sizes.
+Do not print: any footer sentence, font/size/colour codes, IDs, square brackets, counts of documents/classes/images, percentages, accuracy figures.
 
 ---
-## Part 5: Things that must NOT appear
-- On-device model improvement, secure aggregation, federated learning, "improved models".
-- Voice, speech, microphone, audio.
-- Gemini as the main generator; Qwen as optional.
-- Numbers of anything (documents, classes, accuracy).
-- Any text describing how the picture was made (px, pt, font names, hex codes, "regular", "semibold").
+## Part 5: Must NOT appear
+On-device model improvement / secure aggregation / federated learning; voice, speech, microphone, audio; Gemini as the main generator; Qwen as optional; numbers of anything; any text about how the picture was made.
 
-## Part 6: Checklist to review the generated image (tick all)
-- [ ] Wide 16:9, all text legible when the image is shown at half size.
-- [ ] No spec text, brackets, IDs, sizes, hex codes printed.
-- [ ] No word is misspelt; labels match Part 4 exactly.
-- [ ] Every box has an icon; no box has more than 4 words.
-- [ ] No duplicate steps (Quality Check once, Confident and Safe? once).
-- [ ] Qwen is the visual focus of Zone 2; Gemini is grey and dashed and below it.
-- [ ] Only one arrow crosses from Zone 1 to Zone 2; "Save case" reaches Zone 3; "Past cases" comes back.
-- [ ] No arrow crosses text or another arrow.
-- [ ] Legend has 7 unique entries and covers nothing.
+## Part 6: Checklist to review the generated image
+- [ ] Wide 16:9; nothing cut at any edge; legend does not overlap a zone band.
+- [ ] Text legible at half size; correctly spelled.
+- [ ] Technical terms present: MoE, MobileNetV3/ONNX, zero-shot, Multimodal Fusion, RAG + FAISS, Qwen2.5 + LoRA, Gemini Fallback, SQLite, personal data removed.
+- [ ] Every box: one icon, short bold title, at most one small tag line.
+- [ ] Privacy Filter has an incoming arrow (from the gate) and an outgoing one (to Trusted Knowledge).
+- [ ] Context stack joins Qwen; Qwen → Verify is solid; only Gemini arrows dashed.
+- [ ] Only one arrow from Zone 1 to Zone 2; "Save case" reaches Zone 3; "Past cases" returns.
+- [ ] No IDs/brackets/sizes/counts printed; no duplicate steps.
+- [ ] Confidence & Safety Gate: yellow hexagon, title inside, tag under, two labelled exits (green Yes, orange-red Unsure or risky), fully inside the Zone 1 band.
+- [ ] Save case starts at the navy pill and ends at Farm Records; Past cases points UP into the Farm history chip.
+- [ ] Exactly one dashed arrow Qwen → Gemini, no return arrow; no stray label "Verify".
+- [ ] No stray words or symbols ("useful", asterisk).
 
 ---
-## Part 7: Structure reference (Mermaid; for connectivity only, ignore its styling; names below are the printed labels)
+## Part 7: Structure reference (Mermaid, connectivity only; ignore its styling)
 ```mermaid
 flowchart LR
   subgraph Z1["1 Farmer's Device"]
     IN["Photo · Symptom text · Sensors · Region & season"] --> QC{"Quality Check"}
     QC -- reject --> RJ1(["Retake photo"]) --> IN
-    QC --> DR["Crop or Livestock?"]
+    QC --> DR["Domain Router"]
     DR -- other --> RJ2(["Not a farm photo"])
-    DR -- Crop --> GC["Learned Gate"] --> E1["Row crops"] & E2["Tree crops"]
-    DR -- Livestock --> GL["Learned Gate"] --> E3["Lumpy skin"] & E4["Foot-and-mouth"]
-    E1 & E2 & E3 & E4 --> BA["Best answer"] --> FU["Add Evidence"] --> CG{"Confident and Safe?"}
+    subgraph MOE["Mixture-of-Experts (MoE)"]
+      GC["MoE Gate"] --> E1["Row crops"] & E2["Tree crops"]
+      GL["MoE Gate"] --> E3["Lumpy skin"] & E4["Foot-and-mouth"]
+    end
+    DR -- Crop --> GC
+    DR -- Livestock --> GL
+    E1 & E2 & E3 & E4 --> CB["Combiner"] --> FU["Multimodal Fusion"] --> CG{"Confidence & Safety Gate"}
     CG -- Yes --> LA["Offline Advice"]
   end
   subgraph Z2["2 Cloud Advisory"]
-    PF["Privacy Filter"] --> TK["Trusted Knowledge"] --> QW["Qwen Advisor"]
+    PF["Privacy Filter"] --> TK["Trusted Knowledge (RAG)"] --> QW["Qwen2.5 Advisor (LoRA)"]
     CTX["Region & season · Weather · Farm history"] --> QW
-    QW --> VC{"Verify and Cite"}
-    QW -. if unavailable .-> GM["Gemini Backup"] -.-> VC
+    QW --> VC{"Verify & Cite"}
+    QW -. if unavailable .-> GM["Gemini Fallback"] -.-> VC
     VC --> AS["Advice with Sources"]
   end
   subgraph Z3["3 Private Farm Memory"]
-    FR[("Farm Records")] --- MH["My Farm History"]
+    FR[("Farm Records: SQLite")] --- MH["My Farm History"]
   end
   CG -- "Unsure or risky" --> PF
   LA --> OUT(["Advice to Farmer"])
@@ -188,50 +214,65 @@ flowchart LR
 ```
 
 ---
-## Part 8: PROMPT A (main prompt: paste this into Gemini with the previous diagram attached)
+## Part 8: PROMPT A (main: paste into Gemini with the previous diagram attached as style reference)
 
-> Create ONE formal, clean, easy-to-read **system architecture diagram** as a flat vector-style image, **wide landscape 16:9, highest resolution available, white background, generous empty margins**. Title: "Unified AI Agri-Vision Platform". Subtitle: "Crop and livestock advisory · Edge-first · Grounded in trusted knowledge".
+> Create ONE formal, clean **system architecture diagram** as a flat vector-style image: **wide landscape 16:9, highest resolution available, white background, at least 6% empty margin on every side, nothing cut off at the edges.** Title "Unified AI Agri-Vision Platform"; subtitle "Crop and livestock advisory · Edge-first AI · Retrieval-grounded (RAG) cloud advisory".
 >
-> **Top priority: it must be instantly understandable and NOT crowded.** Use small icons instead of text. Every box has ONE clear icon and a label of at most four words. Leave lots of empty space. If something does not fit, remove detail; never shrink text.
+> **Content style (important):** every box has (1) one clear single-colour line icon, (2) a short **bold title** of at most three words, and (3) where listed below, ONE small muted slate-blue **technical tag** line under the title (the tag is the technical term). No paragraphs, no bullet lists, lots of white space. The diagram must be instantly understandable AND show the technology used. Technical terms MoE, MobileNetV3, ONNX, zero-shot, RAG, FAISS, LoRA, SQLite must appear exactly where listed.
 >
-> I attached my previous diagram only as a reference for the general look (three coloured horizontal zone bands stacked top to bottom with a numbered circle badge, a legend at the bottom right). **Do not copy its content or its clutter.**
+> I attached my previous diagram only as a style/layout reference (three coloured horizontal zone bands stacked top to bottom, numbered circle badges, teal boxes for our models, grey dashed fallback, navy result pill). Keep that look, but follow the content below exactly.
 >
-> **Layout.** Three horizontal bands. Zone 1 (top, light blue): title "Farmer's Device" with small italic "works offline". Zone 2 (middle, light amber): title "Cloud Advisory" with small italic "only when needed". Zone 3 (bottom, light green): title "Private Farm Memory". Leave an empty horizontal gap between Zone 1 and Zone 2 for one arrow. A tall navy pill "Advice to Farmer" (phone with speech-bubble icon) sits at the far right, touching both Zone 1 and Zone 2. Small compact legend in the bottom-right corner.
+> **Layout.** Three horizontal bands: Zone 1 (light blue) titled "Farmer's Device" with small italic "works offline"; Zone 2 (light amber) titled "Cloud Advisory" with small italic "only when needed"; Zone 3 (light green) titled "Private Farm Memory". Leave an empty horizontal corridor between Zone 1 and Zone 2 for exactly one arrow. A tall navy pill "Advice to Farmer" with tag "English / Hindi" (phone with speech-bubble icon) sits at the far right, spanning Zone 1 and Zone 2. The legend is a single-row strip along the very bottom of the image, below all bands, touching no edge.
 >
-> **Zone 1, left to right:** phone outline with three stacked pills "Photo" (camera icon), "Symptom text" (text-lines icon), "Sensors" (thermometer icon) and a small chip "Region & season" (map-pin and calendar icon) → hexagon "Quality Check" (magnifying glass over photo) with a green tick to continue and a short red arrow to a red box "Retake photo" that points back to the phone → box "Crop or Livestock?" (split arrow with a leaf and a cow) with a red exit to a red box "Not a farm photo" → a large white container titled "Expert Team" with caption "fine-tuned AI models". Inside it two rows. Row "Crop": small teal box "Learned Gate" feeding two teal boxes "Row crops" (tomato and corn icons) and "Tree crops" (apple and grapes icons). Row "Livestock": small teal box "Learned Gate" feeding two teal boxes "Lumpy skin" (spotted cow icon) and "Foot-and-mouth" (cow head icon). All four expert boxes merge into a small white box "Best answer" → white box "Add Evidence" (layers icon) → yellow diamond "Confident and Safe?" (shield icon). From the diamond: "Yes" goes to white box "Offline Advice" (open-book icon) then to "Advice to Farmer"; "Unsure or risky" (small warning triangle) goes DOWN through the empty gap into Zone 2.
+> **Zone 1, left to right (title / tag):** a phone outline with three pills "Photo" (camera), "Symptom text" (text lines), "Sensors" (thermometer, tag "simulated"), and a chip "Region & season" (map pin, calendar) → hexagon **Quality Check** (title inside the hexagon, tag "blur · exposure · contrast" directly under it; magnifier-over-photo icon) with a green tick to continue, and a short red arrow to a red box "Retake photo" (camera icon) that points back to the phone → **Domain Router** / "crop vs livestock · zero-shot" (split arrow with a leaf and a cow) with a red exit to a red box "Not a farm photo", and two short arrows labelled "Crop" and "Livestock" leading into the two rows of → one large white container titled **Mixture-of-Experts (MoE)** with tag "fine-tuned MobileNetV3 · ONNX". Inside, two rows with small horizontal pills "Crop" and "Livestock". Crop row: small teal box **MoE Gate** / "learned" feeding two teal boxes **Row crops** (tomato and corn icons) and **Tree crops** (apple and grapes icons). Livestock row: small teal box **MoE Gate** / "learned" feeding two teal boxes **Lumpy skin** (spotted cow icon) and **Foot-and-mouth** (cow head icon). All four expert boxes merge into a small white box **Combiner** / "most confident wins" → **Multimodal Fusion** / "image + text + sensors" (layers icon) → a yellow **hexagon** (not a big diamond; about 1.3× the size of the Quality Check hexagon, fully inside the blue band) with a shield icon and the bold two-line title **Confidence & Safety Gate** INSIDE it, and the small tag "confidence · evidence · safety-critical" directly under it. Two exits only: a green arrow to the right labelled "Yes" (with a small green tick) → **Offline Advice** / "local knowledge base · season tips" (open book) → the navy pill; and an orange-red arrow going DOWN, labelled "Unsure or risky" with a small warning-triangle icon next to the label, through the MIDDLE of the empty corridor between the bands to the first box of Zone 2.
 >
-> **Zone 2, left to right:** white box "Privacy Filter" (padlock) → box "Trusted Knowledge" (books and magnifying glass) → the largest teal box with a thick outline "Qwen Advisor" with a small tag "fine-tuned" (brain or chip icon). Three small stacked chips feed the Qwen box: "Region & season", "Weather" (dashed outline, cloud-rain icon) and "Farm history" (clock and notebook icon). Below the Qwen box a light-grey dashed box "Gemini Backup" (sparkle icon) with small caption "if unavailable", connected from Qwen by a dashed arrow. From Qwen a SOLID arrow, and from Gemini Backup a dashed arrow, both go to a shield-with-check hexagon "Verify and Cite" → white box "Advice with Sources" (document with quote marks) → arrow up to "Advice to Farmer".
+> **Zone 2, left to right:** **Privacy Filter** / "personal data removed" (padlock) — the downward arrow ends on this box → **Trusted Knowledge** / "RAG · embeddings + FAISS" (books and magnifier) → the largest teal box with a thick outline **Qwen2.5 Advisor** / "LoRA fine-tuned · cites sources" (brain or chip icon). In the bottom-left of Zone 2 a small stack titled "Context" with three chips "Region & season" (map pin and sun), "Weather" (dashed outline, cloud-rain icon), "Farm history" (clock and notebook); ONE merged arrow from this stack goes into the Qwen box. A light-grey dashed box **Gemini Fallback** / "if Qwen unavailable" (sparkle icon) sits below the gap between Qwen and the next box, connected by exactly one dashed arrow Qwen → Gemini (label "if unavailable", no return arrow) and one unlabelled dashed arrow Gemini → Verify & Cite. From Qwen a SOLID arrow goes to hexagon **Verify & Cite** / "schema · sources · safety" (shield with check) → **Advice with Sources** / "structured answer" (document with quote marks) → arrow up into the navy "Advice to Farmer" pill.
 >
-> **Zone 3:** a cylinder "Farm Records" (database with small leaf and cow) and a box "My Farm History" (timeline icon) with small italic text "private to each farm". Arrow from "Advice to Farmer" down to "Farm Records" labelled "Save case". One vertical arrow from "Farm Records" up to the "Farm history" chip in Zone 2, labelled "Past cases".
+> **Zone 3:** cylinder **Farm Records** / "SQLite (local)" (database with a small leaf and cow) and a box **My Farm History** / "private to each farm" (timeline icon), joined by an arrow. An arrow starting at the navy pill and ending on the Farm Records cylinder, labelled "Save case" (it must NOT end on My Farm History). One vertical arrow starting at Farm Records with its arrowhead pointing UP into the "Farm history" chip in Zone 2, labelled "Past cases", crossing nothing.
 >
-> **Colours.** Teal fill with white icon/text ONLY for models we trained (the four experts, the two gates, Qwen Advisor). Grey with dashed outline for the external backup (Gemini). Yellow for decision gates. Light red for rejected outcomes. Navy for the final result. White for all other steps. Solid dark arrows for the main path, grey dashed arrows for the backup path, red arrows for rejects. Zone bands: very light blue, very light amber, very light green with matching thin outlines.
+> **Colours.** Teal fill with white icon/text ONLY for models we trained (the two MoE gates, the four experts, Qwen2.5 Advisor). Grey with dashed outline for the external fallback (Gemini). Yellow for decisions (Quality Check hexagon, safety-gate diamond). Light red for rejected outcomes. Navy for the final result. White for other steps. Solid dark arrows for the main path, grey dashed arrows only for the fallback path, red arrows for rejects. Zone bands very light blue / amber / green with matching thin outlines.
 >
-> **Legend (7 entries, compact):** teal box "Fine-tuned AI model", grey dashed box "External backup", yellow diamond "Decision", cylinder "Data store", red box "Rejected", solid arrow "Main path", dashed arrow "Backup path".
+> **Legend (7 entries, compact):** teal box "Fine-tuned AI model", grey dashed box "External fallback", yellow "Decision", cylinder "Data store", red box "Rejected", solid arrow "Main path", dashed arrow "Fallback path".
 >
-> **Style rules.** Flat vector look; consistent single-colour line icons; thin outlines; no gradients, no 3D, no photos, no company logos; all text horizontal, sans-serif, large and legible, correctly spelled; arrows are straight or right-angled and never cross text or each other; only ONE arrow crosses from Zone 1 into Zone 2.
->
-> **Never print** any of the following on the image: numbers of documents/classes/images, percentages, font names or sizes, colour codes, square brackets, step IDs, image dimensions, a footer sentence, or any voice/speech/microphone element, or any "on-device model improvement / aggregation" element. Use ONLY the label texts given above, spelled exactly.
+> **Rules.** Flat vector, consistent line icons, thin outlines, no gradients/3D/photos/logos; all text horizontal, sharp, correctly spelled, large enough to read at half size; arrows straight or right-angled, never crossing text or each other; only ONE arrow crosses from Zone 1 into Zone 2. **Do not print:** font names or sizes, colour codes, square brackets, step IDs, image dimensions, numbers of documents/classes/images, percentages, a footer sentence. **Do not include:** voice/speech/microphone, "on-device model improvement", "secure aggregation", or "federated learning". Use ONLY the titles and tags given above, spelled exactly.
 
 ---
-## Part 9: PROMPT B (alternative, exact text: ask Gemini for SVG code instead of a picture)
-AI image generators often misspell words. A text model that writes **SVG** cannot misspell them. Use this if Prompt A keeps producing typos.
+## Part 9: PROMPT B (alternative: ask for SVG code, so text is never misspelt)
+> Write ONE self-contained **SVG file** (viewBox 1920×1080, 16:9, white background, system sans-serif font, no external files) of the architecture diagram described below. Output only the SVG code in a single code block. Draw simple flat line icons with basic shapes (camera, text lines, thermometer, magnifier, leaf, cow, tomato, apple, shield, padlock, books, brain/chip, cylinder, clock, phone). Use exactly the titles, small technical tag lines, colours, layout and arrows from the specification that follows (paste Parts 3, 4 and 5 of this file, then the Layout paragraph of Prompt A). Keep it uncluttered with generous white space. Do not print sizes, colour codes or IDs as text.
 
-> Write ONE self-contained **SVG file** (viewBox 1920×1080, 16:9, white background, no external fonts or images, system sans-serif font) of the architecture diagram described below. Output only the SVG code in one code block. Draw simple flat line icons yourself with basic shapes (camera, text lines, thermometer, magnifier, leaf, cow, tomato, apple, shield, padlock, book, brain/chip, database cylinder, clock, phone). Use exactly the labels, colours, layout and arrows from this specification (paste Parts 3, 4 and 5 of this file here, plus the layout paragraph of Prompt A). Keep it uncluttered: at most four words per label, generous white space, arrows right-angled and never crossing text. Do not print any sizes, colour codes or IDs as text.
-
-Then open the SVG in a browser, and export as PNG (or edit in Inkscape / Figma / PowerPoint).
+Open the SVG in a browser and export to PNG, or edit it in Inkscape/Figma/PowerPoint.
 
 ## Part 10: PROMPT C (fallback: one zone at a time, then assemble)
-If a single image is still crowded, generate three separate images with the same style and combine them in PowerPoint/Figma/Canva:
-> Using the same style and palette as before, create only **Zone 1: Farmer's Device** of the Agri-Vision architecture as a wide 16:9 image (content: Part 4 Zone 1 table). Then only **Zone 2: Cloud Advisory** (Zone 2 table) and only **Zone 3: Private Farm Memory** (Zone 3 table), each with plain white background and identical fonts, colours and icon style, leaving a small stub arrow at the edges where it connects to the next zone (Zone 1 bottom arrow labelled "Unsure or risky"; Advice to Farmer arrows; "Save case"; "Past cases").
+> Using the same style and palette as before, create only **Zone 1: Farmer's Device** as a wide 16:9 image (content: Part 4 Zone 1 table, including titles and tag lines). Then only **Zone 2: Cloud Advisory**, then only **Zone 3: Private Farm Memory**, each on plain white with identical fonts, colours and icon style, leaving a short stub arrow at each edge where it connects to the next zone ("Unsure or risky" leaves Zone 1 downward; "Save case"; "Past cases").
 
-Final check of every label against Part 4 after assembling (AI text errors are common).
+Assemble in PowerPoint/Figma/Canva and re-check every label against Part 4.
 
-## Part 11: PROMPT D (fix-up: paste this as a follow-up message when the first result has problems)
-> Redo the image with these corrections. Keep the same layout, colours and icon style. (1) Remove every piece of text that is not a label from my list: no font sizes, no "pt/px", no hex codes, no step IDs or square brackets, no counts of documents or classes, no footer sentence. (2) Fix all spelling: use exactly these labels: Photo, Symptom text, Sensors, Region & season, Quality Check, Retake photo, Crop or Livestock?, Not a farm photo, Expert Team, Learned Gate, Row crops, Tree crops, Lumpy skin, Foot-and-mouth, Best answer, Add Evidence, Confident and Safe?, Offline Advice, Unsure or risky, Privacy Filter, Trusted Knowledge, Qwen Advisor, Gemini Backup, Verify and Cite, Advice with Sources, Advice to Farmer, Farm Records, My Farm History, Save case, Past cases. (3) Delete duplicate boxes: "Quality Check" and "Confident and Safe?" must each appear exactly once. (4) Reduce text: every box gets one icon and at most four words; delete all sub-sentences. (5) Make the "Save case" arrow go from "Advice to Farmer" to "Farm Records" in Zone 3, and add one "Past cases" arrow from "Farm Records" up to the "Farm history" chip. (6) Draw the arrow from Qwen Advisor to Verify and Cite as SOLID; only Gemini Backup arrows are dashed. (7) Only one arrow may cross from Zone 1 to Zone 2. (8) Make the image wide 16:9 with at least 6% empty margin so nothing is cut at the edges. (9) Use more space between boxes so nothing looks crowded, and make the text larger.
+## Part 11: PROMPT D (fix-up follow-up when a result has problems)
+> Redo the image with these corrections, keeping the same layout, colours and icon style. (1) Each box must show: an icon, a short bold title and, where listed, ONE small technical tag line. Restore the technical terms: "Mixture-of-Experts (MoE)" with tag "fine-tuned MobileNetV3 · ONNX"; "MoE Gate" with tag "learned"; "Domain Router" with tag "crop vs livestock · zero-shot"; "Multimodal Fusion" with tag "image + text + sensors"; "Confidence & Safety Gate"; "Privacy Filter" with tag "personal data removed"; "Trusted Knowledge" with tag "RAG · embeddings + FAISS"; "Qwen2.5 Advisor" with tag "LoRA fine-tuned · cites sources"; "Gemini Fallback" with tag "if Qwen unavailable"; "Verify & Cite" with tag "schema · sources · safety"; "Farm Records" with tag "SQLite (local)"; "Advice to Farmer" with tag "English / Hindi". (2) The escalation arrow "Unsure or risky" must end on "Privacy Filter", and "Privacy Filter" must have an arrow to "Trusted Knowledge" then to "Qwen2.5 Advisor". (3) The Context stack (Region & season, Weather, Farm history) must join "Qwen2.5 Advisor" with one merged arrow. (4) "Qwen2.5 Advisor" to "Verify & Cite" must be a SOLID arrow; only Gemini arrows are dashed. (5) Use horizontal pills "Crop" and "Livestock" instead of vertical text. (6) Make the image wide 16:9 with at least 6% empty margin; nothing cut off; the Legend must be outside the green band and not touch the image edge. (7) Do not print font sizes, colour codes, step IDs, brackets, or counts of documents/classes. (8) Keep the text large and correctly spelled. (9) Redraw the Confidence & Safety Gate as a normal-size yellow hexagon fully inside the blue band, with the shield icon and the two-line title INSIDE it and the tag "confidence · evidence · safety-critical" under it; a green "Yes" arrow to Offline Advice and an orange-red "Unsure or risky" arrow (warning-triangle icon) down through the middle of the corridor.
+
+---
+## Part 11b: PROMPT R (REFINEMENT: use this first on your current good image; changes ONLY what is listed)
+Attach `updated_architecture_diagram.png` (the current image) and paste:
+
+> This diagram is almost final. **Keep everything exactly as it is** (layout, colours, icons, text, box positions, sizes, arrows) **except the corrections listed below. Do not redraw, restyle, move or reword anything else.** Output the same image with only these changes:
+>
+> 1. **Confidence & Safety Gate (main fix).** Replace the large yellow diamond with a normal-size yellow hexagon (about 1.3 times the Quality Check hexagon) that sits fully inside the blue Zone 1 band with clear space above and below. Put the shield icon and the bold two-line title "Confidence & Safety Gate" INSIDE the hexagon, and the small tag "confidence · evidence · safety-critical" directly under it. Nothing may float above it. Give it exactly two exits: a green arrow to the right labelled "Yes" (small green tick) into Offline Advice, and an orange-red arrow labelled "Unsure or risky" (small warning-triangle icon next to the label) going down through the middle of the empty gap between the two bands into Privacy Filter.
+> 2. **Quality Check:** put the whole title "Quality Check" inside the hexagon (two lines) and the tag "blur · exposure · contrast" directly under it; nothing above the hexagon.
+> 3. **Domain Router:** add two short labelled arrows "Crop" and "Livestock" from the router into the Crop row and the Livestock row of the Mixture-of-Experts box.
+> 4. **Save case arrow:** it must start at the navy "Advice to Farmer" pill and end on the Farm Records cylinder (currently it ends at My Farm History).
+> 5. **Past cases arrow:** reverse it: it starts at Farm Records and its arrowhead points up into the "Farm history" chip.
+> 6. **Gemini Fallback:** keep exactly one dashed arrow from Qwen2.5 Advisor to Gemini Fallback labelled "if unavailable" (remove the extra upward dashed arrow), and one unlabelled dashed arrow from Gemini Fallback to Verify & Cite (remove the stray label "Verify").
+> 7. **Typos:** the text under My Farm History must read exactly "private to each farm" (remove the quotes and the word "useful"); remove the asterisk next to the map-pin icon on the "Region & season" chip.
+> 8. **Legend:** move it out of the amber/green bands into a single-row strip along the very bottom of the image (or entirely inside the empty right part of the green band); it must not touch any edge.
+> 9. **Advice to Farmer pill:** make it a taller navy pill placed fully in the right margin, spanning the gap between Zone 1 and Zone 2, with "English / Hindi" on its own line.
+> 10. **Escalation arrow:** route it through the middle of the empty gap between the bands, not along a band border.
+> 11. Output at 16:9 with at least 6% empty margin on all sides; nothing cut off.
+
+If the tool cannot edit precisely and changes other parts, go back to the previous image and use Prompt D (which regenerates the whole image with the same fixes).
 
 ---
 ## Part 12: Notes for maintainers
 - Accuracy numbers and document counts are intentionally not on the diagram (see `docs/system/evaluation_results.md`).
-- The "Best answer" node corresponds to `AGRIVISION_MOE_ROUTING=both` (recommended). With `top1` the learned gate alone picks one expert.
-- Qwen box: trained on synthetic, human-reviewed advisories; until the fine-tune and comparison are done, Gemini is the default backend (`ADVISORY_BACKEND=local_llm` switches to Qwen).
-- After generating, save the final image over `architecture_diagram.png` (the README uses that file name) and keep the previous one in git history.
+- "Combiner" corresponds to `AGRIVISION_MOE_ROUTING=both` (recommended). With `top1` the learned gate alone picks one expert.
+- Qwen box: trained on synthetic, human-reviewed advisories; until fine-tune and comparison finish, Gemini is the default backend (`ADVISORY_BACKEND=local_llm` switches to Qwen).
+- After generating, save the final image over `architecture_diagram.png` (the README uses that name).

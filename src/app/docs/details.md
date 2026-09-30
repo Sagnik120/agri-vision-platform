@@ -40,4 +40,4 @@ IMPLEMENTED.
 Assumes local DB is accessible. Assumes offline fallback models are cached.
 
 ## 12. Known limitations
-Voice processing is currently temporarily disabled from the frontend UI flow via a feature flag to ensure demonstration stability. The underlying ASR implementation remains intact for future reactivation.
+None recorded for the current prototype scope.
