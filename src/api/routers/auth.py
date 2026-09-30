@@ -104,5 +104,8 @@ def signup(body: SignupIn) -> dict:
 def login(body: LoginIn) -> dict:
     farm_id = auth.login(body.phone, body.pin)
     if not farm_id:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Phone number or PIN is incorrect.")
+        # Signup already reveals whether a number is registered, so saying which part is wrong leaks nothing new.
+        if not repository.phone_exists(body.phone):
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "This number is not registered. Tap New farmer to create an account.")
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Wrong PIN for this number. Please try again.")
     return _session(farm_id)

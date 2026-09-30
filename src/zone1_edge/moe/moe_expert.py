@@ -86,9 +86,11 @@ class MoEDomainExpert:
     def __init__(self, domain: str, mock: bool = False, routing: str | None = None):
         self.domain = domain
         self.mock = mock
-        self.routing = (routing or config.MOE_ROUTING or "top1").lower()
+        self.routing = (routing or config.MOE_ROUTING_BY_DOMAIN.get(domain) or config.MOE_ROUTING or "top1").lower()
+        # Every domain has exactly two sub-experts, so "top2" means the same as "both".
+        self.routing = {"top2": "both"}.get(self.routing, self.routing)
         if self.routing not in ("top1", "both"):
-            raise ValueError(f"routing must be 'top1' or 'both', got {self.routing!r}")
+            raise ValueError(f"routing must be 'top1', 'top2' or 'both', got {self.routing!r}")
         self.gate = MoEGate(domain, mock=mock)
         self._experts = {}
 
@@ -127,6 +129,8 @@ class MoEDomainExpert:
             "prediction": prediction,
             "confidence": round(float(confidence), 4),
             "top_k": top_k,
+            # Same debug key the single experts set, so the API/admin can show which models ran.
+            "_backend": "mock" if self.mock else f"moe:{group}",
             "_moe": {
                 "component": "moe_gate",
                 "gate_kind": self.gate.kind,

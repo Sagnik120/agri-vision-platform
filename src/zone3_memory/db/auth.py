@@ -36,6 +36,13 @@ def login(phone: str, pin: str) -> str | None:
     hashed_pin = hashlib.sha256(pin.encode('utf-8')).hexdigest()
     c.execute("SELECT farm_id FROM farm WHERE phone = ? AND pin = ?", (phone, hashed_pin))
     row = c.fetchone()
+    if not row:
+        # Accounts created before PIN hashing stored the raw PIN. Accept it once and upgrade in place.
+        c.execute("SELECT farm_id FROM farm WHERE phone = ? AND pin = ?", (phone, pin))
+        row = c.fetchone()
+        if row:
+            c.execute("UPDATE farm SET pin = ? WHERE farm_id = ?", (hashed_pin, row[0]))
+            conn.commit()
     conn.close()
     return row[0] if row else None
 

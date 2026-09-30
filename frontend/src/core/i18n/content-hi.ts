@@ -282,6 +282,8 @@ export const SENTENCE_HI: Record<string, string> = {
   "Not found.": "नहीं मिला।",
   "PIN must be 4 digits.": "पिन 4 अंकों का होना चाहिए।",
   "Phone number or PIN is incorrect.": "फ़ोन नंबर या पिन गलत है।",
+  "This number is not registered. Tap New farmer to create an account.": "यह नंबर पंजीकृत नहीं है। खाता बनाने के लिए 'नया किसान' पर टैप करें।",
+  "Wrong PIN for this number. Please try again.": "इस नंबर का पिन गलत है। कृपया फिर कोशिश करें।",
   "Phone verification expired. Please request a new code.": "फ़ोन सत्यापन की समय-सीमा ख़त्म। कृपया नया कोड मंगाएँ।",
   "Photo is larger than 10 MB.": "फ़ोटो 10 MB से बड़ी है।",
   "Please enter your name.": "कृपया अपना नाम डालें।",

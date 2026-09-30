@@ -9,6 +9,7 @@ import type {
   OtpRequestResult,
   Session,
   Stats,
+  Translation,
 } from "../types";
 import { apiUrl, currentToken, rawRequest, request } from "./client";
 
@@ -37,6 +38,7 @@ export const farmApi = {
 export const diagnosisApi = {
   list: () => request<HistoryItem[]>("/diagnoses"),
   get: (id: number) => request<Diagnosis>(`/diagnoses/${id}`),
+  translation: (id: number, lang: "hi") => request<Translation>(`/diagnoses/${id}/translation?lang=${lang}`),
   imageUrl: (id: number) => `${apiUrl(`/diagnoses/${id}/image`)}?token=${encodeURIComponent(currentToken() ?? "")}`,
 
   /** Streams real pipeline progress (NDJSON) and calls onEvent for each stage. */

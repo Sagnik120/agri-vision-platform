@@ -22,9 +22,10 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
-from src.api import diagnosis_service
+from src.api import diagnosis_service, translation
 from src.api.config import PROJECT_ROOT, settings
 from src.api.security import issue_token, read_token
+from src.zone1_edge import config as zone1_config
 from src.zone3_memory.db import farm_memory
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -368,11 +369,12 @@ def system(_: str = Depends(current_admin)) -> dict:
                 "platform": f"{platform.system()} {platform.machine()}"},
         "vision": {"expert_mode": settings.expert_mode,
                    "moe_enabled": os.environ.get("AGRIVISION_MOE_ENABLED", "auto"),
-                   "moe_routing": os.environ.get("AGRIVISION_MOE_ROUTING", "top1")},
+                   "moe_routing": " / ".join(f"{d} {r}" for d, r in zone1_config.MOE_ROUTING_BY_DOMAIN.items())},
         "llm": _llm_status(),
         "gemini_ready": gemini_ready,
         "rag_backend": os.environ.get("RAG_BACKEND", "auto"),
         "weather_enabled": os.environ.get("WEATHER_ENABLED", "false").lower() == "true",
+        "translation": translation.status(),
         "demo_otp": settings.demo_otp,
         "default_admin_password": settings.admin_password == "agrivision-admin",
         "storage": {"db_bytes": db.stat().st_size if db.exists() else 0, "uploads_files": uploads_n,

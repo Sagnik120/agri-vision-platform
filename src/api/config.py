@@ -26,6 +26,13 @@ class Settings:
             "AGRIVISION_CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000"
         ).split(",") if o.strip()
     ))
+    # Also allow any page served from this machine / the local network / a Cloudflare quick tunnel,
+    # so the app works when opened via the LAN IP or a demo tunnel without editing CORS each time.
+    cors_origin_regex: str = field(default_factory=lambda: os.environ.get(
+        "AGRIVISION_CORS_ORIGIN_REGEX",
+        r"^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|10(\.\d+){3}|192\.168(\.\d+){2}|172\.(1[6-9]|2\d|3[01])(\.\d+){2})(:\d+)?$"
+        r"|^https://[a-z0-9-]+\.trycloudflare\.com$",
+    ))
     expert_mode: str = field(default_factory=lambda: os.environ.get("AGRIVISION_EXPERT_MODE", "auto"))
     voice_enabled: bool = field(default_factory=lambda: _flag("VOICE_INPUT_ENABLED", "false"))
     # Admin portal login. The default password is for local demos only — set ADMIN_PASSWORD when deploying.

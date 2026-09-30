@@ -11,6 +11,7 @@ load_dotenv()  # before any zone module reads os.environ
 from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
+from src.api import translation  # noqa: E402
 from src.api.config import settings  # noqa: E402
 from src.api.routers import admin, auth, diagnoses, farm, meta  # noqa: E402
 from src.zone3_memory.db import farm_memory  # noqa: E402
@@ -20,6 +21,7 @@ from src.zone3_memory.db import farm_memory  # noqa: E402
 async def lifespan(_: FastAPI):
     farm_memory.init_db()
     settings.upload_dir.mkdir(parents=True, exist_ok=True)
+    translation.warm_up()
     yield
 
 
@@ -28,6 +30,7 @@ app = FastAPI(title="Agri-Vision API", version="1.0.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=list(settings.cors_origins),
+    allow_origin_regex=settings.cors_origin_regex or None,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
