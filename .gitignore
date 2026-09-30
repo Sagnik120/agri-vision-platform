@@ -5,8 +5,17 @@ __pycache__/
 .venv/
 venv/
 
-# Model caches (large, download via setup scripts instead)
+# Model caches and heavy weight files (large, download via setup scripts / HF Hub instead)
 models_cache/
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.onnx
+*.gguf
+*.tflite
+*.h5
+*.ckpt
 
 # Env secrets
 .env
@@ -30,3 +39,6 @@ results/zone1/moe/
 results/zone2/rag_eval/
 results/zone2/llm_data/
 results/zone2/llm_compare/
+
+# Photos + diagnosis sidecars saved by the web API (src/api)
+results/api_uploads/
