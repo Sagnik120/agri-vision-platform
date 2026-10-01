@@ -5,7 +5,16 @@ import { Phone } from "lucide-react";
 import { Label } from "@/components/ui/field";
 import { useI18n } from "@/providers/language-provider";
 
-export const digitsOnly = (v: string) => v.replace(/\D/g, "").slice(0, 10);
+/**
+ * Phone keyboards autofill "+91 98765 43210" or "098765 43210"; keep the 10-digit mobile number,
+ * not the first 10 digits (which would turn "+91 98765…" into "9198765…").
+ */
+export const digitsOnly = (v: string) => {
+  let d = v.replace(/\D/g, "");
+  if (d.length > 10 && d.startsWith("91")) d = d.slice(2);
+  else if (d.length > 10 && d.startsWith("0")) d = d.slice(1);
+  return d.slice(0, 10);
+};
 export const isValidPhone = (v: string) => /^[6-9]\d{9}$/.test(v);
 
 /** +91 mobile number input, displayed as "98765 43210". */

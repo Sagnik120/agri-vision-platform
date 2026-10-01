@@ -30,7 +30,7 @@ opencv-python-headless
 
 # --- Optional: MoE sub-expert inference (ONNX, torch-free). Only needed once
 # fine-tuned sub-experts exist in models_cache/moe/. Training deps: training/requirements-train.txt
-# onnxruntime>=1.17.0
+onnxruntime>=1.17.0
 
 # HTTP API for the Next.js frontend (src/api)
 fastapi>=0.115

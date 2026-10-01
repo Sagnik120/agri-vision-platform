@@ -42,3 +42,6 @@ results/zone2/llm_compare/
 
 # Photos + diagnosis sidecars saved by the web API (src/api)
 results/api_uploads/
+
+# ./demo.sh logs
+results/demo_logs/

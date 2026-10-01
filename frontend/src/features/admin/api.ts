@@ -59,6 +59,7 @@ export interface SystemInfo {
   vision: { expert_mode: string; moe_enabled: string; moe_routing: string };
   llm: { backend: string; model: string; configured: boolean; reachable: boolean | null; latency_ms: number | null };
   gemini_ready: boolean;
+  translation: { enabled: boolean; model: string; loaded: boolean; error: string | null };
   rag_backend: string;
   weather_enabled: boolean;
   demo_otp: boolean;

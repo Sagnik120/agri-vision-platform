@@ -48,7 +48,7 @@ export function CheckDetail({ id }: { id: number }) {
               </Link>
             </div>
           </Card>
-          <ResultView d={q.data} imageUrl={adminApi.imageUrl(q.data.id)} />
+          <ResultView d={q.data} imageUrl={adminApi.imageUrl(q.data.id)} translatable={false} />
         </div>
       )}
     </div>

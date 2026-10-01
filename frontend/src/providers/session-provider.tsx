@@ -22,8 +22,17 @@ interface SessionContextValue {
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
+/** Explicit NEXT_PUBLIC_API_URL wins; otherwise the API is assumed on port 8000 of whatever host served the page
+ *  (localhost, the laptop's LAN IP from a phone, …). */
+function defaultApiUrl() {
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window === "undefined") return "http://localhost:8000";
+  const host = window.location.hostname === "0.0.0.0" ? "localhost" : window.location.hostname;
+  return `${window.location.protocol}//${host}:8000`;
+}
+
 configureApi({
-  baseUrl: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000",
+  baseUrl: defaultApiUrl(),
   getToken: () => storage.get(TOKEN_KEY),
 });
 

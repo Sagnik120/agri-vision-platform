@@ -114,6 +114,11 @@ export interface Diagnosis {
   has_image: boolean;
 }
 
+/** Hindi advisory text from GET /diagnoses/{id}/translation (IndicTrans2, cached server-side). */
+export type Translation =
+  | { available: true; summary: string; warning: string; safety_note: string; context_note: string; actions: string[]; model: string }
+  | { available: false; reason: string };
+
 export type PipelineStage = "vision" | "gate" | "knowledge" | "cloud";
 
 export type DiagnosisEvent =

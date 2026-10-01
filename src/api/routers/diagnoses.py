@@ -12,7 +12,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import FileResponse, StreamingResponse
 
-from src.api import diagnosis_service, repository
+from src.api import diagnosis_service, repository, translation
 from src.api.config import settings
 from src.api.security import current_farm_id, read_token
 
@@ -97,6 +97,39 @@ def get_diagnosis(observation_id: int, farm_id: str = Depends(current_farm_id)) 
     if not detail:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Record not found.")
     return detail
+
+
+@router.get("/{observation_id}/translation")
+def get_translation(observation_id: int, lang: str = Query("hi"), farm_id: str = Depends(current_farm_id)) -> dict:
+    """Hindi version of the advisory text, translated once with IndicTrans2 and cached in the sidecar."""
+    if lang != "hi":
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Only Hindi is supported.")
+    detail = diagnosis_service.load_detail(farm_id, observation_id)
+    if not detail:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Record not found.")
+    cached = (detail.get("translations") or {}).get(lang)
+    if cached:
+        return {"available": True, **cached}
+
+    fields = {
+        "summary": detail.get("summary") or "",
+        "warning": detail.get("warning") or "",
+        "safety_note": detail.get("safety_note") or "",
+        "context_note": (detail.get("context") or {}).get("note") or "",
+    }
+    actions = [a for a in detail.get("actions") or [] if a]
+    texts = list(fields.values()) + actions
+    out = translation.translate_many(texts)
+    if out is None:
+        return {"available": False, "reason": translation.status()["error"] or "Translation is turned off."}
+
+    result = {**dict(zip(fields, out[: len(fields)])), "actions": out[len(fields):], "model": translation.MODEL_ID}
+    side = diagnosis_service.sidecar_path(observation_id)
+    if side.exists():  # cache so the next switch to Hindi is instant
+        data = json.loads(side.read_text())
+        data.setdefault("translations", {})[lang] = result
+        side.write_text(json.dumps(data, ensure_ascii=False, indent=2))
+    return {"available": True, **result}
 
 
 @router.get("/{observation_id}/image")

@@ -97,6 +97,12 @@ export function SystemView() {
                   </>
                 )}
                 <Row label={t("admin.system.gemini")}><Status ok={s.gemini_ready} label={s.gemini_ready ? t("set.ready") : t("set.notConfigured")} /></Row>
+                <Row label={t("admin.system.translation")}>
+                  <Status
+                    ok={s.translation.enabled ? (s.translation.loaded ? true : s.translation.error ? false : null) : null}
+                    label={!s.translation.enabled ? t("admin.system.off") : s.translation.loaded ? "IndicTrans2" : s.translation.error ? t("status.offline") : t("common.loading")}
+                  />
+                </Row>
                 <Row label="RAG">{s.rag_backend}</Row>
               </Panel>
             </StaggerItem>

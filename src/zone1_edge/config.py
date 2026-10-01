@@ -70,6 +70,13 @@ MOE_ENABLED = os.environ.get("AGRIVISION_MOE_ENABLED", "auto").lower()
 # Routing inside a domain: "top1" = moe_gate picks ONE sub-expert (default, cheapest);
 # "both" = run every sub-expert of the domain and combine (see moe_expert.MoEDomainExpert). Measure before adopting.
 MOE_ROUTING = os.environ.get("AGRIVISION_MOE_ROUTING", "top1").lower()
+# Per-domain overrides (fall back to MOE_ROUTING). Recommended: livestock=top2, crop=top1 —
+# the crop experts cover disjoint plants, and an out-of-domain expert can be confidently wrong
+# (a tomato leaf scored "Apple scab 1.0" by crop_perennial), so max-confidence merging hurts crops.
+MOE_ROUTING_BY_DOMAIN = {
+    "crop": os.environ.get("AGRIVISION_MOE_ROUTING_CROP", MOE_ROUTING).lower(),
+    "livestock": os.environ.get("AGRIVISION_MOE_ROUTING_LIVESTOCK", MOE_ROUTING).lower(),
+}
 MOE_DIR = Path(os.environ.get("AGRIVISION_MOE_DIR", MODEL_CACHE_DIR / "moe"))
 
 # ---------------------------------------------------------------------------

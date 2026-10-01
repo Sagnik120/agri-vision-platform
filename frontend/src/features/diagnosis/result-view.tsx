@@ -2,8 +2,9 @@
 
 import {
   AlertOctagon, BookMarked, CalendarRange, CloudSun, Cpu, Cloud, FlaskConical, Info, Lightbulb, MessageSquareQuote,
-  Printer, ShieldAlert, ShieldCheck, Square, TriangleAlert, Volume2,
+  Languages, Printer, ShieldAlert, ShieldCheck, Square, TriangleAlert, Volume2,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 
@@ -74,13 +75,45 @@ function useSpeak(text: string) {
   return { supported, speaking, toggle };
 }
 
-export function ResultView({ d, footer, imageUrl }: { d: Diagnosis; footer?: React.ReactNode; imageUrl?: string }) {
+/**
+ * Cloud (LLM) advice arrives in English; in Hindi mode it is machine-translated once on the
+ * server and cached. Offline advice is covered by the hand-written dictionary instead.
+ */
+function useHindiAdvice(d: Diagnosis, enabled: boolean) {
+  return useQuery({
+    queryKey: ["translation", d.id],
+    queryFn: () => diagnosisApi.translation(d.id, "hi"),
+    enabled: enabled && d.route === "cloud",
+    staleTime: Infinity,
+    retry: false,
+  });
+}
+
+function Pending({ lines = 2 }: { lines?: number }) {
+  return (
+    <span className="block space-y-2 py-1" aria-busy>
+      {Array.from({ length: lines }, (_, i) => <span key={i} className={cn("skeleton block h-3.5", i === lines - 1 ? "w-3/5" : "w-full")} />)}
+    </span>
+  );
+}
+
+export function ResultView({
+  d, footer, imageUrl, translatable = true,
+}: { d: Diagnosis; footer?: React.ReactNode; imageUrl?: string; translatable?: boolean }) {
   const { t, lang, n, pct, cond, text } = useI18n();
   const health = healthOf(d.condition, d.confidence);
-  const actions = d.actions.map(text);
+  const [original, setOriginal] = useState(false);
+  const tq = useHindiAdvice(d, translatable && lang === "hi");
+  const machine = lang === "hi" && d.route === "cloud" && tq.data?.available && !original ? tq.data : null;
+  const translating = lang === "hi" && d.route === "cloud" && translatable && tq.isPending;
+  const summary = machine ? machine.summary : text(d.summary);
+  const actions = machine ? machine.actions : d.actions.map(text);
+  const warning = machine ? machine.warning : text(d.warning);
+  const safety = machine ? machine.safety_note : text(d.safety_note ?? "");
+  const contextNote = machine ? machine.context_note : text(d.context?.note ?? "");
   const [done, setDone] = useState<number[]>([]);
   const isMock = (d.vision_backend ?? "").startsWith("mock");
-  const speech = useSpeak([cond(d.condition), text(d.summary), ...actions].filter(Boolean).join(". "));
+  const speech = useSpeak([cond(d.condition), summary, ...actions].filter(Boolean).join(". "));
   const certaintyKey = `res.certainty.${d.certainty ?? "possible"}` as MessageKey;
 
   return (
@@ -123,7 +156,18 @@ export function ResultView({ d, footer, imageUrl }: { d: Diagnosis; footer?: Rea
                 >
                   {cond(d.condition)}
                 </motion.h2>
-                {d.summary && <p className="mt-3 leading-relaxed text-ink-2">{text(d.summary)}</p>}
+                {translating ? <Pending /> : d.summary && <p className="mt-3 leading-relaxed text-ink-2">{summary}</p>}
+                {lang === "hi" && d.route === "cloud" && translatable && tq.data && (
+                  <p className="mt-2 flex flex-wrap items-center gap-1.5 text-xs font-medium text-ink-3">
+                    <Languages className="size-3.5" />
+                    {tq.data.available ? t("res.translated") : t("res.untranslated")}
+                    {tq.data.available && (
+                      <button onClick={() => setOriginal((o) => !o)} className="font-bold text-leaf hover:underline">
+                        {original ? t("res.showHindi") : t("res.showOriginal")}
+                      </button>
+                    )}
+                  </p>
+                )}
               </div>
               <ConfidenceRing value={d.confidence} label={t("res.confidence")} className="shrink-0" />
             </div>
@@ -151,23 +195,23 @@ export function ResultView({ d, footer, imageUrl }: { d: Diagnosis; footer?: Rea
         <div className="space-y-5">
           {actions.length > 0 && (
             <Panel icon={Lightbulb} title={t("res.whatToDo")}>
-              <CoolCheckbox
+              {translating ? <Pending lines={3} /> : <CoolCheckbox
                 className="-mx-2.5"
                 todos={actions.map((a, i) => ({ id: i, title: a, checked: done.includes(i) }))}
                 onToggle={(id) => setDone((xs) => (xs.includes(id) ? xs.filter((x) => x !== id) : [...xs, id]))}
-              />
+              />}
             </Panel>
           )}
           {d.warning && !/^none\b/i.test(d.warning) && (
             <Callout tone="amber" icon={ShieldAlert}>
               <span className="font-bold">{t("res.warning")}: </span>
-              {text(d.warning)}
+              {translating ? "…" : warning}
             </Callout>
           )}
-          {d.safety_note && <Callout tone="leaf" icon={Info}>{text(d.safety_note)}</Callout>}
+          {d.safety_note && <Callout tone="leaf" icon={Info}>{translating ? "…" : safety}</Callout>}
           {d.context?.note && (
             <Panel icon={CalendarRange} title={t("res.context")}>
-              <p className="leading-relaxed text-ink-2">{text(d.context.note)}</p>
+              {translating ? <Pending /> : <p className="leading-relaxed text-ink-2">{contextNote}</p>}
             </Panel>
           )}
           {d.farmer_text && (
